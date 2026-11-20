@@ -1,0 +1,33 @@
+# secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+**/.env.local
+
+# claude personal settings
+.claude/settings.local.json
+CLAUDE.local.md
+
+# node / next
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# python
+__pycache__/
+.venv/
+*.pyc
+.pytest_cache/
+
+# supabase
+supabase/.temp/
+supabase/.branches/
+
+# misc
+.DS_Store
+.playwright-cli/
+playwright-report/
+test-results/
