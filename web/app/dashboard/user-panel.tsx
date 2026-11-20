@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { ApiStatus } from "./api-status";
 
 export async function UserPanel() {
+  await connection();
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/login");
