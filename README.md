@@ -1,3 +1,18 @@
+# lauzhack-SantaCLauz
+
+## Arrencar-ho tot (5 ordres)
+```bash
+bash scripts/setup-member.sh             # 1. eines, .env a partir de les plantilles, dependències
+npm run dev:web                          # 2. web  → http://localhost:3000  (login → /dashboard)
+npm run dev:api                          # 3. API  → http://localhost:8000/docs
+npm run test                             # 4. tests: Vitest (web) + pytest (api)
+npx supabase db push --remote            # 5. aplicar migracions noves de supabase/migrations (només A)
+```
+Estructura: `web/` Next.js 16 (App Router, `proxy.ts` refresca la sessió) · `api/` FastAPI (`app/main.py`) ·
+`supabase/migrations/` esquema de la BD. Contracte: `docs/API.md`. Regles: `CLAUDE.md`.
+
+---
+
 # Kit LauzHack 2026 — setup de l'equip (4 × Claude Pro)
 
 LauzHack: dissabte 21 nov, hacking de 12:00 a diumenge 12:00 (EPFL). Les normes permeten fer servir codi i recursos

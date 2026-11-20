@@ -1,0 +1,11 @@
+{
+  "name": "lauzhack-santaclauz",
+  "private": true,
+  "scripts": {
+    "dev:web": "npm --prefix web run dev",
+    "dev:api": "cd api && uv run fastapi dev app/main.py",
+    "test": "npm --prefix web run test && cd api && uv run pytest -q",
+    "lint": "npm --prefix web run lint",
+    "build": "npm --prefix web run build"
+  }
+}
