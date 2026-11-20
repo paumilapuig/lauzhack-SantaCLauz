@@ -1,0 +1,2 @@
+-- Local-only seed data (applied by `supabase db reset` on a LOCAL stack, never on the shared project).
+-- Keep it free of secrets and real personal data.

@@ -2,7 +2,7 @@
 
 | Who | Branch | Doing now | Blocked by | Last update |
 |---|---|---|---|---|
-| A | | | | |
+| A | chore/skeleton | Skeleton done: web login→dashboard→/api/me 200, profiles table live | – | Fri 20 Nov 21:00 |
 | B | | | | |
 | C | | | | |
 | D | | | | |
