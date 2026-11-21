@@ -2,7 +2,7 @@
 
 | Who | Branch | Doing now | Blocked by | Last update |
 |---|---|---|---|---|
-| Miquel (A) | – | Migració de les taules del contracte + 3 usuaris de demo (`feat/db-contract-tables`); tipus `Me` a `web/lib/api.ts` fet | – | Sat 21 Nov 17:20 |
+| Miquel (A) | feat/db-contract-tables | Fet: migració del contracte (PR obert, pendent `db push`), `/api/me` amb role. Següent: `db push` + tipus, 3 usuaris de demo, després `feat/api-classdata` | – | Sat 21 Nov |
 | Laura (B) | docs/project-definition | PR de docs obert. Següent: spike `spikes/b-glossary/` (glossari amb OpenRouter, transparència, `mastery.py` + pytest) | clau d'OpenRouter (Pau) | Sat 21 Nov 17:20 |
 | Paula (C) | – | Spike `spikes/c-subtitles/`: Web Speech fr-FR + estats de paraula sobre `docs/demo/glossary-respiration.json` | – | Sat 21 Nov 17:20 |
 | Pau (D) | – | Estands AXA (clau OpenRouter → Miquel i Laura) i IMC (ONG); després `DESIGN.md` amb els 3 estats de paraula | – | Sat 21 Nov 17:20 |
