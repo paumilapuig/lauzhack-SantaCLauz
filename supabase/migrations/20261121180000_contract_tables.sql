@@ -27,7 +27,7 @@ as $$
   );
 $$;
 
-revoke execute on function public.is_teacher() from public;
+revoke execute on function public.is_teacher() from public, anon;
 grant execute on function public.is_teacher() to authenticated, service_role;
 
 create policy "profiles: teachers read all"
@@ -130,7 +130,10 @@ create policy "practice_results: student reads own"
   to authenticated
   using (student_id = (select auth.uid()));
 
--- Grants: the project does not auto-grant new public tables to the API roles.
+-- Grants: start from nothing, because a local stack auto-grants new tables to anon/authenticated.
+revoke all on table
+  public.lessons, public.lesson_terms, public.word_mastery, public.practice_results
+  from anon, authenticated;
 grant select on table
   public.lessons, public.lesson_terms, public.word_mastery, public.practice_results
   to authenticated;
@@ -204,7 +207,7 @@ as $$
   );
 $$;
 
-revoke execute on function public.is_session_teacher(uuid) from public;
+revoke execute on function public.is_session_teacher(uuid) from public, anon;
 grant execute on function public.is_session_teacher(uuid) to authenticated, service_role;
 
 alter table public.class_sessions enable row level security;
@@ -255,6 +258,9 @@ create policy "word_states_log: lesson teacher reads"
   to authenticated
   using ((select public.is_session_teacher(session_id)));
 
+revoke all on table
+  public.class_sessions, public.class_events, public.clips, public.word_states_log
+  from anon, authenticated;
 grant select on table
   public.class_sessions, public.class_events, public.clips, public.word_states_log
   to authenticated;
