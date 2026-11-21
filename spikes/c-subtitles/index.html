@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spike C – sous-titres</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <button id="toggle" type="button">Start</button>
+        <span id="status" class="pill">stopped</span>
+        <span id="counter" class="counter">0/15</span>
+      </header>
+      <div id="banner" class="banner" hidden>
+        SpeechRecognition no disponible en este navegador. Usa Chrome.
+      </div>
+      <section id="subtitles" class="subtitles" aria-live="polite"></section>
+      <section class="latency">
+        <span>Premier texte : <b id="first-ms">–</b></span>
+        <span>Final : <b id="final-ms">–</b></span>
+        <span>Médiane : <b id="median-ms">–</b></span>
+        <small>Espace = début de parole</small>
+      </section>
+      <ul id="lemmas" class="lemmas"></ul>
+      <label class="simulate">
+        Simulate transcript
+        <input id="simulate" type="text" placeholder="Tape une phrase puis Entrée" />
+      </label>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -2,26 +2,230 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.18'
-  }
-  "public": {
+  
+  "graphql_public": {
           Tables: {
-            "profiles": {
+            [_ in never]: never
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "graphql":
+{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
+                           }
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        },"public": {
+          Tables: {
+            "class_events": {
                   Row: {
-                    "created_at": string,"display_name": string | null,"id": string
+                    "created_at": string,"id": string,"lemma": string | null,"session_id": string,"student_id": string,"t_sec": number,"type": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name"?: string | null,"id": string
+                    "created_at"?: string,"id"?: string,"lemma"?: string | null,"session_id": string,"student_id": string,"t_sec": number,"type": string
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string | null,"id"?: string
+                    "created_at"?: string,"id"?: string,"lemma"?: string | null,"session_id"?: string,"student_id"?: string,"t_sec"?: number,"type"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "class_events_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "class_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_events_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"class_sessions": {
+                  Row: {
+                    "id": string,"lesson_id": string,"started_at": string,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id"?: string,"lesson_id": string,"started_at"?: string,"student_id": string
+                  }
+                  Update: {
+                    "id"?: string,"lesson_id"?: string,"started_at"?: string,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "class_sessions_lesson_id_fkey"
+      columns: ["lesson_id"]
+isOneToOne: false
+      referencedRelation: "lessons"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_sessions_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"clips": {
+                  Row: {
+                    "audio_path": string | null,"created_at": string,"id": string,"session_id": string,"student_id": string,"t_end": number,"t_start": number,"transcript": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "audio_path"?: string | null,"created_at"?: string,"id"?: string,"session_id": string,"student_id": string,"t_end": number,"t_start": number,"transcript"?: string | null
+                  }
+                  Update: {
+                    "audio_path"?: string | null,"created_at"?: string,"id"?: string,"session_id"?: string,"student_id"?: string,"t_end"?: number,"t_start"?: number,"transcript"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "clips_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "class_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "clips_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"lesson_terms": {
+                  Row: {
+                    "definition_fr": string | null,"forms": (string)[],"id": string,"key_phrase": string | null,"lemma": string,"lesson_id": string,"translation_es": string | null,"transparent": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "definition_fr"?: string | null,"forms": (string)[],"id"?: string,"key_phrase"?: string | null,"lemma": string,"lesson_id": string,"translation_es"?: string | null,"transparent": boolean
+                  }
+                  Update: {
+                    "definition_fr"?: string | null,"forms"?: (string)[],"id"?: string,"key_phrase"?: string | null,"lemma"?: string,"lesson_id"?: string,"translation_es"?: string | null,"transparent"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lesson_terms_lesson_id_fkey"
+      columns: ["lesson_id"]
+isOneToOne: false
+      referencedRelation: "lessons"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"lessons": {
+                  Row: {
+                    "created_at": string,"id": string,"lesson_date": string | null,"source_text": string | null,"subject": string | null,"teacher_id": string,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"lesson_date"?: string | null,"source_text"?: string | null,"subject"?: string | null,"teacher_id": string,"title": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"lesson_date"?: string | null,"source_text"?: string | null,"subject"?: string | null,"teacher_id"?: string,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lessons_teacher_id_fkey"
+      columns: ["teacher_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"practice_results": {
+                  Row: {
+                    "clip_id": string | null,"created_at": string,"id": string,"lemma": string,"passed": boolean,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clip_id"?: string | null,"created_at"?: string,"id"?: string,"lemma": string,"passed": boolean,"student_id": string
+                  }
+                  Update: {
+                    "clip_id"?: string | null,"created_at"?: string,"id"?: string,"lemma"?: string,"passed"?: boolean,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "practice_results_clip_id_fkey"
+      columns: ["clip_id"]
+isOneToOne: false
+      referencedRelation: "clips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "practice_results_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "created_at": string,"display_name": string | null,"id": string,"l1": string,"level": string,"role": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"display_name"?: string | null,"id": string,"l1"?: string,"level"?: string,"role"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"display_name"?: string | null,"id"?: string,"l1"?: string,"level"?: string,"role"?: string
                   }
                   Relationships: [
                     
+                  ]
+                },"word_mastery": {
+                  Row: {
+                    "last_seen_at": string | null,"lemma": string,"level": number,"student_id": string,"times_tapped": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "last_seen_at"?: string | null,"lemma": string,"level": number,"student_id": string,"times_tapped"?: number
+                  }
+                  Update: {
+                    "last_seen_at"?: string | null,"lemma"?: string,"level"?: number,"student_id"?: string,"times_tapped"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "word_mastery_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"word_states_log": {
+                  Row: {
+                    "lemma": string,"session_id": string,"state": string,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "lemma": string,"session_id": string,"state": string,"student_id": string
+                  }
+                  Update: {
+                    "lemma"?: string,"session_id"?: string,"state"?: string,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "word_states_log_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "class_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "word_states_log_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 }
           }
@@ -29,7 +233,12 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "is_session_teacher":
+{ Args: { "p_session_id": string }; Returns: boolean
+                           },
+"is_teacher":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           }
           }
           Enums: {
             [_ in never]: never
@@ -146,7 +355,11 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  "public": {
+  "graphql_public": {
+          Enums: {
+            
+          }
+        },"public": {
           Enums: {
             
           }
