@@ -52,11 +52,11 @@ export function Word({
       aria-describedby={showTranslation ? glossId : undefined}
       onClick={handleClick}
       className={cn(
-        "inline-flex min-h-11 min-w-11 flex-col items-center justify-center rounded-sm align-middle",
+        "inline-flex min-h-11 min-w-11 flex-col items-center justify-center rounded-sm",
         "data-[tapped]:bg-word-yellow-bg"
       )}
     >
-      <span className={UNDERLINE[state]}>
+      <span className={UNDERLINE[state === "green" && revealed ? "yellow" : state]}>
         {text}
         {state === "orange" && (
           <>
@@ -66,7 +66,7 @@ export function Word({
         )}
       </span>
       {showTranslation && (
-        <span id={glossId} lang="es" className="text-sm text-word-yellow">
+        <span id={glossId} lang="es" className="text-[max(14px,0.45em)] leading-[1.1] font-normal text-word-yellow">
           {translation}
         </span>
       )}
