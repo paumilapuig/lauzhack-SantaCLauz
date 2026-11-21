@@ -109,10 +109,22 @@ export function usePlayback(text: string, audioUrl: string, rate: number): Playb
   }
 
   function startAudio(id: number, from: number) {
-    const el = audio.current ?? new Audio(audioUrl)
-    audio.current = el
-    el.addEventListener("ended", () => finish(id), { once: true })
-    el.play()
+    const fallBack = () => {
+      audioFailed.current = true
+      audio.current = null
+      if (session.current === id) startSpeech(id, from)
+    }
+    let el: HTMLAudioElement
+    let playing: Promise<void>
+    try {
+      el = audio.current ?? new Audio(audioUrl)
+      audio.current = el
+      el.addEventListener?.("ended", () => finish(id), { once: true })
+      playing = el.play()
+    } catch {
+      return fallBack()
+    }
+    playing
       .then(() => {
         if (session.current !== id) return el.pause()
         if (from > 0 && el.duration) el.currentTime = (atOf(from) / plan.total) * el.duration
@@ -122,11 +134,7 @@ export function usePlayback(text: string, audioUrl: string, rate: number): Playb
           return { char: wordAtTime(p * plan.total), progress: p, done: false }
         })
       })
-      .catch(() => {
-        audioFailed.current = true
-        audio.current = null
-        if (session.current === id) startSpeech(id, from)
-      })
+      .catch(fallBack)
   }
 
   function start(from: number) {
