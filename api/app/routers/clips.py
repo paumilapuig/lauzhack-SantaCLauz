@@ -10,7 +10,8 @@ from supabase import Client
 from ..db import get_supabase
 from ..roles import StudentUser
 from . import classdata_session_repository as sessions
-from . import clips_repository, clips_storage
+from .. import storage
+from . import clips_repository
 from .classdata_schemas import ClipCreated
 from .clips_validation import read_audio
 
@@ -21,7 +22,7 @@ router = APIRouter(prefix="/api/clips", tags=["clips"])
 
 def _store_audio(db: Client, path: str, data: bytes) -> None:
     try:
-        clips_storage.upload_clip(db, path, data)
+        storage.upload_clip(db, path, data)
     except Exception as error:
         logger.exception("Could not upload clip %s", path)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Could not store audio") from error
@@ -34,14 +35,14 @@ def _save_rows(db: Client, clip: dict, event_t_sec: float) -> None:
         clips_repository.insert_clip(db, **clip)
     except Exception as error:
         logger.exception("Could not insert clip row %s", clip["clip_id"])
-        clips_storage.remove_clip(db, path)
+        storage.remove_clip(db, path)
         raise _save_failed() from error
     try:
         sessions.insert_event(db, clip["session_id"], clip["student_id"], event_t_sec, "unclear", None)
     except Exception as error:
         logger.exception("Could not insert unclear event for clip %s", clip["clip_id"])
         clips_repository.delete_clip(db, clip["clip_id"])
-        clips_storage.remove_clip(db, path)
+        storage.remove_clip(db, path)
         raise _save_failed() from error
 
 
@@ -65,7 +66,7 @@ def create_clip(
     if sessions.get_owned_session(db, str(session_id), user.id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Session not found")
     clip_id = str(uuid4())
-    path = clips_storage.clip_object_path(user.id, clip_id)
+    path = storage.clip_object_path(user.id, clip_id)
     _store_audio(db, path, data)
     clip = {
         "clip_id": clip_id,

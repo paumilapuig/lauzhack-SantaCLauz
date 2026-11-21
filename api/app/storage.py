@@ -1,4 +1,4 @@
-"""Supabase Storage calls for the private `clips` bucket."""
+"""Shared Supabase Storage helpers for the private `clips` bucket (reused by every router)."""
 
 import logging
 

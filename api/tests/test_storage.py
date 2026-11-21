@@ -1,6 +1,6 @@
 import pytest
 
-from app.routers.clips_storage import clip_object_path, remove_clip, signed_clip_url, upload_clip
+from app.storage import clip_object_path, remove_clip, signed_clip_url, upload_clip
 from tests.classdata_seed import STUDENT, seeded_fake
 from tests.fake_storage import FakeStorageError
 

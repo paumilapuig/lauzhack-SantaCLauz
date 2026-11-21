@@ -9,7 +9,7 @@ import app.routers.clips as clips_module
 from app.auth import get_current_user
 from app.db import get_supabase
 from app.routers.clips import router
-from app.routers.clips_storage import signed_clip_url
+from app.storage import signed_clip_url
 from app.schemas import CurrentUser, Profile
 from tests.classdata_seed import OTHER_SESSION, STUDENT, STUDENT_SESSION, seeded_fake
 
