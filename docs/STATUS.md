@@ -11,7 +11,8 @@
 - A touched web/lib/api.ts (Me type) for Paula
 - Pau → equip (decisió de producte): les paraules NO es marquen a classe; només es marquen al clip a casa. Afecta F2/PLAN (tocar paraula a classe = −1), l'estat 🟠 (ara: paraula marcada a casa que torna a sortir a classe) i el guió de la demo. Cal decidir-ho a la sync (A actualitza PLAN).
 - (e.g. "Paula → Miquel: need column `x` in `class_events`")
-- Pau → Miquel/Laura: endpoint to save words marked at home (clip_id, word, translation_es) + `source` on words_to_practice
+- Pau → Miquel: API.md actualitzat (paraules marcades a casa, no a classe). Cal: migració `clip_marks`, `POST /api/clips/{id}/marks` i `DELETE /api/clips/{id}/marks/{word}`; `previously_tapped` i `top_words` ara surten de `clip_marks`; seed de `lucia-w4` amb marques a `déchets`/`chaleur`. **Nivells: encara no decidit** (marcar a casa fa −1? treiem `word` de `/events`?); de moment API.md › Rules no canvia.
+- Pau → Laura: `GET /api/home/review` › `words_to_practice` ara surt de `clip_marks` (camp nou `word`; `lemma`/`translation_es`/`definition_fr`/`level` són null per a paraules fora del glossari).
 - Miquel → Laura: nous fitxers a `api/tests/` (`fake_supabase.py`, `classdata_seed.py`, `test_classdata_*`); reutilitza `app.roles` (`StudentUser`/`TeacherUser`) i `classdata_schemas.LessonTerm`.
 - Laura ha afegit 1 línia a PLAN.md › Decisions log (PyMuPDF per a l'entrada PDF del spike).
 - Laura → Miquel: `mastery` ja és a main (`from app import mastery`): initial_level, state, apply_tap, apply_practice, apply_preview, autonomy, weekly_autonomy.

@@ -51,6 +51,7 @@ RLS principle: a student sees only her rows; a teacher sees rows linked to her/h
 | class_events | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_sec real, type text check in ('word','unclear','lost'), lemma text null, created_at | student own; lesson's teacher read |
 | clips | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_start real, t_end real, transcript text, audio_path text, created_at | student own; lesson's teacher read |
 | word_states_log | session_id uuid, student_id uuid, lemma text, state text check in ('green','yellow','orange'); **PK (session_id, student_id, lemma)** | student own; lesson's teacher read |
+| clip_marks | student_id uuid → profiles, clip_id uuid → clips on delete cascade, word text (surface form as tapped, lowercase), lemma text null (glossary lemma of the clip's lesson whose `forms` contain `word`, else null), created_at timestamptz default now(); **PK (student_id, clip_id, word)** | student own; lesson's teacher read |
 | practice_results | id uuid PK, student_id uuid → profiles, lemma text, clip_id uuid null → clips, passed bool, created_at timestamptz default now() | student own |
 
 Note: `class_sessions.student_id` is added to the original sketch (one session per student device, see PLAN › Decisions).
@@ -65,9 +66,11 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | POST | /api/lessons | teacher | JSON `{ "title", "subject", "lesson_date", "source_text" }` **or** multipart `title, subject, lesson_date, file` (txt / PDF / png / jpg, max 10 MB) | `{ "lesson_id", "terms": LessonTerm[] }` | B |
 | GET | /api/lessons/{id}/class-pack | student | – | ClassPack (below) | A |
 | POST | /api/sessions | student | `{ "lesson_id" }` | `{ "session_id" }` | A |
-| POST | /api/sessions/{id}/events | student | `{ "t_sec": 12.4, "type": "word"\|"lost", "lemma": "déchet"\|null }` | `{ "ok": true, "level": int\|null }` (type `word` applies −1 and returns the new level) | A (uses B's `mastery`) |
+| POST | /api/sessions/{id}/events | student | `{ "t_sec": 12.4, "type": "word"\|"lost", "lemma": "déchet"\|null }` | `{ "ok": true, "level": int\|null }` (type `word` applies −1 and returns the new level). `/class` no longer sends `word`: words are marked at home (`clip_marks`); `word` stays until the level decision (STATUS) | A (uses B's `mastery`) |
 | POST | /api/sessions/{id}/word-states | student | `{ "states": [{ "lemma", "state": WordState }] }` — first state shown for each glossary word that appeared; sent at end of class | `{ "ok": true, "autonomy": float }` | A |
 | POST | /api/clips | student | multipart: `audio` (webm), `session_id`, `t_start`, `t_end`, `transcript` | `{ "clip_id", "audio_path" }` — also inserts a class_event `unclear` at `t_end` | A |
+| POST | /api/clips/{id}/marks | student (clip owner) | `{ "word": "déchets" }` | `{ "word", "lemma": str\|null, "translation_es": str\|null }` — upsert into `clip_marks` (same word twice = no-op); `translation_es` only for glossary words | A |
+| DELETE | /api/clips/{id}/marks/{word} | student (clip owner) | – | `{ "ok": true }` — undo a mark | A |
 | GET | /api/home/review | student | – | HomeReview (below) | B |
 | POST | /api/practice | student | `{ "lemma", "clip_id": uuid\|null, "passed": bool }` | `{ "lemma", "level": int, "leveled_up": bool }` | B |
 | GET | /api/me/progress | student | – | `{ "messages": [{ "kind": "learned_this_week"\|"no_help_needed"\|"keep_going", "text": str }] }` — **never percentages or numbers out of a total** | B |
@@ -96,7 +99,7 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
   "previously_tapped": ["chaleur"]
 }
 ```
-`mastery` contains EVERY lemma of the lesson (defaults filled). `previously_tapped` = lemmas with a `word` event in an earlier session of this student.
+`mastery` contains EVERY lemma of the lesson (defaults filled). `previously_tapped` = glossary lemmas this student marked at home (`clip_marks.lemma`) on a clip of an earlier session.
 
 ### HomeReview — `GET /api/home/review`
 ```json
@@ -107,13 +110,13 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
       "audio_url": "https://…signed…", "terms": ["déchet", "dioxyde de carbone"] }
   ],
   "words_to_practice": [
-    { "lemma": "déchet", "translation_es": "desecho", "definition_fr": "Ce qui reste et ne sert plus.",
+    { "word": "déchets", "lemma": "déchet", "translation_es": "desecho", "definition_fr": "Ce qui reste et ne sert plus.",
       "key_phrase": "Elle produit aussi des déchets : de l'eau et du dioxyde de carbone.", "level": 0, "clip_id": "c1…" }
   ]
 }
 ```
 - A clip is pending until it has a `practice_results` row with `passed = true`. `terms` = glossary lemmas whose forms appear in the transcript.
-- `words_to_practice` = tapped lemmas with level < 2. `clip_id` = a clip of the same session whose transcript contains the word, else `null` (client then plays `key_phrase` with `speechSynthesis`).
+- `words_to_practice` = one item per `clip_marks` row of this student, newest first; glossary words with level ≥ 2 are left out. `clip_id` = the clip where it was marked. `key_phrase` = the sentence of that clip's transcript that contains `word`. Non-glossary words: `lemma`, `translation_es`, `definition_fr` and `level` are `null`.
 
 ### Dashboard — `GET /api/teacher/lessons/{id}/dashboard`
 ```json
@@ -129,14 +132,14 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
   ]
 }
 ```
-`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `word` events, sorted desc, max 10. `students[].autonomy`: latest session.
+`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[].autonomy`: latest session.
 
 ## Demo seed (owner A, `supabase/seed.sql` or a script; nothing secret in git)
 - Users: `prof-demo` (teacher), `lucia-w1`, `lucia-w4` (students). Emails `<name>@demo.lauzhack`, password in the private chat.
 - Lesson "La respiration cellulaire" by prof-demo with the 15 terms of `docs/demo/glossary-respiration.json`.
 - `lucia-w1`: no mastery rows (8 transparent green, 7 yellow → ≈53%).
-- `lucia-w4`: 4 non-transparent at level 2–3 (`nourriture`, `fournir`, `rejeter`, `dégager`), `chaleur` level 1 and tapped in an earlier session (→ 🟠), `déchet`, `essoufflé` level 0; 3 earlier weekly sessions with word_states_log giving 53% → 62% → 71%; 12 `practice_results` passed this week (→ "has aprendido 12 palabras nuevas").
-- Earlier sessions with `lost` events peaking at minute 12 and `word` taps on `déchet`/`chaleur`.
+- `lucia-w4`: 4 non-transparent at level 2–3 (`nourriture`, `fournir`, `rejeter`, `dégager`), `chaleur` level 1 and marked at home on a clip of an earlier session (→ 🟠), `déchet`, `essoufflé` level 0; 3 earlier weekly sessions with word_states_log giving 53% → 62% → 71%; 12 `practice_results` passed this week (→ "has aprendido 12 palabras nuevas").
+- Earlier sessions with `lost` events peaking at minute 12 and `clip_marks` on `déchets`/`chaleur`.
 
 ## Env vars (new; names only — values in the private chat)
 - `api/.env`: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `ELEVENLABS_API_KEY` (F3 only). Owner B adds them to `api/.env.example`.
