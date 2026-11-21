@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from .auth import AuthenticatedUser
 from .config import get_settings
+from .profiles import fetch_profile
 from .schemas import Health, Me
 
 app = FastAPI(title="LauzHack API")
@@ -23,4 +24,7 @@ def health() -> Health:
 
 @app.get("/api/me", response_model=Me)
 def read_me(user: AuthenticatedUser) -> Me:
-    return Me(id=user.id, email=user.email)
+    profile = fetch_profile(user.id)
+    if profile is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    return Me(id=user.id, email=user.email, display_name=profile.display_name, role=profile.role)

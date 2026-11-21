@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ApiError, createApiClient } from "./api";
+import { ApiError, createApiClient, type Me } from "./api";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -10,12 +10,13 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 describe("createApiClient", () => {
   it("attaches the Supabase access token as a Bearer header", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: "u1", email: "a@b.c" }));
+    const expectedMe: Me = { id: "u1", email: "a@b.c", display_name: "lucia-w1", role: "student" };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(expectedMe));
     const client = createApiClient("http://api.test", async () => "tok123", fetchMock);
 
     const me = await client.getMe();
 
-    expect(me).toEqual({ id: "u1", email: "a@b.c" });
+    expect(me).toEqual(expectedMe);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("http://api.test/api/me");
     expect(new Headers(init.headers).get("Authorization")).toBe("Bearer tok123");
