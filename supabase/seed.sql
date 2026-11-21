@@ -96,4 +96,91 @@ values
    false, 'Retenez bien : la respiration cellulaire fournit l''énergie à toutes nos cellules.')
 on conflict do nothing;
 
--- ===== Part 2 (T3) is appended below: sessions, word_states_log, events, word_mastery, practice_results =====
+-- ===== Part 2: sessions, word_states_log, events, word_mastery, practice_results =====
+
+-- Sessions: w1 this week; w4 3/2/1 weeks ago and this week. All on the demo lesson.
+insert into public.class_sessions (id, lesson_id, student_id, started_at)
+select
+  plan.id, 'de100000-0000-4000-8000-000000000001', plan.student_id,
+  case when plan.weeks_ago = 0
+    then greatest(date_trunc('week', now()), now() - interval '2 hours')
+    else date_trunc('week', now()) - plan.weeks_ago * interval '1 week' + interval '2 days 9 hours'
+  end
+from (values
+  ('de300000-0000-4000-8000-000000000001'::uuid, 'de000000-0000-4000-8000-000000000002'::uuid, 0),
+  ('de300000-0000-4000-8000-000000000011'::uuid, 'de000000-0000-4000-8000-000000000003'::uuid, 3),
+  ('de300000-0000-4000-8000-000000000012'::uuid, 'de000000-0000-4000-8000-000000000003'::uuid, 2),
+  ('de300000-0000-4000-8000-000000000013'::uuid, 'de000000-0000-4000-8000-000000000003'::uuid, 1),
+  ('de300000-0000-4000-8000-000000000014'::uuid, 'de000000-0000-4000-8000-000000000003'::uuid, 0)
+) as plan (id, student_id, weeks_ago)
+on conflict (id) do nothing;
+
+-- word_states_log: green = transparent or extra green; orange as listed; otherwise yellow; absent lemmas have no row.
+insert into public.word_states_log (session_id, student_id, lemma, state)
+select
+  plan.session_id, sessions.student_id, terms.lemma,
+  case
+    when terms.lemma = any (plan.orange) then 'orange'
+    when terms.transparent or terms.lemma = any (plan.extra_green) then 'green'
+    else 'yellow'
+  end
+from (values
+  ('de300000-0000-4000-8000-000000000001'::uuid, array[]::text[], array[]::text[], array[]::text[]),
+  ('de300000-0000-4000-8000-000000000011'::uuid, array[]::text[], array[]::text[], array[]::text[]),
+  ('de300000-0000-4000-8000-000000000012'::uuid, array['essoufflé', 'fournir'], array[]::text[], array[]::text[]),
+  ('de300000-0000-4000-8000-000000000013'::uuid, array['essoufflé'], array['nourriture', 'dégager'], array[]::text[]),
+  ('de300000-0000-4000-8000-000000000014'::uuid, array[]::text[],
+     array['nourriture', 'fournir', 'rejeter', 'dégager'], array['chaleur', 'déchet'])
+) as plan (session_id, absent, extra_green, orange)
+join public.class_sessions sessions on sessions.id = plan.session_id
+join public.lesson_terms terms on terms.lesson_id = sessions.lesson_id
+where not (terms.lemma = any (plan.absent))
+on conflict do nothing;
+
+-- Events (w4 sessions 11-13 only): student_id from the session, created_at = started_at + t_sec.
+insert into public.class_events (id, session_id, student_id, t_sec, type, lemma, created_at)
+select
+  plan.id, sessions.id, sessions.student_id, plan.t_sec, plan.type, plan.lemma,
+  sessions.started_at + plan.t_sec * interval '1 second'
+from (values
+  ('de400000-0000-4000-8000-000000000001'::uuid, 'de300000-0000-4000-8000-000000000011'::uuid, 722, 'lost', null),
+  ('de400000-0000-4000-8000-000000000002'::uuid, 'de300000-0000-4000-8000-000000000011'::uuid, 735, 'lost', null),
+  ('de400000-0000-4000-8000-000000000003'::uuid, 'de300000-0000-4000-8000-000000000011'::uuid, 190, 'lost', null),
+  ('de400000-0000-4000-8000-000000000004'::uuid, 'de300000-0000-4000-8000-000000000011'::uuid, 300, 'word', 'déchet'),
+  ('de400000-0000-4000-8000-000000000005'::uuid, 'de300000-0000-4000-8000-000000000011'::uuid, 745, 'word', 'déchet'),
+  ('de400000-0000-4000-8000-000000000006'::uuid, 'de300000-0000-4000-8000-000000000011'::uuid, 610, 'word', 'chaleur'),
+  ('de400000-0000-4000-8000-000000000007'::uuid, 'de300000-0000-4000-8000-000000000012'::uuid, 748, 'lost', null),
+  ('de400000-0000-4000-8000-000000000008'::uuid, 'de300000-0000-4000-8000-000000000012'::uuid, 205, 'lost', null),
+  ('de400000-0000-4000-8000-000000000009'::uuid, 'de300000-0000-4000-8000-000000000012'::uuid, 310, 'word', 'déchet'),
+  ('de400000-0000-4000-8000-000000000010'::uuid, 'de300000-0000-4000-8000-000000000012'::uuid, 620, 'word', 'chaleur'),
+  ('de400000-0000-4000-8000-000000000011'::uuid, 'de300000-0000-4000-8000-000000000013'::uuid, 760, 'lost', null),
+  ('de400000-0000-4000-8000-000000000012'::uuid, 'de300000-0000-4000-8000-000000000013'::uuid, 771, 'lost', null),
+  ('de400000-0000-4000-8000-000000000013'::uuid, 'de300000-0000-4000-8000-000000000013'::uuid, 320, 'word', 'déchet'),
+  ('de400000-0000-4000-8000-000000000014'::uuid, 'de300000-0000-4000-8000-000000000013'::uuid, 630, 'word', 'chaleur')
+) as plan (id, session_id, t_sec, type, lemma)
+join public.class_sessions sessions on sessions.id = plan.session_id
+on conflict (id) do nothing;
+
+-- lucia-w4 word_mastery: times_tapped = number of seeded word events for the lemma.
+insert into public.word_mastery (student_id, lemma, level, times_tapped, last_seen_at)
+select 'de000000-0000-4000-8000-000000000003', mastery.lemma, mastery.level, mastery.times_tapped, latest.started_at
+from (values
+  ('nourriture', 3, 0), ('fournir', 2, 0), ('rejeter', 2, 0), ('dégager', 3, 0),
+  ('chaleur', 1, 3), ('déchet', 0, 4), ('essoufflé', 0, 0)
+) as mastery (lemma, level, times_tapped)
+cross join (
+  select started_at from public.class_sessions where id = 'de300000-0000-4000-8000-000000000014'
+) as latest
+on conflict (student_id, lemma) do nothing;
+
+-- practice_results: 12 passed rows for lucia-w4, all inside the current ISO week.
+insert into public.practice_results (id, student_id, lemma, clip_id, passed, created_at)
+select
+  ('de500000-0000-4000-8000-0000000000' || lpad(practice.n::text, 2, '0'))::uuid,
+  'de000000-0000-4000-8000-000000000003', practice.lemma, null, true,
+  greatest(date_trunc('week', now()), now() - practice.n * interval '10 minutes')
+from (values
+  (1, 'nourriture'), (2, 'fournir'), (3, 'rejeter'), (4, 'dégager'), (5, 'chaleur'), (6, 'poumon'),
+  (7, 'sang'), (8, 'souffle'), (9, 'sueur'), (10, 'cœur'), (11, 'effort'), (12, 'vaisseau')
+) as practice (n, lemma)
+on conflict (id) do nothing;
