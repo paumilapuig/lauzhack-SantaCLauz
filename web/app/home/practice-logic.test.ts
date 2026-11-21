@@ -20,6 +20,7 @@ describe("optionsFor", () => {
     expect(new Set(o).size).toBe(3);
     expect(o).toContain("déchet");
     expect(optionsFor("déchet", ["chaleur", "déchet", "eau", "sucre"])).toEqual(o);
+    expect(o).toEqual(["chaleur", "déchet", "eau"]);
   });
 });
 

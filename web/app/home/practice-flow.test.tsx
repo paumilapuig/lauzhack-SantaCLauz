@@ -25,20 +25,29 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(cleanup);
 
 async function reachSpeaking() {
-  render(<PracticeFlow word={word} onDone={onDone} />);
+  render(<PracticeFlow word={word} onDone={onDone} onExit={vi.fn()} />);
   fireEvent.click(screen.getByRole("button", { name: "chaleur" }));
   expect(screen.getByText("Casi. Prueba otra vez.")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "déchet" }));
   expect(screen.getByText(/____/)).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "déchet" }));
-  await screen.findByRole("button", { name: /Dilo/ });
+  fireEvent.click(screen.getByRole("button", { name: "déchets" }));
+  await screen.findByRole("button", { name: /Hablar/ });
 }
 
 describe("PracticeFlow", () => {
+  it("shows the word header and Salir leaves without saving", () => {
+    render(<PracticeFlow word={word} onDone={onDone} onExit={onDone} />);
+    expect(screen.getByText("Practicamos")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "déchet" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Salir" }));
+    expect(onDone).toHaveBeenCalled();
+    expect(savePractice).not.toHaveBeenCalled();
+  });
+
   it("falls back when nothing is heard, still passes, saves once", async () => {
     vi.mocked(listenOnce).mockResolvedValue(null);
     await reachSpeaking();
-    fireEvent.click(screen.getByRole("button", { name: /Dilo/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
     await screen.findByText(/No te hemos oído bien/);
     await screen.findByText("déchet sube de nivel");
     expect(savePractice).toHaveBeenCalledTimes(1);
@@ -50,7 +59,7 @@ describe("PracticeFlow", () => {
   it("praises a matching answer", async () => {
     vi.mocked(listenOnce).mockResolvedValue("des déchets");
     await reachSpeaking();
-    fireEvent.click(screen.getByRole("button", { name: /Dilo/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
     await waitFor(() => expect(screen.getByText("¡Muy bien!")).toBeTruthy());
   });
 });

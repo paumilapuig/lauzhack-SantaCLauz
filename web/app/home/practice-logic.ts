@@ -19,8 +19,7 @@ export function blankPhrase(keyPhrase: string, lemma: string): BlankedPhrase {
 
 export function optionsFor(lemma: string, distractors: string[]): string[] {
   const others = distractors.filter((d, i) => d !== lemma && distractors.indexOf(d) === i).slice(0, 2);
-  const position = [...lemma].reduce((sum, c) => sum + c.charCodeAt(0), 0) % 3;
-  return [...others.slice(0, position), lemma, ...others.slice(position)];
+  return [lemma, ...others].sort((a, b) => a.localeCompare(b, "fr"));
 }
 
 export function heardMatches(heard: string, lemma: string): boolean {

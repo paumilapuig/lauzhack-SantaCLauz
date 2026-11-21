@@ -11,13 +11,13 @@ const LINKS = [
 export function StudentNav() {
   const pathname = usePathname()
   return (
-    <nav aria-label="Alumna" className="flex gap-4">
+    <nav aria-label="Alumna" className="flex gap-6">
       {LINKS.map(({ href, label }) => (
         <Link
           key={href}
           href={href}
           aria-current={pathname === href ? "page" : undefined}
-          className="rounded-md px-2 py-2 font-medium aria-[current=page]:text-primary aria-[current=page]:underline"
+          className="rounded-md py-3 text-muted-foreground aria-[current=page]:font-bold aria-[current=page]:text-primary aria-[current=page]:underline"
         >
           {label}
         </Link>

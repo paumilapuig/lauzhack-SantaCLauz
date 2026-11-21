@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,16 +7,24 @@ export function StepCard({
   number,
   title,
   active,
+  done = false,
   children,
 }: {
   number: number;
   title: string;
   active: boolean;
+  done?: boolean;
   children?: ReactNode;
 }) {
   return (
     <Card className={active ? "border-2 border-primary px-4" : "px-4 opacity-70"}>
-      <h3 className="text-lg font-bold">
+      <h3 className="flex items-center gap-2 text-lg font-bold">
+        {done && (
+          <>
+            <Check aria-hidden className="size-5 text-primary" />
+            <span className="sr-only">completado</span>
+          </>
+        )}
         {number}. {title}
       </h3>
       {active && children}
