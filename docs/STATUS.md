@@ -3,7 +3,7 @@
 | Who | Branch | Doing now | Blocked by | Last update |
 |---|---|---|---|---|
 | Miquel (A) | feat/api-classdata | Fet: 5 endpoints de classe (`api/app/routers/classdata*`, `api/app/roles.py`), 100+ tests amb Supabase simulat (PR obert). Següent: `/teacher` dashboard + clips | – | Sat 21 Nov |
-| Laura (B) | feat/api-lessons | Fet: `app/mastery.py` + `app/transparency.py` a main (#13); `POST /api/lessons` (text/PDF/foto → 1 crida OpenRouter → validació robusta → `lessons` + `lesson_terms`), PR oberta. Spike PDF a PR #14. Següent: prova real amb `prof-demo` quan hi hagi clau; després `feat/api-home-review` / `feat/api-practice` | clau d'OpenRouter (Pau) | Sat 21 Nov 21:00 |
+| Laura (B) | feat/api-lessons | Fet: `POST /api/lessons` (text/PDF/foto → 1 crida OpenRouter → `lessons` + `lesson_terms`), PR #18 + docs PR #19. **Primera prova real** (gemini-2.5-flash-lite, text de la demo): 15/15 termes, 8 verds/7 grocs = referència, 4,4 s, **0,00083 $**. Següent: prova amb foto + `prof-demo`; després `feat/api-home-review` / `feat/api-practice` | – | Sat 21 Nov 22:00 |
 | Paula (C) | feat/spike-c-subtitles | Fet: spike `spikes/c-subtitles/` (PR obert; pàgina cablejada, 37 tests). Següent: prova de micro a Chrome amb `lesson-respiration.md` (retard + N/15), després passar `wordState.ts` a `web/lib/` i començar `/class` | – | Sat 21 Nov 18:45 |
 | Pau (D) | feat/home-redesign | Redisseny de `/home` i `/progress` (direcció "quadern": clip amb ona d'àudio, fitxes de vocabulari, retolador, hero de progrés) + DESIGN.md §6 Casa. Pendent: protegir /home i /progress al proxy; connectar `data.ts` als endpoints de Laura. Següent: pitch + slides | – | Sat 21 Nov 21:30 |
 

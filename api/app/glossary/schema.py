@@ -19,9 +19,10 @@ class GlossaryTerm(LessonTermInput):
         return [form.lower() for form in forms]
 
     @model_validator(mode="after")
-    def lemma_must_be_a_form(self) -> "GlossaryTerm":
+    def lemma_is_always_a_form(self) -> "GlossaryTerm":
+        """The contract says forms include the lemma; LLMs often list only inflections."""
         if self.lemma not in self.forms:
-            raise ValueError(f"lemma {self.lemma!r} must be in forms")
+            self.forms = [self.lemma, *self.forms]
         return self
 
 

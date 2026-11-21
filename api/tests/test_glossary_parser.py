@@ -85,13 +85,21 @@ def test_invalid_term_among_valid_ones_is_dropped_and_counted():
     assert parsed.dropped_terms == 1
 
 
-def test_lemma_not_in_forms_is_dropped():
-    bad = make_term(lemma="noyau", forms=["noyaux"])
+def test_lemma_missing_from_forms_is_added_not_dropped():
+    # Real OpenRouter replies often list only inflected forms ("mitochondries").
+    term = make_term(lemma="noyau", forms=["noyaux"])
 
-    parsed = parse_glossary(make_reply([make_term(), bad, "not a dict", {"lemma": 3}]))
+    parsed = parse_glossary(make_reply([term]))
+
+    assert parsed.result.terms[0].forms == ["noyau", "noyaux"]
+    assert parsed.dropped_terms == 0
+
+
+def test_malformed_terms_are_dropped_and_counted():
+    parsed = parse_glossary(make_reply([make_term(), "not a dict", {"lemma": 3}]))
 
     assert len(parsed.result.terms) == 1
-    assert parsed.dropped_terms == 3
+    assert parsed.dropped_terms == 2
 
 
 def test_all_terms_invalid_raises():
