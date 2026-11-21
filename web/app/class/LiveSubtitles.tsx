@@ -6,15 +6,17 @@ import { SUBTITLE_IDLE_SEC } from "./subtitleLines";
  * Remounting on every text change restarts the fade, so the line disappears after a silence.
  */
 export function LiveSubtitles({ text, visible }: { text: string; visible: boolean }) {
+  if (!visible) return null;
   return (
     <div
       aria-live="polite"
-      className="flex h-20 items-center justify-end overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%)] md:h-24"
+      lang="fr"
+      className="flex h-20 items-center justify-end overflow-hidden rounded-[24px] border border-border bg-card px-6 [mask-image:linear-gradient(to_right,transparent,black_15%)] md:h-28 md:px-8"
     >
-      {visible && text && (
+      {text && (
         <p
           key={text}
-          className={`${styles.fading} whitespace-nowrap text-4xl font-bold md:text-6xl`}
+          className={`${styles.fading} whitespace-nowrap text-[32px] font-bold tracking-[-0.03em] text-foreground md:text-[52px]`}
           style={{ animationDuration: `${SUBTITLE_IDLE_SEC}s` }}
         >
           {text}

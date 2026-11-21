@@ -83,7 +83,7 @@ export function MyWordsList({ words, onRemove, variant = "full" }: Props) {
     return <p className="pt-3 text-[17px] leading-[22px] text-label-secondary">Aún no tienes palabras. Marca alguna en un clip.</p>
   }
   return (
-    <ul className="divide-y divide-separator">
+    <ul className="divide-y divide-separator rounded-2xl border border-border bg-card px-4">
       {words.map((w) => (
         <WordRow key={w.lemma} word={w} onRemove={onRemove} variant={variant} />
       ))}

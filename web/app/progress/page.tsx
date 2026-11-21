@@ -9,15 +9,17 @@ export default async function ProgressPage() {
   const rest = messages.filter((m) => m !== hero)
 
   return (
-    <StudentPage title="Progreso" context="esta semana">
-      {hero && <ProgressHero message={hero} />}
-      <ul className="flex flex-col divide-y divide-separator">
-        {rest.map((message) => (
-          <li key={message.kind}>
-            <ProgressMessage message={message} />
-          </li>
-        ))}
-      </ul>
+    <StudentPage title="Progreso" context="esta semana" lead="Frases sobre lo que ya no necesitas, nunca un porcentaje.">
+      <div className="flex flex-col gap-10">
+        {hero && <ProgressHero message={hero} />}
+        <ul className="flex flex-col divide-y divide-separator rounded-[24px] border border-border bg-card px-5">
+          {rest.map((message) => (
+            <li key={message.kind}>
+              <ProgressMessage message={message} />
+            </li>
+          ))}
+        </ul>
+      </div>
     </StudentPage>
   )
 }

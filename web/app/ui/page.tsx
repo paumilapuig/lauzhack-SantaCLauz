@@ -10,8 +10,12 @@ const SUBTITLE = "max-w-[28em] text-[28px] leading-[1.9] md:text-[36px]"
 
 export default function UiDemoPage() {
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
-      <Card className="p-6">
+    <main className="mx-auto flex max-w-3xl flex-col gap-6 bg-background p-6">
+      <p className="flex items-center gap-2 text-lg font-bold tracking-[-0.025em]">
+        <span aria-hidden className="size-2.5 rounded-full bg-brand-orange" />
+        Loop&apos;d · UI
+      </p>
+      <Card className="p-8">
         <p lang="fr" className="max-w-[28em] text-[22px] leading-[1.8] text-muted-foreground md:text-[28px]">
           Une partie de l&apos;énergie se dégage sous forme de{" "}
           <Word text="chaleur" translation="calor" state="orange" onTap={noop} /> : c&apos;est pour ça

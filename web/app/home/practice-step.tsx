@@ -58,7 +58,7 @@ export function OptionsStep({
             type="button"
             lang="fr"
             onClick={() => onPick(option)}
-            className="h-16 touch-manipulation rounded-xl bg-fill px-4 text-[21px] font-semibold tracking-[-0.01em] transition-[background-color,transform] hover:bg-fill-strong active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="h-16 touch-manipulation rounded-full border border-border bg-card px-4 text-[21px] font-bold tracking-[-0.01em] transition-[background-color,transform] hover:bg-fill active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {option}
           </button>
