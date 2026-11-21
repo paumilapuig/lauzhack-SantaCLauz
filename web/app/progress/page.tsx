@@ -9,9 +9,9 @@ export default async function ProgressPage() {
   const rest = messages.filter((m) => m !== hero)
 
   return (
-    <StudentPage title="Tu progreso" lead="Cada palabra que dominas deja de necesitar ayuda en clase">
+    <StudentPage title="Progreso" context="esta semana">
       {hero && <ProgressHero message={hero} />}
-      <ul className="-mt-12 flex flex-col divide-y divide-separator">
+      <ul className="flex flex-col divide-y divide-separator">
         {rest.map((message) => (
           <li key={message.kind}>
             <ProgressMessage message={message} />

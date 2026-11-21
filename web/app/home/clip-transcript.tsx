@@ -1,46 +1,83 @@
+import type { ReactNode } from "react"
 import { Word } from "@/components/ui/word"
 import { activeWordStart } from "./karaoke"
-import { splitByTerms } from "./transcript"
+import { tokenize } from "./transcript"
 
 // Bold drawn with a thin stroke in the text colour: same glyph widths, so the line never reflows
 const BOLD = "text-label [-webkit-text-stroke:0.6px_currentColor]"
 const style = (active: boolean, ahead: boolean) =>
   `transition-colors ${active ? BOLD : ahead ? "text-label-secondary" : ""}`
 
-function Spoken({ text, active, ahead }: { text: string; active: boolean; ahead: boolean }) {
-  return <span className={style(active, ahead)}>{text}</span>
+type Props = {
+  transcript: string
+  saved: Set<string>
+  translate: (word: string) => string | null
+  onToggle: (word: string, translation: string) => void
+  char: number | null
 }
 
-type Props = { transcript: string; terms: string[]; translations: Map<string, string>; char: number | null }
+type Chunk = { start: number; end: number }
 
-export function ClipTranscript({ transcript, terms, translations, char }: Props) {
+// Groups of text that must never break inside: "l'oxygène", "glucose.", and French
+// stand-alone punctuation (" :", " ;", " ?") glued to the word before it
+export function unbreakableChunks(text: string): Chunk[] {
+  const chunks: Chunk[] = []
+  for (const m of text.matchAll(/\S+/g)) {
+    const chunk = { start: m.index, end: m.index + m[0].length }
+    const last = chunks[chunks.length - 1]
+    if (last && !/\p{L}/u.test(m[0])) last.end = chunk.end
+    else chunks.push(chunk)
+  }
+  return chunks
+}
+
+export function ClipTranscript({ transcript, saved, translate, onToggle, char }: Props) {
   const active = activeWordStart(transcript, char)
-  const segments = splitByTerms(transcript, terms)
-  const starts = segments.map((_, i) => segments.slice(0, i).reduce((sum, seg) => sum + seg.text.length, 0))
+  const tokens = tokenize(transcript)
 
+  const renderChunk = ({ start, end }: Chunk) => {
+    const parts: ReactNode[] = []
+    let cursor = start
+    for (const token of tokens.filter((t) => t.start >= start && t.end <= end)) {
+      // a space inside a chunk only comes from glued punctuation: keep it non-breaking
+      if (token.start > cursor) parts.push(transcript.slice(cursor, token.start).replace(/\s+/g, " "))
+      cursor = token.end
+      const text = transcript.slice(token.start, token.end)
+      const word = text.toLowerCase()
+      const translation = translate(word)
+      parts.push(
+        <span
+          key={token.start}
+          className={style(active !== null && active >= token.start && active < token.end, active !== null && token.start > active)}
+        >
+          {translation ? (
+            // key changes on save/unsave so an un-saved word drops the translation it revealed
+            <Word
+              key={saved.has(word) ? "saved" : "plain"}
+              compact
+              text={text}
+              translation={translation}
+              state={saved.has(word) ? "yellow" : "green"}
+              onTap={() => onToggle(word, translation)}
+            />
+          ) : (
+            text
+          )}
+        </span>,
+      )
+    }
+    if (cursor < end) parts.push(transcript.slice(cursor, end).replace(/\s+/g, " "))
+    return (
+      <span key={start} className="whitespace-nowrap">
+        {parts}
+      </span>
+    )
+  }
+
+  const chunks = unbreakableChunks(transcript)
   return (
-    <p lang="fr" className="max-w-[34em] text-[21px] leading-[2.1] tracking-[-0.005em]">
-      {segments.map((seg, i) => {
-        const start = starts[i]
-        const end = start + seg.text.length
-        const translation = seg.lemma ? translations.get(seg.lemma) : undefined
-        if (translation) {
-          const on = active !== null && active >= start && active < end
-          const ahead = active !== null && start > active
-          return (
-            <span key={i} className={style(on, ahead)}>
-              <Word text={seg.text} translation={translation} state="yellow" onTap={() => {}} />
-            </span>
-          )
-        }
-        const pieces = seg.text.split(/(\s+)/)
-        return pieces.map((piece, k) => {
-          const at = start + pieces.slice(0, k).join("").length
-          if (!piece.trim()) return piece
-          const on = active !== null && active >= at && active < at + piece.length
-          return <Spoken key={`${i}-${k}`} text={piece} active={on} ahead={active !== null && at > active} />
-        })
-      })}
+    <p lang="fr" className="max-w-[38em] text-[20px] leading-10">
+      {chunks.flatMap((chunk, i) => (i === 0 ? [renderChunk(chunk)] : [" ", renderChunk(chunk)]))}
     </p>
   )
 }

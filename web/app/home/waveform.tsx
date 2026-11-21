@@ -1,4 +1,9 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+
 const BARS = 64
+const MIN_LABEL_GAP_PX = 64
 
 // Deterministic speech-like bar heights (0.15–1) from a seed, so each clip keeps its own shape
 export function barHeights(seed: string, count = BARS): number[] {
@@ -15,48 +20,76 @@ export function barHeights(seed: string, count = BARS): number[] {
   })
 }
 
+export type Mark = { at: number; label: string }
+
+// Pure: sorts marks and drops any closer than MIN_LABEL_GAP_PX to the previous kept one (width 0 = unknown, keep all)
+export function thinMarks(marks: Mark[], widthPx: number): Mark[] {
+  const kept: Mark[] = []
+  for (const mark of [...marks].sort((a, b) => a.at - b.at)) {
+    const last = kept[kept.length - 1]
+    if (!last || widthPx === 0 || (mark.at - last.at) * widthPx >= MIN_LABEL_GAP_PX) kept.push(mark)
+  }
+  return kept
+}
+
+function useWidth() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const measure = () => setWidth(ref.current?.offsetWidth ?? 0)
+    measure()
+    window.addEventListener("resize", measure)
+    return () => window.removeEventListener("resize", measure)
+  }, [])
+  return { ref, width }
+}
+
 type Props = {
   seed: string
-  /** [start, end] of the marked word as fractions of the clip (0–1) */
-  mark: [number, number] | null
-  /** 0–1; the played part is drawn in ink */
+  /** Saved words in the clip, positioned as fractions of the clip (0-1) */
+  marks: Mark[]
+  /** 0-1; the played part is drawn in ink */
   progress: number
   showHead: boolean
 }
 
-export function Waveform({ seed, mark, progress, showHead }: Props) {
+export function Waveform({ seed, marks, progress, showHead }: Props) {
+  const { ref, width } = useWidth()
   const heights = barHeights(seed)
-  const inMark = (i: number) => mark !== null && i / BARS >= mark[0] && i / BARS <= mark[1]
-  const bars = (played: boolean) =>
+  const pins = thinMarks(marks, width)
+  const bars = (color: string) =>
     heights.map((height, i) => (
-      <span
-        key={i}
-        style={{ height: `${height * 100}%` }}
-        className={
-          inMark(i)
-            ? "w-[2px] rounded-full bg-marker-strong"
-            : played
-              ? "w-[2px] rounded-full bg-label"
-              : "w-[2px] rounded-full bg-fill-strong"
-        }
-      />
+      <span key={i} style={{ height: `${height * 100}%` }} className={`w-0.5 rounded-full ${color}`} />
     ))
 
   return (
-    <div aria-hidden className="relative h-12">
-      <div className="absolute inset-0 flex items-center justify-between">{bars(false)}</div>
-      <div
-        style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}
-        className="absolute inset-0 flex items-center justify-between"
-      >
-        {bars(true)}
+    <div ref={ref} aria-hidden>
+      <div className="relative h-16">
+        <div className="absolute inset-0 flex items-center justify-between">{bars("bg-fill-strong")}</div>
+        <div
+          style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}
+          className="absolute inset-0 flex items-center justify-between"
+        >
+          {bars("bg-label")}
+        </div>
+        {pins.map((m) => (
+          <span key={m.at} style={{ left: `${m.at * 100}%` }} className="absolute inset-y-0 w-0.5 bg-marker-strong" />
+        ))}
+        {showHead && (
+          <span style={{ left: `${progress * 100}%` }} className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-label" />
+        )}
       </div>
-      {showHead && (
-        <span
-          style={{ left: `${progress * 100}%` }}
-          className="absolute -top-1 -bottom-1 w-0.5 -translate-x-1/2 rounded-full bg-primary"
-        />
-      )}
+      <div className="relative h-4">
+        {pins.map((m) => (
+          <span
+            key={m.at}
+            style={{ left: `${m.at * 100}%` }}
+            className="absolute top-1 -translate-x-1/2 whitespace-nowrap font-mono text-xs leading-4 text-word-yellow"
+          >
+            {m.label}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }

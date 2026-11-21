@@ -59,3 +59,21 @@ describe("speech", () => {
     expect(onEnd).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("speak voice and start", () => {
+  it("prefers a local French voice and reports when the voice starts", () => {
+    const spoken = vi.fn();
+    vi.stubGlobal("SpeechSynthesisUtterance", function (this: { text: string }, text: string) {
+      this.text = text;
+    });
+    const local = { lang: "fr-FR", localService: true, name: "Hortense" };
+    const remote = { lang: "fr-FR", localService: false, name: "Google français" };
+    vi.stubGlobal("speechSynthesis", { cancel: vi.fn(), speak: spoken, getVoices: () => [remote, local] });
+    const onStart = vi.fn();
+    speak("bonjour", 1, { onStart });
+    const utterance = spoken.mock.calls[0][0];
+    expect(utterance.voice).toBe(local);
+    utterance.onstart();
+    expect(onStart).toHaveBeenCalledTimes(1);
+  });
+});

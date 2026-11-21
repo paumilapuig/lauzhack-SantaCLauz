@@ -106,23 +106,23 @@ Amplada de contingut: màx. 960 px centrada, marges laterals 24 px (16 px a mòb
 - Barra inferior fixa amb els 2 botons grans (§5). Els subtítols tenen `padding-bottom` per no quedar mai tapats.
 - Res més a la pantalla: ni menú ni comptadors.
 
-### Casa (`/home`, `/progress`) — més rica que la classe
-Direcció: **pulcre, estil Apple**. Poques caixes: el contingut va directament sobre blanc, separat per espai i línies fines. La riquesa és a la tipografia i a l'ona d'àudio, no a la decoració.
-- **Lletra**: la del sistema (SF Pro a Apple), Inter de reserva (`StudentPage`). Títols semibold amb tracking negatiu (−0.025em a 56 px); text 17–21 px.
-- **Colors** (només casa): `--label` `#1D1D1F`, `--label-secondary` `#6E6E73` (4.8:1 sobre blanc), `--fill` `#F5F5F7` i `--fill-strong` `#E8E8ED` per a botons i pistes, `--separator` negre al 10 %. Accent: `--primary` (verd petroli). Fons blanc pur.
-- **Formes**: res de vores ni ombres a les seccions. Radi només a controls: píndola (botons), 12 px (opcions), 10 px (control segmentat, icones).
-- **Navegació**: control segmentat d'iOS (`StudentNav`), data a la dreta, línia fina a sota.
+### Casa (`/home`, `/progress`) — Apple HIG + unslop
+Revisat amb github.com/dickwu/apple-design-skill (HIG) i després amb la skill `unslop` (Damir Sokolovsky, @heydamir, CC BY 4.0). Especificacions: `docs/specs/home-apple-hig.md`, `docs/specs/home-unslop.md`.
+- **Direcció**: escoltar de nou la classe. Caràcter: tranquil, atent, una mica càlid. **Moment**: el reproductor del clip (ona gran de la veu del profe). **Signatura**: la marca ámbar = "paraula que has marcat" (subratllat a la transcripció, agulla a l'ona, punt a la llista). Enlloc més.
+- **Shell**: ≥ 1024 px barra lateral de 256 px (marca "Fondu", Repasar / Progreso amb pas de superfície a l'actiu, i "Tus palabras" compacta); < 1024 px barra de pestanyes a baix (HIG). Contingut màx. 880 px.
+- **Títol**: nom de la pàgina + context en gris a la mateixa línia ("Repasar · sábado 21", "Progreso · esta semana"), 32/40 px, pes 500. Etiquetes de secció 15 px gris amb el recompte en mono.
+- **Color**: neutres de `.student` (clar i **fosc**); l'accent `--primary` només a la pestanya activa i a l'acció principal d'una fulla. Play en tinta. Icones de línia 18 px en gris, sense requadres de color.
+- **Tipus**: lletra del sistema (SF Pro / Inter) + **Geist Mono** per a hores, temps i recomptes (`tabular-nums`). Pesos 400/500.
+- **Formes**: res de caixes a les seccions; radi només a controls i a la fulla modal.
 
 ### `/home` — alumna, a casa (castellà)
-- **Seccions**: títol 28 px + recompte en gris, línia fina, llista amb separadors (`divide-separator`).
-- **Clip** (`ClipCard`): meta ("La respiration cellulaire · Clip de clase · 22:10") i **la transcripció primer** (21 px, termes en `Word` groc). A sota, el reproductor: botó rodó play/pausa (44 px, `--primary`) i l'**ona d'àudio** fina (`Waveform`, barres de 2 px; la part reproduïda en tinta; la paraula marcada en ámbar `--marker-strong`) amb capçal `--primary`, temps transcorregut / total i arrossegable (range invisible a sobre, fletxes del teclat).
-- **Karaoke** (`ClipTranscript` + `usePlayback`): la paraula que sona es posa en negreta (traç fi del mateix color, sense canviar l'amplada), el que encara no ha sonat en `--label-secondary`. Segueix els esdeveniments de paraula de la veu quan n'hi ha; si no, una estimació per temps.
-- **Paraules** (`WordCard`): fila amb la paraula 24 px, la traducció en ámbar fosc, la definició FR en gris, i botó píndola gris "Practicar ›".
-- **Pràctica** (`PracticeFlow`): capçalera amb la paraula 40 px i "Salir" en text accent; barra de 3 segments fins; "Paso N de 3" + títol 28 px; opcions com a botons grisos de 64 px; pas 3 amb micro rodó de 80 px. Sense temporitzadors ni confeti.
+- **Clip**: títol de la lliçó + meta en mono; **la transcripció primer** (karaoke: la paraula que sona en negreta amb traç fi, la resta en gris; cada paraula amb el seu apòstrof i puntuació no es parteix de línia); després play/pausa en tinta i l'**ona** (h-16, la part sonada en tinta, capçal, agulles ámbar amb la paraula en mono sota), temps en mono, arrossegable.
+- **Marcar paraules**: només als clips de casa; tocar = traducció + es desa (groc); tornar a tocar = es treu.
+- **Tus palabras**: punt ámbar, paraula + traducció; X per treure amb "Quitada · Deshacer" 5 s.
+- **Practicar**: files en 2 columnes (icona de línia, nom, una línia de descripció). El mode s'obre en una **fulla modal** (`Dialog`; pantalla completa al mòbil), "Cerrar"/Esc sense desar; pantalla final sense números.
 
 ### `/progress` — alumna (castellà)
-- Resum tipus Apple: "Esta semana" en accent, la xifra a 112–160 px (recompte de paraules, mai un %) i la frase sencera a sota (`ProgressHero`).
-- La resta de missatges com a files amb una icona en quadrat accent de 40 px (estil Ajustes).
+- La xifra de la setmana gran (recompte, mai un %) i la frase sencera; la resta com a files amb icona de línia.
 
 ### `/teacher` — profe (UI en francès)
 - Aquí sí hi ha xifres. Layout de 2 columnes ≥ 1024 px, 1 columna a sota.

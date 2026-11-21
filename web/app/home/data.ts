@@ -5,6 +5,8 @@ import type {
   ProgressMessage,
 } from "@/lib/student-contract";
 
+import type { MyWord } from "./types";
+
 export const DISTRACTORS = ["chaleur", "nourriture", "fournir", "rejeter", "essoufflé"];
 
 const MAX_LEVEL = 3;
@@ -64,6 +66,55 @@ const FAKE_REVIEW: HomeReview = {
 
 const levels = new Map(FAKE_REVIEW.words_to_practice.map((w) => [w.lemma, w.level]));
 
+const DICTIONARY: Record<string, string> = {
+  mitochondries: "mitocondrias", utilisent: "usan", oxygène: "oxígeno", transformer: "transformar",
+  glucose: "glucosa", réaction: "reacción", libérer: "liberar", énergie: "energía", muscles: "músculos",
+  produit: "produce", aussi: "también", déchets: "desechos", eau: "agua", dioxyde: "dióxido",
+  carbone: "carbono", sang: "sangre", transporte: "transporta", poumons: "pulmones",
+  rejetons: "expulsamos", expire: "espira", partie: "parte", dégage: "se desprende", forme: "forma",
+  chaleur: "calor", chaud: "calor", court: "corre",
+};
+
+// shortcut: static dictionary for the 2 fake clips, swap for a translation endpoint
+export function translate(word: string): string | null {
+  return DICTIONARY[word.toLowerCase()] ?? null;
+}
+
+// demo seed: words marked at home earlier, keyed by the surface form that appears in the transcripts
+const SEED_FORMS: Record<string, string> = { déchet: "déchets" };
+const marks: MyWord[] = FAKE_REVIEW.words_to_practice.map((w) => {
+  const form = SEED_FORMS[w.lemma] ?? w.lemma;
+  // same translation the clip shows for that form
+  return { ...w, lemma: form, translation_es: DICTIONARY[form] ?? w.translation_es };
+});
+
+const sentenceWith = (transcript: string, word: string) =>
+  transcript.split(/(?<=[.!?])\s+/).find((s) => s.toLowerCase().includes(word)) ?? transcript;
+
+// shortcut: in-memory marks until owner A adds an endpoint, then swap for request<T>()
+export async function saveMark(word: string, clipId: string): Promise<void> {
+  const lemma = word.toLowerCase();
+  const clip = FAKE_REVIEW.clips.find((c) => c.id === clipId);
+  if (!clip || marks.some((m) => m.lemma === lemma)) return;
+  marks.push({
+    lemma,
+    translation_es: translate(lemma) ?? "",
+    definition_fr: "",
+    key_phrase: sentenceWith(clip.transcript, lemma),
+    level: 0,
+    clip_id: clipId,
+  });
+}
+
+export async function removeMark(lemma: string): Promise<void> {
+  const index = marks.findIndex((m) => m.lemma === lemma);
+  if (index >= 0) marks.splice(index, 1);
+}
+
+export async function getMyWords(): Promise<MyWord[]> {
+  return structuredClone(marks);
+}
+
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()
 export async function getHomeReview(): Promise<HomeReview> {
   return structuredClone(FAKE_REVIEW);
@@ -71,9 +122,10 @@ export async function getHomeReview(): Promise<HomeReview> {
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()
 export async function savePractice(req: PracticeRequest): Promise<PracticeResponse> {
-  const level = Math.min((levels.get(req.lemma) ?? 0) + 1, MAX_LEVEL);
+  const current = levels.get(req.lemma) ?? 0;
+  const level = req.passed ? Math.min(current + 1, MAX_LEVEL) : current;
   levels.set(req.lemma, level);
-  return { lemma: req.lemma, level, leveled_up: true };
+  return { lemma: req.lemma, level, leveled_up: level > current };
 }
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()

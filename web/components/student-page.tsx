@@ -1,29 +1,30 @@
 import { Inter } from "next/font/google"
 import type { ReactNode } from "react"
+import { PageTitle } from "./page-title"
 import { StudentNav } from "./student-nav"
-import { TodayLabel } from "./today-label"
 
 // SF Pro on Apple devices, Inter (closest free cut) everywhere else
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 const SYSTEM =
   "[font-family:-apple-system,BlinkMacSystemFont,'SF_Pro_Text',var(--font-inter),system-ui,sans-serif]"
 
-export function StudentPage({ title, lead, children }: { title: string; lead: string; children: ReactNode }) {
+type StudentPageProps = { title: string; context?: string; sidebar?: ReactNode; children: ReactNode }
+
+export function StudentPage({ title, context, sidebar, children }: StudentPageProps) {
   return (
-    <div className={`${inter.variable} ${SYSTEM} min-h-dvh w-full bg-white text-label antialiased`}>
-      <div className="mx-auto w-full max-w-[980px] px-5 pb-24 md:px-8">
-        <header className="flex h-16 items-center justify-between gap-4 border-b border-separator">
-          <StudentNav />
-          <TodayLabel />
-        </header>
-        <main className="flex flex-col gap-16 pt-12 md:pt-16 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-balance text-[40px] leading-[1.08] font-semibold tracking-[-0.025em] md:text-[56px]">{title}</h1>
-            <p className="text-[19px] leading-snug text-label-secondary md:text-[21px]">{lead}</p>
-          </div>
+    <div className={`${inter.variable} ${SYSTEM} student min-h-dvh w-full bg-background text-label antialiased lg:flex`}>
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-r border-separator px-4 pb-6 lg:flex">
+        <p className="flex h-14 items-center px-3 text-[17px] font-semibold">Fondu</p>
+        <StudentNav variant="sidebar" />
+        {sidebar}
+      </aside>
+      <div className="w-full px-5 pb-28 lg:px-10 lg:pb-16">
+        <main className="mx-auto flex max-w-[880px] flex-col gap-12 pt-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-400 lg:pt-10">
+          <PageTitle title={title} context={context} />
           {children}
         </main>
       </div>
+      <StudentNav variant="tabbar" />
     </div>
   )
 }
