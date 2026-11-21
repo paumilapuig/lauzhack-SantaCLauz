@@ -118,9 +118,10 @@ export async function getHomeReview(): Promise<HomeReview> {
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()
 export async function savePractice(req: PracticeRequest): Promise<PracticeResponse> {
-  const level = Math.min((levels.get(req.lemma) ?? 0) + 1, MAX_LEVEL);
+  const current = levels.get(req.lemma) ?? 0;
+  const level = req.passed ? Math.min(current + 1, MAX_LEVEL) : current;
   levels.set(req.lemma, level);
-  return { lemma: req.lemma, level, leveled_up: true };
+  return { lemma: req.lemma, level, leveled_up: level > current };
 }
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()

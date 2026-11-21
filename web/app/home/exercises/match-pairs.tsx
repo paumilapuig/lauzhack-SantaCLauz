@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ExerciseShell } from "./exercise-shell";
 import { buildBoard, buildResults, isPair } from "./match-pairs-logic";
@@ -39,13 +39,18 @@ export function MatchPairs({ words, onFinish, onExit }: ExerciseProps) {
   const [results, setResults] = useState<ExerciseResult[]>();
   const lemmas = board.french.map((w) => w.lemma);
 
+  useEffect(() => {
+    if (wrong.length === 0) return;
+    const timer = setTimeout(() => setWrong([]), FLASH_MS);
+    return () => clearTimeout(timer);
+  }, [wrong]);
+
   function pickSpanish(lemma: string) {
     if (selected === null) return;
     if (isPair(selected, lemma)) return acceptPair(lemma);
     setMissed(new Set(missed).add(selected).add(lemma));
     setWrong([selected, lemma]);
     setSelected(null);
-    setTimeout(() => setWrong([]), FLASH_MS);
   }
 
   function acceptPair(lemma: string) {

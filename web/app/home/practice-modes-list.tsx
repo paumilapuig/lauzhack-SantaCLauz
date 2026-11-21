@@ -1,4 +1,5 @@
 import { ChevronRight, type LucideIcon } from "lucide-react"
+import type { Need } from "./usable-words"
 
 export type PracticeModeItem = {
   id: string
@@ -6,19 +7,21 @@ export type PracticeModeItem = {
   description: string
   icon: LucideIcon
   minWords: number
+  needs: Need[]
 }
 
 type Props = {
   modes: PracticeModeItem[]
-  wordCount: number
+  wordCount: number | ((mode: PracticeModeItem) => number)
   onOpen: (id: string) => void
 }
 
 export function PracticeModesList({ modes, wordCount, onOpen }: Props) {
   return (
     <ul className="divide-y divide-separator">
-      {modes.map(({ id, name, description, icon: Icon, minWords }) => {
-        const disabled = wordCount < minWords
+      {modes.map((mode) => {
+        const { id, name, description, icon: Icon, minWords } = mode
+        const disabled = (typeof wordCount === "function" ? wordCount(mode) : wordCount) < minWords
         return (
           <li key={id}>
             <button

@@ -47,6 +47,11 @@ describe("home data seam", () => {
     expect(res).toEqual({ lemma: "déchet", level: 1, leveled_up: true });
   });
 
+  it("savePractice keeps the level when not passed", async () => {
+    const res = await savePractice({ lemma: "essoufflé", clip_id: null, passed: false });
+    expect(res).toEqual({ lemma: "essoufflé", level: 0, leveled_up: false });
+  });
+
   it("getProgress has the 3 kinds", async () => {
     const { messages } = await getProgress();
     expect(messages.map((m) => m.kind)).toEqual(["learned_this_week", "no_help_needed", "keep_going"]);

@@ -9,7 +9,8 @@ import type { ExerciseProps, ExerciseResult } from "./types";
 
 const CHIP = "h-11 rounded-full bg-fill px-4 text-[17px] text-label focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
-export function OrderPhrase({ words, onFinish, onExit }: ExerciseProps) {
+export function OrderPhrase({ words: allWords, onFinish, onExit }: ExerciseProps) {
+  const words = allWords.filter((w) => w.key_phrase.trim() !== "");
   const [index, setIndex] = useState(0);
   const [placed, setPlaced] = useState<Chip[]>([]);
   const [failed, setFailed] = useState(false);

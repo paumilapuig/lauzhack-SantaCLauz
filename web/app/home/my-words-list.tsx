@@ -14,7 +14,7 @@ export function MyWordsList({ words, onRemove }: Props) {
         <li key={w.lemma} className="flex items-center justify-between gap-4 py-5">
           <div>
             <p lang="fr" className="text-[24px] font-semibold">{w.lemma}</p>
-            <p lang="es" className="text-word-yellow">{w.translation_es}</p>
+            {w.translation_es && <p lang="es" className="text-word-yellow">{w.translation_es}</p>}
             <p className="text-[13px] text-label-secondary">{SOURCE_LABEL[w.source]}</p>
           </div>
           {w.source === "home" && (

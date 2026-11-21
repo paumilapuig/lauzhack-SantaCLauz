@@ -36,7 +36,7 @@ export function Flashcards({ words, onFinish, onExit }: ExerciseProps) {
           {flipped ? (
             <>
               <span lang="es" className="text-[21px] font-semibold text-word-yellow">{word.translation_es}</span>
-              <span lang="fr" className="text-[17px] text-label-secondary">{word.definition_fr}</span>
+              {word.definition_fr && <span lang="fr" className="text-[17px] text-label-secondary">{word.definition_fr}</span>}
             </>
           ) : (
             <span className="text-[15px] text-label-secondary">Toca para ver</span>

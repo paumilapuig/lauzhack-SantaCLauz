@@ -7,8 +7,8 @@ import { PracticeModesList } from "./practice-modes-list"
 afterEach(cleanup)
 
 const modes = [
-  { id: "flashcards", name: "Tarjetas", description: "Repasa cada palabra", icon: Layers, minWords: 1 },
-  { id: "match-pairs", name: "Parejas", description: "Une palabra y significado", icon: Link2, minWords: 2 },
+  { id: "flashcards", name: "Tarjetas", description: "Repasa cada palabra", icon: Layers, minWords: 1, needs: [] },
+  { id: "match-pairs", name: "Parejas", description: "Une palabra y significado", icon: Link2, minWords: 2, needs: [] },
 ]
 
 describe("PracticeModesList", () => {

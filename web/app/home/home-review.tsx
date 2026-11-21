@@ -10,6 +10,7 @@ import { MyWordsList } from "./my-words-list"
 import { PRACTICE_MODES } from "./practice-modes"
 import { PracticeModesList } from "./practice-modes-list"
 import type { MyWord } from "./types"
+import { usableWords } from "./usable-words"
 
 function Section({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
   return (
@@ -43,7 +44,7 @@ export function HomeReview() {
       )
     return (
       <StudentPage>
-        <mode.Component words={words} onFinish={finish} onExit={() => setOpenMode(null)} />
+        <mode.Component words={usableWords(words, mode.needs)} onFinish={finish} onExit={() => setOpenMode(null)} />
       </StudentPage>
     )
   }
@@ -75,7 +76,7 @@ export function HomeReview() {
             <MyWordsList words={words} onRemove={remove} />
           </Section>
           <Section title="Practicar">
-            <PracticeModesList modes={PRACTICE_MODES} wordCount={words.length} onOpen={setOpenMode} />
+            <PracticeModesList modes={PRACTICE_MODES} wordCount={(m) => usableWords(words, m.needs).length} onOpen={setOpenMode} />
           </Section>
         </>
       )}
