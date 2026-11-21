@@ -21,6 +21,9 @@ const word = {
 };
 
 const onDone = vi.fn();
+const abort = vi.fn();
+const mockHeard = (heard: string | null) =>
+  vi.mocked(listenOnce).mockReturnValue({ result: Promise.resolve(heard), abort });
 beforeEach(() => vi.clearAllMocks());
 afterEach(cleanup);
 
@@ -45,7 +48,7 @@ describe("PracticeFlow", () => {
   });
 
   it("falls back when nothing is heard, still passes, saves once", async () => {
-    vi.mocked(listenOnce).mockResolvedValue(null);
+    mockHeard(null);
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
     await screen.findByText(/No te hemos oído bien/);
@@ -57,9 +60,45 @@ describe("PracticeFlow", () => {
   });
 
   it("praises a matching answer", async () => {
-    vi.mocked(listenOnce).mockResolvedValue("des déchets");
+    mockHeard("des déchets");
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
     await waitFor(() => expect(screen.getByText("¡Muy bien!")).toBeTruthy());
+  });
+
+  it("shows an error and lets her retry when saving fails", async () => {
+    mockHeard(null);
+    vi.mocked(savePractice).mockRejectedValueOnce(new Error("down"));
+    await reachSpeaking();
+    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
+    await screen.findByText("No se ha podido guardar. Inténtalo otra vez.");
+    expect(screen.queryByText("déchet sube de nivel")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
+    await screen.findByText("déchet sube de nivel");
+    expect(screen.queryByText(/No se ha podido guardar/)).toBeNull();
+  });
+
+  it("does not save after unmount and aborts listening", async () => {
+    let resolveHeard: (v: string | null) => void = () => {};
+    vi.mocked(listenOnce).mockReturnValue({ result: new Promise((r) => (resolveHeard = r)), abort });
+    const cancel = vi.fn();
+    vi.stubGlobal("speechSynthesis", { cancel });
+    const view = render(<PracticeFlow word={word} onDone={onDone} onExit={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "déchet" }));
+    fireEvent.click(screen.getByRole("button", { name: "déchets" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Hablar/ }));
+    view.unmount();
+    resolveHeard(null);
+    await Promise.resolve();
+    expect(abort).toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalled();
+    expect(savePractice).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("moves focus to the new step heading", () => {
+    render(<PracticeFlow word={word} onDone={onDone} onExit={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "déchet" }));
+    expect(document.activeElement?.textContent).toContain("Completa la frase");
   });
 });

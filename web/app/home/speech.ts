@@ -6,6 +6,7 @@ type Recognition = {
   onerror: (() => void) | null;
   onend: (() => void) | null;
   start: () => void;
+  abort: () => void;
 };
 
 type RecognitionConstructor = new () => Recognition;
@@ -19,13 +20,15 @@ export function speak(text: string, rate: number): void {
   globalThis.speechSynthesis.speak(utterance);
 }
 
-export function listenOnce(lang: string): Promise<string | null> {
+export type Listening = { result: Promise<string | null>; abort: () => void };
+
+export function listenOnce(lang: string): Listening {
   const w = typeof window === "undefined" ? undefined : (window as unknown as Record<string, unknown>);
   const Ctor = (w?.SpeechRecognition ?? w?.webkitSpeechRecognition) as RecognitionConstructor | undefined;
-  if (!Ctor) return Promise.resolve(null);
+  if (!Ctor) return { result: Promise.resolve(null), abort: () => {} };
 
-  return new Promise((resolve) => {
-    const recognition = new Ctor();
+  const recognition = new Ctor();
+  const result = new Promise<string | null>((resolve) => {
     recognition.lang = lang;
     recognition.onresult = (event) => resolve(event.results[0]?.[0]?.transcript ?? null);
     recognition.onerror = () => resolve(null);
@@ -36,4 +39,5 @@ export function listenOnce(lang: string): Promise<string | null> {
       resolve(null);
     }
   });
+  return { result, abort: () => recognition.abort() };
 }

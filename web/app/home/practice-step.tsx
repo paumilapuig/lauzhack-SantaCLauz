@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -16,9 +16,16 @@ export function StepCard({
   done?: boolean;
   children?: ReactNode;
 }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (active && !firstRender.current) heading.current?.focus();
+    firstRender.current = false;
+  }, [active]);
+
   return (
     <Card className={active ? "border-2 border-primary px-4" : "px-4 opacity-70"}>
-      <h3 className="flex items-center gap-2 text-lg font-bold">
+      <h3 ref={heading} tabIndex={-1} className="flex items-center gap-2 text-lg font-bold">
         {done && (
           <>
             <Check aria-hidden className="size-5 text-primary" />

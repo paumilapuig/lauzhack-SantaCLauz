@@ -1,7 +1,7 @@
 "use client";
 
 import { Mic } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { WordToPractice } from "@/lib/student-contract";
 import { DISTRACTORS, savePractice } from "./data";
@@ -10,7 +10,7 @@ import { OptionsStep, StepCard } from "./practice-step";
 import { listenOnce, speak } from "./speech";
 
 const STEPS = ["Escucha y elige", "Completa la frase", "Dilo en voz alta"];
-const MAX_LEVEL = 2;
+const NO_HELP_LEVEL = 2;
 
 type Props = { word: WordToPractice; onDone: (lemma: string) => void; onExit: () => void };
 
@@ -20,6 +20,24 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
   const [heardMessage, setHeardMessage] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const [level, setLevel] = useState<number | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const mounted = useRef(true);
+  const stopListening = useRef<(() => void) | null>(null);
+
+  useEffect(
+    () => () => {
+      mounted.current = false;
+      stopListening.current?.();
+      globalThis.speechSynthesis?.cancel();
+    },
+    [],
+  );
+
+  function exit() {
+    stopListening.current?.();
+    globalThis.speechSynthesis?.cancel();
+    onExit();
+  }
 
   const options = optionsFor(word.lemma, DISTRACTORS);
   const blank = blankPhrase(word.key_phrase, word.lemma);
@@ -33,17 +51,26 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
 
   async function speakAnswer() {
     setListening(true);
-    const heard = await listenOnce("fr-FR");
+    setSaveFailed(false);
+    const listening = listenOnce("fr-FR");
+    stopListening.current = listening.abort;
+    const heard = await listening.result;
+    if (!mounted.current) return;
     setListening(false);
-    setHeardMessage(heard && heardMatches(heard, word.lemma) ? "¡Muy bien!" : "No te hemos oído bien, lo damos por hecho.");
-    const result = await savePractice({ lemma: word.lemma, clip_id: word.clip_id, passed: true });
-    setLevel(result.level);
+    try {
+      const result = await savePractice({ lemma: word.lemma, clip_id: word.clip_id, passed: true });
+      if (!mounted.current) return;
+      setHeardMessage(heard && heardMatches(heard, word.lemma) ? "¡Muy bien!" : "No te hemos oído bien, lo damos por hecho.");
+      setLevel(result.level);
+    } catch {
+      if (mounted.current) setSaveFailed(true);
+    }
   }
 
   const outcome =
     level === null
       ? null
-      : level >= MAX_LEVEL
+      : level >= NO_HELP_LEVEL
         ? `Ya no necesitas ayuda para ${word.lemma}`
         : `${word.lemma} sube de nivel`;
 
@@ -55,7 +82,7 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
           <h2 lang="fr" className="text-2xl font-bold">{word.lemma}</h2>
           <p>{word.translation_es}</p>
         </div>
-        <Button variant="ghost" onClick={onExit}>Salir</Button>
+        <Button variant="ghost" onClick={exit}>Salir</Button>
       </header>
       <StepCard number={1} title={STEPS[0]} active={step === 0} done={step > 0}>
         <OptionsStep
@@ -92,6 +119,7 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
           <>
             <p lang="fr" className="text-3xl font-bold">{word.lemma}</p>
             <p>Pulsa el botón y di la palabra.</p>
+            {saveFailed && <p role="status">No se ha podido guardar. Inténtalo otra vez.</p>}
             <Button disabled={listening} className="disabled:opacity-100" onClick={speakAnswer}>
               <Mic aria-hidden />
               <span aria-live="polite">{listening ? "Te escucho…" : "Hablar"}</span>

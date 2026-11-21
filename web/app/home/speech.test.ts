@@ -5,7 +5,23 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("speech", () => {
   it("listenOnce resolves null without SpeechRecognition", async () => {
-    expect(await listenOnce("es-ES")).toBeNull();
+    expect(await listenOnce("es-ES").result).toBeNull();
+  });
+
+  it("abort stops recognition and resolves null", async () => {
+    const abort = vi.fn();
+    function FakeRecognition(this: { onend?: () => void; start: () => void; abort: () => void }) {
+      this.start = () => {};
+      this.abort = () => {
+        abort();
+        this.onend?.();
+      };
+    }
+    vi.stubGlobal("window", { SpeechRecognition: FakeRecognition });
+    const listening = listenOnce("fr-FR");
+    listening.abort();
+    expect(await listening.result).toBeNull();
+    expect(abort).toHaveBeenCalled();
   });
 
   it("speak is a no-op without speechSynthesis", () => {
