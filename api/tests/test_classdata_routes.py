@@ -19,3 +19,9 @@ def test_class_routes_require_token(method, path, body):
     response = getattr(TestClient(main.app), method)(path, **({"json": body} if body else {}))
 
     assert response.status_code == 401
+
+
+def test_clips_route_requires_token():
+    response = TestClient(main.app).post("/api/clips")
+
+    assert response.status_code == 401
