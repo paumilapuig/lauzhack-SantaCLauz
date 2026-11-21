@@ -18,7 +18,7 @@ DEFAULT_MODELS = (
 )
 OUT_DIR = Path(__file__).parent / "out"
 REFERENCE_PATH = Path(__file__).parents[2] / "docs" / "demo" / "glossary-respiration.json"
-HEADERS = ["model", "matched", "transparent mismatches", "LLM flag overrides",
+HEADERS = ["model", "matched", "ref. transparent mismatches", "LLM flag overrides",
            "cost USD", "seconds", "prompt tokens"]
 
 
