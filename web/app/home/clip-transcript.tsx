@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { Word } from "@/components/ui/word"
 import { activeWordStart } from "./karaoke"
 import { tokenize } from "./transcript"
@@ -15,41 +16,68 @@ type Props = {
   char: number | null
 }
 
+type Chunk = { start: number; end: number }
+
+// Groups of text that must never break inside: "l'oxygène", "glucose.", and French
+// stand-alone punctuation (" :", " ;", " ?") glued to the word before it
+export function unbreakableChunks(text: string): Chunk[] {
+  const chunks: Chunk[] = []
+  for (const m of text.matchAll(/\S+/g)) {
+    const chunk = { start: m.index, end: m.index + m[0].length }
+    const last = chunks[chunks.length - 1]
+    if (last && !/\p{L}/u.test(m[0])) last.end = chunk.end
+    else chunks.push(chunk)
+  }
+  return chunks
+}
+
 export function ClipTranscript({ transcript, saved, translate, onToggle, char }: Props) {
   const active = activeWordStart(transcript, char)
-  const pieces: React.ReactNode[] = []
-  let cursor = 0
+  const tokens = tokenize(transcript)
 
-  for (const { start, end } of tokenize(transcript)) {
-    if (start > cursor) pieces.push(transcript.slice(cursor, start))
-    cursor = end
-    const text = transcript.slice(start, end)
-    const className = style(active !== null && active >= start && active < end, active !== null && start > active)
-    const word = text.toLowerCase()
-    const translation = translate(word)
-    pieces.push(
-      <span key={start} className={className}>
-        {translation ? (
-          // key changes on save/unsave so an un-saved word drops the translation it revealed
-          <Word
-            key={saved.has(word) ? "saved" : "plain"}
-            compact
-            text={text}
-            translation={translation}
-            state={saved.has(word) ? "yellow" : "green"}
-            onTap={() => onToggle(word, translation)}
-          />
-        ) : (
-          text
-        )}
-      </span>,
+  const renderChunk = ({ start, end }: Chunk) => {
+    const parts: ReactNode[] = []
+    let cursor = start
+    for (const token of tokens.filter((t) => t.start >= start && t.end <= end)) {
+      // a space inside a chunk only comes from glued punctuation: keep it non-breaking
+      if (token.start > cursor) parts.push(transcript.slice(cursor, token.start).replace(/\s+/g, " "))
+      cursor = token.end
+      const text = transcript.slice(token.start, token.end)
+      const word = text.toLowerCase()
+      const translation = translate(word)
+      parts.push(
+        <span
+          key={token.start}
+          className={style(active !== null && active >= token.start && active < token.end, active !== null && token.start > active)}
+        >
+          {translation ? (
+            // key changes on save/unsave so an un-saved word drops the translation it revealed
+            <Word
+              key={saved.has(word) ? "saved" : "plain"}
+              compact
+              text={text}
+              translation={translation}
+              state={saved.has(word) ? "yellow" : "green"}
+              onTap={() => onToggle(word, translation)}
+            />
+          ) : (
+            text
+          )}
+        </span>,
+      )
+    }
+    if (cursor < end) parts.push(transcript.slice(cursor, end).replace(/\s+/g, " "))
+    return (
+      <span key={start} className="whitespace-nowrap">
+        {parts}
+      </span>
     )
   }
-  if (cursor < transcript.length) pieces.push(transcript.slice(cursor))
 
+  const chunks = unbreakableChunks(transcript)
   return (
     <p lang="fr" className="max-w-[38em] text-[20px] leading-10">
-      {pieces}
+      {chunks.flatMap((chunk, i) => (i === 0 ? [renderChunk(chunk)] : [" ", renderChunk(chunk)]))}
     </p>
   )
 }

@@ -106,22 +106,23 @@ Amplada de contingut: màx. 960 px centrada, marges laterals 24 px (16 px a mòb
 - Barra inferior fixa amb els 2 botons grans (§5). Els subtítols tenen `padding-bottom` per no quedar mai tapats.
 - Res més a la pantalla: ni menú ni comptadors.
 
-### Casa (`/home`, `/progress`) — Apple HIG
-Revisat amb la skill github.com/dickwu/apple-design-skill (HIG d'Apple: `segmented-controls`, `tab-bars`, `color`, `typography`, `layout`, `lists-and-tables`, `buttons`). Especificació: `docs/specs/home-apple-hig.md`.
-- **Contenidor `.student`** (`StudentPage`): fons blanc pur en clar; **mode fosc** amb `prefers-color-scheme` (fons #000, `--label` #F5F5F7, `--label-secondary` #98989D 7.3:1, `--primary` #5EC4CF amb text #00191C, `--word-yellow` #F2C14E). Mai `bg-white`/`text-white` dins de casa.
-- **Lletra**: la del sistema (SF Pro a Apple), Inter de reserva. Escala HIG: Large Title 34, Title 2 22, Title 3 20, Headline/Body 17, Subhead 15, Footnote 13; lectura de la transcripció 20 px.
-- **Navegació = barra de pestanyes** (`StudentNav`, "Repasar" / "Progreso"): al mòbil fixa a baix (icona sobre etiqueta, desenfocament només en aquesta capa flotant); des de `md`, càpsula centrada a dalt. Les seccions de l'app no van en control segmentat.
-- **Formes**: res de vores ni ombres a les seccions; radi només a controls i a la fulla (modal).
+### Casa (`/home`, `/progress`) — Apple HIG + unslop
+Revisat amb github.com/dickwu/apple-design-skill (HIG) i després amb la skill `unslop` (Damir Sokolovsky, @heydamir, CC BY 4.0). Especificacions: `docs/specs/home-apple-hig.md`, `docs/specs/home-unslop.md`.
+- **Direcció**: escoltar de nou la classe. Caràcter: tranquil, atent, una mica càlid. **Moment**: el reproductor del clip (ona gran de la veu del profe). **Signatura**: la marca ámbar = "paraula que has marcat" (subratllat a la transcripció, agulla a l'ona, punt a la llista). Enlloc més.
+- **Shell**: ≥ 1024 px barra lateral de 256 px (marca "Fondu", Repasar / Progreso amb pas de superfície a l'actiu, i "Tus palabras" compacta); < 1024 px barra de pestanyes a baix (HIG). Contingut màx. 880 px.
+- **Títol**: nom de la pàgina + context en gris a la mateixa línia ("Repasar · sábado 21", "Progreso · esta semana"), 32/40 px, pes 500. Etiquetes de secció 15 px gris amb el recompte en mono.
+- **Color**: neutres de `.student` (clar i **fosc**); l'accent `--primary` només a la pestanya activa i a l'acció principal d'una fulla. Play en tinta. Icones de línia 18 px en gris, sense requadres de color.
+- **Tipus**: lletra del sistema (SF Pro / Inter) + **Geist Mono** per a hores, temps i recomptes (`tabular-nums`). Pesos 400/500.
+- **Formes**: res de caixes a les seccions; radi només a controls i a la fulla modal.
 
 ### `/home` — alumna, a casa (castellà)
-- **Layout**: ≥ 1024 px dues columnes (clips; a la dreta, fixa, "Tus palabras" i "Practicar", 360 px); a sota, una columna.
-- **Clip** (`ClipCard`): meta en Footnote, **la transcripció primer** (karaoke: la paraula que sona en negreta amb traç fi, el que falta en gris; temps per síl·labes i pauses, arrenca amb `onstart` de la veu i es reajusta amb cada paraula notificada), després play/pausa 44 px i l'ona fina amb capçal, temps i arrossegable.
-- **Marcar paraules**: només als clips de casa (a classe no es marca res); tocar = traducció + es desa (groc); tornar a tocar = es treu.
-- **Tus palabras**: files de 44 px (paraula + traducció en groc), botó X amb `aria-label`; treure mostra "Quitada · Deshacer" 5 s abans d'esborrar (si surts de la pàgina, s'esborra igualment).
-- **Practicar**: llista estil Ajustes (icona 29 px en `--primary`, nom, `>`). El mode s'obre en una **fulla modal** (`Dialog`): pantalla completa al mòbil, centrada (720 px) des de `md`; títol + "Cerrar"; Esc tanca sense desar. Acció principal amb estil prominent (`bg-primary`). Pantalla final sense números.
+- **Clip**: títol de la lliçó + meta en mono; **la transcripció primer** (karaoke: la paraula que sona en negreta amb traç fi, la resta en gris; cada paraula amb el seu apòstrof i puntuació no es parteix de línia); després play/pausa en tinta i l'**ona** (h-16, la part sonada en tinta, capçal, agulles ámbar amb la paraula en mono sota), temps en mono, arrossegable.
+- **Marcar paraules**: només als clips de casa; tocar = traducció + es desa (groc); tornar a tocar = es treu.
+- **Tus palabras**: punt ámbar, paraula + traducció; X per treure amb "Quitada · Deshacer" 5 s.
+- **Practicar**: files en 2 columnes (icona de línia, nom, una línia de descripció). El mode s'obre en una **fulla modal** (`Dialog`; pantalla completa al mòbil), "Cerrar"/Esc sense desar; pantalla final sense números.
 
 ### `/progress` — alumna (castellà)
-- "Esta semana" en accent, la xifra a 96–120 px (recompte, mai un %), la frase en Title 2; la resta com a files estil Ajustes.
+- La xifra de la setmana gran (recompte, mai un %) i la frase sencera; la resta com a files amb icona de línia.
 
 ### `/teacher` — profe (UI en francès)
 - Aquí sí hi ha xifres. Layout de 2 columnes ≥ 1024 px, 1 columna a sota.
