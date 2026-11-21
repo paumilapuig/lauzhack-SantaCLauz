@@ -30,7 +30,11 @@ Errors: `{ "detail": str }` (FastAPI default). Times: ISO 8601 UTC strings. IDs:
 ## Rules (implemented ONLY in `api/app/mastery.py`, owner B; others import it)
 - **Levels** 0–3 per (student, lemma). No row in `word_mastery` → initial level: `3` if `transparent` else `0`.
 - **State shown in class**: `level >= 2` → `green`; `level < 2` and lemma in `previously_tapped` → `orange`; else `yellow`.
-- **Changes**: tap in class `−1` (min 0) · 3 home activities passed `+1` · recognised in F3 `+1` (max 3).
+- **Changes** (decided Sat 21 Nov, PLAN › Decisions log): words are marked **at home**, never in class.
+  - **Mark at home** (`POST /api/clips/{id}/marks`, glossary word): the **first** mark of a lemma on the clips of one session → `−1` (min 0). More marks of the same lemma in that session (another form, another clip) change nothing.
+  - **Undo** (`DELETE /api/clips/{id}/marks/{word}`): when the **last** mark of that lemma in that session goes, the level gets back exactly what was subtracted: `min(3, level − level_delta)` (`level_delta` = `−1`, or `0` if the level was already 0). Stored in `mark_level_changes`.
+  - **3 home activities passed** `+1` · **recognised in F3** `+1` (max 3).
+  - `mastery.py` (B) gets `revert_mark(level, level_delta) -> int`; the routes only call `mastery`.
 - **Transparency rule**: `transparent = llm_transparent AND similarity(lemma, translation_es) >= 0.7`, where
   `similarity = difflib.SequenceMatcher(None, norm(a), norm(b)).ratio()` and `norm` = lowercase + strip accents (Unicode NFD, drop combining marks).
   Reference values: libérer/liberar 0.86 ✅, oxygène/oxígeno 0.71 ✅, déchet/desecho 0.62 ❌, chaleur/calor 0.67 ❌.
@@ -48,13 +52,16 @@ RLS principle: a student sees only her rows; a teacher sees rows linked to her/h
 | lesson_terms | id uuid PK, lesson_id uuid → lessons on delete cascade, lemma text, forms text[], translation_es text, definition_fr text, transparent bool, key_phrase text; unique(lesson_id, lemma) | all authenticated read; lesson's teacher write |
 | word_mastery | student_id uuid → profiles, lemma text, level int check 0–3, times_tapped int default 0, last_seen_at timestamptz; **PK (student_id, lemma)** | student own rows |
 | class_sessions | id uuid PK, lesson_id uuid → lessons, student_id uuid → profiles, started_at timestamptz default now() | student own; lesson's teacher read |
-| class_events | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_sec real, type text check in ('word','unclear','lost'), lemma text null, created_at | student own; lesson's teacher read |
+| class_events | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_sec real, type text check in ('word','unclear','lost'), lemma text null, **context_t_start real null**, **context_transcript text null** (only `lost`: the last ≤ 60 s of transcript, no audio), created_at | student own; lesson's teacher read |
 | clips | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_start real, t_end real, transcript text, audio_path text, **kind text not null default 'concept' check in ('word','concept')**, **lemma text null**, created_at | student own; lesson's teacher read |
 | word_states_log | session_id uuid, student_id uuid, lemma text, state text check in ('green','yellow','orange'); **PK (session_id, student_id, lemma)** | student own; lesson's teacher read |
 | clip_marks | student_id uuid → profiles, clip_id uuid → clips on delete cascade, word text (surface form as tapped, lowercase), lemma text null (glossary lemma of the clip's lesson whose `forms` contain `word`, else null), created_at timestamptz default now(); **PK (student_id, clip_id, word)** | student own; lesson's teacher read |
 | practice_results | id uuid PK, student_id uuid → profiles, lemma text, clip_id uuid null → clips, passed bool, created_at timestamptz default now() | student own |
+| mark_level_changes | student_id uuid → profiles, session_id uuid → class_sessions on delete cascade, lemma text, level_delta int check in (−1, 0), created_at timestamptz default now(); **PK (student_id, session_id, lemma)** — one row per lemma marked at home per session (see Rules › Changes) | student own |
+| lesson_lost_summaries | lesson_id uuid PK → lessons on delete cascade, lost_count int (number of `lost` events summarised), concepts jsonb (`LostConcept[]`, see [Lost summary](#lost-summary--post-apiteacherlessonsidlost-summary)), created_at timestamptz default now() | lesson's teacher read |
 
 Note: `class_sessions.student_id` is added to the original sketch (one session per student device, see PLAN › Decisions).
+The `'word'` value stays in the `class_events.type` check for old rows only; the API no longer writes it.
 Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. The API returns signed URLs (1 h).
 
 ## Endpoints
@@ -66,15 +73,16 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | POST | /api/lessons | teacher | JSON `{ "title", "subject", "lesson_date", "source_text" }` **or** multipart `title, subject, lesson_date, file` (txt / PDF / png / jpg, max 10 MB) | `{ "lesson_id", "terms": LessonTerm[] }` | B |
 | GET | /api/lessons/{id}/class-pack | student | – | ClassPack (below) | A |
 | POST | /api/sessions | student | `{ "lesson_id" }` | `{ "session_id" }` | A |
-| POST | /api/sessions/{id}/events | student | `{ "t_sec": 12.4, "type": "word"\|"lost", "lemma": "déchet"\|null }` | `{ "ok": true, "level": int\|null }` (type `word` applies −1 and returns the new level). `/class` no longer sends `word`: words are marked at home (`clip_marks`); `word` stays until the level decision (STATUS) | A (uses B's `mastery`) |
+| POST | /api/sessions/{id}/events | student | `{ "t_sec": 100.0, "type": "lost", "lemma": null, "context": { "t_start": 40.0, "transcript": "…" } }` — see [Lost event](#lost-event--post-apisessionsidevents) | `{ "ok": true }` | A |
 | POST | /api/sessions/{id}/word-states | student | `{ "states": [{ "lemma", "state": WordState }] }` — first state shown for each glossary word that appeared; sent at end of class | `{ "ok": true, "autonomy": float }` | A |
 | POST | /api/clips | student | multipart: `audio` (webm), `session_id`, `t_start`, `t_end`, `transcript`, optional `kind` (`word`\|`concept`, default `concept`), optional `lemma` — see [Clips](#clips--post-apiclips) | `{ "clip_id", "audio_path" }` — a `concept` clip also inserts a class_event `unclear` at `t_end`; a `word` clip inserts no event | A |
-| POST | /api/clips/{id}/marks | student (clip owner) | `{ "word": "déchets" }` | `{ "word", "lemma": str\|null, "translation_es": str\|null }` — upsert into `clip_marks` (same word twice = no-op); `translation_es` only for glossary words | A |
-| DELETE | /api/clips/{id}/marks/{word} | student (clip owner) | – | `{ "ok": true }` — undo a mark | A |
+| POST | /api/clips/{id}/marks | student (clip owner) | `{ "word": "déchets" }` | `{ "word", "lemma": str\|null, "translation_es": str\|null, "level": int\|null }` — upsert into `clip_marks` (same word twice = no-op); glossary words apply Rules › Changes (`−1` on the first mark of the lemma in the session); `translation_es` and `level` (after the change) only for glossary words | A (uses B's `mastery`) |
+| DELETE | /api/clips/{id}/marks/{word} | student (clip owner) | – | `{ "ok": true, "level": int\|null }` — undo a mark; reverts the `−1` when it was the last mark of that lemma in the session | A (uses B's `mastery`) |
 | GET | /api/home/review | student | – | HomeReview (below) | B |
 | POST | /api/practice | student | `{ "lemma", "clip_id": uuid\|null, "passed": bool }` | `{ "lemma", "level": int, "leveled_up": bool }` | B |
 | GET | /api/me/progress | student | – | `{ "messages": [{ "kind": "learned_this_week"\|"no_help_needed"\|"keep_going", "text": str }] }` — **never percentages or numbers out of a total** | B |
 | GET | /api/teacher/lessons/{id}/dashboard | teacher | – | Dashboard (below) | A (uses B's `mastery.autonomy`) |
+| POST | /api/teacher/lessons/{id}/lost-summary | teacher (lesson's teacher) | – | LostSummary (below) — at most **1 LLM call**, after class | A route · B `app/lost_summary.py` |
 | GET | /api/lessons/{id}/preview | student | – | `{ "phrases": [{ "text", "audio_url": str\|null, "lemmas": [str] }] }` — `audio_url` null → client uses `speechSynthesis` (F3) | B |
 | POST | /api/lessons/{id}/preview/results | student | `{ "recognized": [lemma] }` | `{ "message": "Mañana entenderás buena parte de la clase" }` (+1 per recognised lemma) (F3) | B |
 
@@ -141,11 +149,33 @@ Two kinds of clip (decided Sat 21 Nov, see PLAN › Decisions log):
 - `kind` and `lemma` are the clip's own columns. A `word` clip is pending until it has a `practice_results` row with `passed = true`. A `concept` clip has no lemma, so the 3 activities do not apply: it is always listed, newest first, and has no completion rule. **Proposal, to be confirmed by owner B.** `terms` = glossary lemmas whose forms appear in the transcript (both kinds).
 - `words_to_practice` = one item per `clip_marks` row of this student, newest first; glossary words with level ≥ 2 are left out. `clip_id` = the clip where it was marked. `key_phrase` = the sentence of that clip's transcript that contains `word`. Non-glossary words: `lemma`, `translation_es`, `definition_fr` and `level` are `null`.
 
+### Lost event — `POST /api/sessions/{id}/events`
+"Me he perdido" saves **text only, no audio**: the transcript of the last 60 s (`t_start = max(0, t_sec − 60)`).
+- `type` must be `"lost"`; `"word"` → 422 (words are marked at home). `lemma` must be absent or `null`.
+- `context` is required: `t_start` with `0 ≤ t_start ≤ t_sec` and `t_sec − t_start ≤ 70` (tolerance), `transcript` 0–5000 chars (empty allowed: silence). Otherwise 422.
+- Stored in `class_events.context_t_start` / `context_transcript`. No LLM call here.
+
+### Lost summary — `POST /api/teacher/lessons/{id}/lost-summary`
+After class the teacher presses "Résumer les moments perdus" on `/teacher`. **One** LLM call groups ALL `lost` contexts of the lesson (all sessions, all students) into concepts.
+```json
+{
+  "lesson_id": "8c1e…", "lost_count": 6, "created_at": "2026-11-22T09:10:00Z",
+  "concepts": [
+    { "concept": "Le rôle de l'oxygène dans la respiration", "hint": "Montrer le schéma cellule → énergie.", "minutes": [12, 13], "students": 4 }
+  ]
+}
+```
+- Input to the LLM: each moment with a number (`n`) and its transcript, plus the lesson's glossary lemmas. Moments with an empty transcript are left out.
+- The LLM returns `{ "concepts": [{ "concept": str, "hint": str, "moments": [n] }] }`, max 5 concepts, in French. The API drops unknown `n` and empty concepts, then **computes** `minutes` (distinct `floor(t_sec / 60)`, ascending) and `students` (distinct `student_id`) itself — the LLM does not count. Sorted by `students` desc.
+- Frugal: if a stored summary has `lost_count` equal to the current number of non-empty `lost` events → returned as is, **no LLM call**. No non-empty `lost` event → `{ "lost_count": 0, "concepts": [] }`, no call, nothing stored. Otherwise call, upsert into `lesson_lost_summaries`, return.
+- Errors: `401` · `403` not a teacher or not this lesson's teacher · `404` lesson not found · `502` LLM error or no valid concept · `503` LLM not configured.
+
 ### Dashboard — `GET /api/teacher/lessons/{id}/dashboard`
 ```json
 {
   "lesson": { "id": "8c1e…", "title": "La respiration cellulaire" },
   "lost_peaks": [ { "minute": 12, "count": 5 }, { "minute": 3, "count": 2 } ],
+  "lost_summary": null,
   "top_words": [ { "lemma": "déchet", "taps": 4 }, { "lemma": "chaleur", "taps": 3 } ],
   "students": [
     { "name": "Lucía (semaine 1)", "autonomy": 0.53, "weekly": [ { "week": "2026-W47", "autonomy": 0.53 } ] },
@@ -155,14 +185,14 @@ Two kinds of clip (decided Sat 21 Nov, see PLAN › Decisions log):
   ]
 }
 ```
-`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[].autonomy`: latest session.
+`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[].autonomy`: latest session. `lost_summary`: the stored LostSummary or `null` (the dashboard never calls the LLM).
 
 ## Demo seed (owner A, `supabase/seed.sql` or a script; nothing secret in git)
 - Users: `prof-demo` (teacher), `lucia-w1`, `lucia-w4` (students). Emails `<name>@demo.lauzhack`, password in the private chat.
 - Lesson "La respiration cellulaire" by prof-demo with the 15 terms of `docs/demo/glossary-respiration.json`.
 - `lucia-w1`: no mastery rows (8 transparent green, 7 yellow → ≈53%).
 - `lucia-w4`: 4 non-transparent at level 2–3 (`nourriture`, `fournir`, `rejeter`, `dégager`), `chaleur` level 1 and marked at home on a clip of an earlier session (→ 🟠), `déchet`, `essoufflé` level 0; 3 earlier weekly sessions with word_states_log giving 53% → 62% → 71%; 12 `practice_results` passed this week (→ "has aprendido 12 palabras nuevas").
-- Earlier sessions with `lost` events peaking at minute 12 and `clip_marks` on `déchets`/`chaleur`.
+- Earlier sessions with `lost` events peaking at minute 12 (with `context_transcript` taken from `docs/demo/lesson-respiration.md`) and `clip_marks` on `déchets`/`chaleur`. No `mark_level_changes` rows: the seed sets the levels directly.
 
 ## Env vars (new; names only — values in the private chat)
 - `api/.env`: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `ELEVENLABS_API_KEY` (F3 only). Owner B adds them to `api/.env.example`.

@@ -2,8 +2,8 @@
 
 > **Projecte: "Subtítols que es retiren"** — subtítols en FRANCÈS de la classe en directe per a alumnes nouvinguts (persona: Lucía, 14 anys, A1–A2, 11e HarmoS).
 > Només les paraules del glossari que l'alumna no domina porten ajuda (🟢 sense ajuda · 🟡 traducció ES · 🟠 "te la vas perdre"); l'ajuda es retira quan les aprèn.
-> F1 subtítols · F2 botons + clip de 30 s + 3 activitats a casa · F4 progrés (mai %) + panell del profe (autonomia) · F3 "la classe de demà" (NICE).
-> Frugal: 1 crida a l'LLM per lliçó (OpenRouter), cap en directe; Web Speech al navegador. Detall: `docs/PLAN.md`, `docs/API.md`, `docs/ROLES.md`.
+> F1 subtítols · F2 botons (clip d'àudio · "M'he perdut" només text) + 3 activitats a casa · F4 progrés (mai %) + panell del profe (autonomia) · F3 "la classe de demà" (NICE).
+> Frugal: com a màxim 2 crides a l'LLM per lliçó (preparació + resum de "M'he perdut" després de classe; OpenRouter), cap en directe; Web Speech al navegador. Detall: `docs/PLAN.md`, `docs/API.md`, `docs/ROLES.md`.
 
 Hackathon: Sat 21 Nov 12:00 → Sun 22 Nov 12:00. Speed > perfection, but the demo MUST work.
 Judges ask what is novel (LauzHack rule 30). Keep `docs/PLAN.md` → "Novelty" section up to date.
