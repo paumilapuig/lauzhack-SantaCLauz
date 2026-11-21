@@ -30,7 +30,7 @@ def _owned_session(db: Client, session_id: UUID, student_id: str) -> dict:
 def _lesson_term(db: Client, lesson_id: str, lemma: str) -> dict:
     term = next((t for t in lessons.list_terms(db, lesson_id) if t["lemma"] == lemma), None)
     if term is None:
-        raise HTTPException(422, "Unknown lemma for this lesson")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Unknown lemma for this lesson")
     return term
 
 

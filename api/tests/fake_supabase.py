@@ -21,7 +21,7 @@ class _Query:
         self._mode = "select"
         self._columns: list[str] | None = None
         self._filters: list = []
-        self._orders: list[tuple[str, bool, bool]] = []
+        self._orders: list[tuple[str, bool, bool | None]] = []
         self._limit: int | None = None
         self._single = False
         self._payload: list[dict] = []
@@ -40,7 +40,7 @@ class _Query:
         self._filters.append(lambda row: row.get(column) in values)
         return self
 
-    def order(self, column: str, desc: bool = False, nullsfirst: bool = False):
+    def order(self, column: str, desc: bool = False, nullsfirst: bool | None = None):
         self._orders.append((column, desc, nullsfirst))
         return self
 
@@ -94,7 +94,8 @@ class _Query:
             present = sorted((r for r in rows if r.get(column) is not None),
                              key=lambda r: r[column], reverse=desc)
             missing = [r for r in rows if r.get(column) is None]
-            rows = missing + present if nullsfirst else present + missing
+            first = desc if nullsfirst is None else nullsfirst
+            rows = missing + present if first else present + missing
         if self._limit is not None:
             rows = rows[: self._limit]
         if self._columns is not None:

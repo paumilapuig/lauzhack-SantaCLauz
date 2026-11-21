@@ -5,10 +5,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 
+from ..auth import AuthenticatedUser
 from ..db import get_supabase
 from ..mastery import initial_level
 from ..roles import StudentUser
-from ..auth import AuthenticatedUser
 from . import classdata_repository as repo
 from .classdata_schemas import ClassPack, LessonSummary, LessonTerm
 

@@ -24,7 +24,7 @@ def test_order_desc_nulls_last_then_chained_order_is_stable():
     fake = FakeSupabase({"t": [
         {"a": 1, "b": 1}, {"a": None, "b": 2}, {"a": 2, "b": 1}, {"a": 2, "b": 3},
     ]})
-    rows = fake.table("t").select("*").order("a", desc=True).order("b", desc=True).execute().data
+    rows = fake.table("t").select("*").order("a", desc=True, nullsfirst=False).order("b", desc=True).execute().data
     assert [(r["a"], r["b"]) for r in rows] == [(2, 3), (2, 1), (1, 1), (None, 2)]
 
 
@@ -82,3 +82,9 @@ def test_seed_sessions_and_events():
     sessions = {s["student_id"]: s["lesson_id"] for s in fake.tables["class_sessions"]}
     assert sessions == {STUDENT: L0, OTHER_STUDENT: L1}
     assert {e["lemma"] for e in fake.tables["class_events"]} == {"chaleur", "déchet"}
+
+
+def test_order_desc_defaults_to_postgres_nulls_first():
+    fake = FakeSupabase({"t": [{"a": 1}, {"a": None}, {"a": 2}]})
+    rows = fake.table("t").select("*").order("a", desc=True).execute().data
+    assert [r["a"] for r in rows] == [None, 2, 1]

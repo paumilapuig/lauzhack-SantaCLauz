@@ -10,7 +10,7 @@ def list_lessons(client: Client) -> list[dict]:
     return (
         client.table("lessons")
         .select("id, title, subject, lesson_date")
-        .order("lesson_date", desc=True)
+        .order("lesson_date", desc=True, nullsfirst=False)
         .order("created_at", desc=True)
         .execute()
         .data

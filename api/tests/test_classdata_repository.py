@@ -49,3 +49,13 @@ def test_upsert_mastery_updates_without_duplicating():
     rows = client.tables["word_mastery"]
     assert len(rows) == 2
     assert repo.mastery_rows(client, STUDENT, ["déchet"]) == {"déchet": {"level": 0, "times_tapped": 3}}
+
+
+def test_list_lessons_puts_null_dates_last():
+    client = seeded_fake()
+    client.table("lessons").insert({"title": "Sans date", "subject": None, "lesson_date": None,
+                                    "created_at": "2026-11-23T00:00:00+00:00"}).execute()
+
+    titles = [lesson["title"] for lesson in repo.list_lessons(client)]
+
+    assert titles[-1] == "Sans date"
