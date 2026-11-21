@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BigButton } from "@/components/ui/big-button";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createAudioRingRecorder } from "@/lib/audioRingRecorder";
-import { getClassApi, type ClassApi, type MockClassApi, type SavedItem } from "./classApi";
+import { getClassApi, type ClassApi } from "./classApi";
 import { createClassSession, type ClassSession } from "./classSession";
-import { createClassButtons, type ButtonResult } from "./classButtons";
+import { createClassButtons } from "./classButtons";
+import { ClassActionButton } from "./ClassActionButton";
 import { LiveSubtitles } from "./LiveSubtitles";
-import { MockSavedList } from "./MockSavedList";
 import { createRecognizer, type SpeechRecognitionCtor } from "./recognizer";
-import { addResult, EMPTY_SUBTITLES, type SubtitleLines } from "./subtitleLines";
+import { announceResult } from "./savedToast";
+import { SubtitleSwitch } from "./SubtitleSwitch";
+import { addResult, EMPTY_SUBTITLES, lineText, type SubtitleLines } from "./subtitleLines";
 import { createTranscriptBuffer } from "./transcriptBuffer";
 
 const LESSON_ID = "demo-lesson";
@@ -19,10 +21,6 @@ const TRANSCRIPT_KEEP_SEC = 90;
 
 type Phase = "idle" | "running" | "error";
 type Buttons = ReturnType<typeof createClassButtons>;
-
-function isMock(api: ClassApi): api is MockClassApi {
-  return "list" in api;
-}
 
 function findRecognitionCtor(): SpeechRecognitionCtor | undefined {
   const w = window as unknown as {
@@ -36,9 +34,8 @@ export function ClassView() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
   const [subtitles, setSubtitles] = useState<SubtitleLines>(EMPTY_SUBTITLES);
-  const [saveFailed, setSaveFailed] = useState(false);
+  const [showSubtitles, setShowSubtitles] = useState(true);
   const [buttons, setButtons] = useState<Buttons>();
-  const [saved, setSaved] = useState<SavedItem[]>([]);
   const apiRef = useRef<ClassApi>(undefined);
   const sessionRef = useRef<ClassSession>(undefined);
 
@@ -75,7 +72,7 @@ export function ClassView() {
           onResult({ finalText, interimText, at }) {
             if (finalText.trim()) transcript.add(finalText.trim(), at);
             transcript.prune(at);
-            setSubtitles((lines) => addResult(lines, { finalText, interimText }));
+            setSubtitles((lines) => addResult(lines, { finalText, interimText, at }));
           },
           onStatus(status, detail) {
             if (status === "error") fail(`Error de reconocimiento de voz (${detail}).`);
@@ -97,30 +94,34 @@ export function ClassView() {
   }
 
   function press(action: keyof Buttons) {
-    return async () => {
-      const result: ButtonResult | undefined = await buttons?.[action]();
-      if (result === "failed") setSaveFailed(true);
-      else if (result === "saved") setSaveFailed(false);
-      if (result === "saved" && apiRef.current && isMock(apiRef.current)) setSaved(apiRef.current.list());
-    };
+    return async () => announceResult(toast, action, await buttons?.[action]());
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <h1 className="text-2xl font-bold">Clase</h1>
-      {phase !== "running" && <Button onClick={start}>Empezar clase</Button>}
-      {phase === "error" && <p role="alert">{message}</p>}
+    <main className="relative flex h-dvh flex-col gap-4 p-4 md:p-6">
+      <h1 className="sr-only">Clase</h1>
+      <div className="absolute top-3 right-3 md:top-4 md:right-4">
+        <SubtitleSwitch checked={showSubtitles} onChange={setShowSubtitles} />
+      </div>
+      {phase !== "running" && (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
+          <Button size="lg" onClick={start}>
+            Empezar clase
+          </Button>
+          {phase === "error" && <p role="alert">{message}</p>}
+        </div>
+      )}
       {phase === "running" && (
         <>
-          <LiveSubtitles lines={subtitles} />
-          <div className="flex gap-4">
-            <BigButton variant="unclear" onPress={press("onUnclear")} />
-            <BigButton variant="lost" onPress={press("onLost")} />
+          <div className="mt-10">
+            <LiveSubtitles text={lineText(subtitles)} visible={showSubtitles} />
           </div>
-          {saveFailed && <p role="alert">No se ha podido guardar</p>}
+          <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
+            <ClassActionButton action="unclear" onPress={press("onUnclear")} />
+            <ClassActionButton action="lost" onPress={press("onLost")} />
+          </div>
         </>
       )}
-      <MockSavedList items={saved} />
     </main>
   );
 }

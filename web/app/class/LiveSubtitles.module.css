@@ -1,0 +1,16 @@
+/* Visible right away, held, then faded out at the end of the idle time. */
+.fading {
+  animation-name: subtitle-life;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes subtitle-life {
+  0% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fading { animation-timing-function: steps(1, end); }
+}

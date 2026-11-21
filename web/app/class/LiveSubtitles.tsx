@@ -1,31 +1,25 @@
-"use client";
+import styles from "./LiveSubtitles.module.css";
+import { SUBTITLE_IDLE_SEC } from "./subtitleLines";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import type { SubtitleLines } from "./subtitleLines";
-
-/** Live subtitles with a toggle that only hides the text; recognition keeps running underneath. */
-export function LiveSubtitles({ lines }: { lines: SubtitleLines }) {
-  const [visible, setVisible] = useState(true);
-
+/**
+ * One big subtitle line. Newest words stay at the right edge; older words slide off the left.
+ * Remounting on every text change restarts the fade, so the line disappears after a silence.
+ */
+export function LiveSubtitles({ text, visible }: { text: string; visible: boolean }) {
   return (
-    <section className="flex flex-col gap-2">
-      <Button
-        variant="outline"
-        className="self-start"
-        aria-pressed={visible}
-        onClick={() => setVisible((v) => !v)}
-      >
-        {visible ? "Ocultar subtítulos" : "Mostrar subtítulos"}
-      </Button>
-      {visible && (
-        <div aria-live="polite" className="flex min-h-24 flex-col gap-1 text-lg">
-          {lines.finals.map((line, index) => (
-            <p key={`${index}-${line}`}>{line}</p>
-          ))}
-          {lines.interim && <p className="text-muted-foreground">{lines.interim}</p>}
-        </div>
+    <div
+      aria-live="polite"
+      className="flex h-20 items-center justify-end overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%)] md:h-24"
+    >
+      {visible && text && (
+        <p
+          key={text}
+          className={`${styles.fading} whitespace-nowrap text-4xl font-bold md:text-6xl`}
+          style={{ animationDuration: `${SUBTITLE_IDLE_SEC}s` }}
+        >
+          {text}
+        </p>
       )}
-    </section>
+    </div>
   );
 }
