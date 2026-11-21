@@ -103,12 +103,18 @@ select is(
 -- Events
 select results_eq(
   $$select (floor(t_sec / 60))::int, count(*)::int from public.class_events
-    where type = 'lost' group by 1 order by 2 desc$$,
+    where type = 'lost'
+      and session_id in (select id from public.class_sessions
+                         where lesson_id = 'de100000-0000-4000-8000-000000000001')
+    group by 1 order by 2 desc$$,
   $$values (12, 5), (3, 2)$$,
   'lost buckets: minute 12 x5, minute 3 x2');
 select results_eq(
   $$select lemma, count(*)::int from public.class_events
-    where type = 'word' group by lemma order by 2 desc$$,
+    where type = 'word'
+      and session_id in (select id from public.class_sessions
+                         where lesson_id = 'de100000-0000-4000-8000-000000000001')
+    group by lemma order by 2 desc$$,
   $$values ('déchet', 4), ('chaleur', 3)$$,
   'word taps: déchet x4, chaleur x3');
 select is(
