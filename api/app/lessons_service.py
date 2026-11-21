@@ -1,8 +1,12 @@
+import logging
+
 from supabase import Client
 
 from .db import get_supabase
 from .glossary.schema import GlossaryTerm
 from .schemas import CreateLessonJson, CreateLessonResponse, CurrentUser, LessonTerm
+
+logger = logging.getLogger(__name__)
 
 
 class LessonSaveError(Exception):
@@ -21,11 +25,19 @@ def create_lesson(
     try:
         rows = _insert_terms(db, lesson_id, terms)
     except Exception as error:
-        db.table("lessons").delete().eq("id", lesson_id).execute()
+        _delete_lesson_quietly(db, lesson_id)
         raise LessonSaveError("could not save lesson terms") from error
     return CreateLessonResponse(
         lesson_id=lesson_id, terms=[LessonTerm(**row) for row in rows]
     )
+
+
+def _delete_lesson_quietly(db: Client, lesson_id: str) -> None:
+    """Best-effort cleanup: a failed delete must not mask the original error."""
+    try:
+        db.table("lessons").delete().eq("id", lesson_id).execute()
+    except Exception:
+        logger.exception("could not remove orphan lesson %s", lesson_id)
 
 
 def _insert_lesson(db: Client, user: CurrentUser, meta: CreateLessonJson) -> str:

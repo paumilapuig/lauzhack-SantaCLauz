@@ -5,6 +5,7 @@ from .auth import AuthenticatedUser
 from .config import get_settings
 from .profiles import fetch_profile
 from .routers import classdata, classdata_sessions, classdata_word_states
+from .routers.lessons import router as lessons_router
 from .schemas import Health, Me
 
 app = FastAPI(title="LauzHack API")
@@ -17,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+app.include_router(lessons_router)
 app.include_router(classdata.router)
 app.include_router(classdata_sessions.router)
 app.include_router(classdata_word_states.router)

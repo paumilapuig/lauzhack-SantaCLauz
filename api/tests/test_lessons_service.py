@@ -100,3 +100,11 @@ def test_lesson_insert_failure_skips_terms_insert():
     with pytest.raises(LessonSaveError):
         create_lesson(USER, META, [make_term("poumon")], db)
     assert all(call[0] != "lesson_terms" for call in db.calls)
+
+
+def test_cleanup_failure_does_not_mask_the_original_terms_error():
+    db = FakeSupabase(failing=[("lesson_terms", "insert"), ("lessons", "delete")])
+    with pytest.raises(LessonSaveError) as error:
+        create_lesson(USER, META, [make_term("poumon")], db)
+    assert str(error.value.__cause__) == "boom"
+    assert db.calls[-1][:2] == ("lessons", "delete")
