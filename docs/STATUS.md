@@ -12,7 +12,7 @@
 `api/app/routers/classdata*`, `api/app/routers/clips*.py`, `api/app/storage.py`, `api/app/roles.py`, `api/tests/test_classdata*`, `api/tests/test_clips*`, `api/tests/test_storage.py`, `api/tests/fake_storage.py`, `api/tests/fake_supabase.py`, `api/tests/classdata_seed.py`.
 **Fet**
 - PR #16 (fusionat): `GET /api/lessons`, `GET /api/lessons/{id}/class-pack`, `POST /api/sessions`, `POST /api/sessions/{id}/events`, `POST /api/sessions/{id}/word-states` amb `api/app/roles.py`, comprovació de propietat de la sessió i tests amb Supabase simulat.
-- PR #21 (oberta, rebasat sobre main amb `POST /api/lessons` de Laura; 243 tests passaven en l'últim rebase): `POST /api/clips` (`audio/webm`, màx. 2 MiB, pujada al bucket privat `clips`, fila a `clips`, event `unclear`, rollback sense orfes) i `signed_clip_url(db, path, expires=3600)` compartit a `app/storage.py`. La resposta continua sent `{ clip_id, audio_path }`.
+- PR #21 (oberta, rebasat sobre main amb `POST /api/lessons` de Laura; 243 tests passen, verificat sobre el cap del PR): `POST /api/clips` (`audio/webm`, màx. 2 MiB, pujada al bucket privat `clips`, fila a `clips`, event `unclear`, rollback sense orfes) i `signed_clip_url(db, path, expires=3600)` compartit a `app/storage.py`. La resposta continua sent `{ clip_id, audio_path }`.
 **Pendent**
 1. Revisió i merge del PR #21 (el merge el decideix Miquel).
 2. Aquest PR de docs (dos tipus de clip).
