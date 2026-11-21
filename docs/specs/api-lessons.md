@@ -16,7 +16,7 @@ Demo check: as prof-demo, `curl -F file=@respiration.pdf ... /api/lessons` retur
 Add `pillow`, `pymupdf`, `httpx` (explicit; `python-multipart` already via `fastapi[standard]`); `uv lock && uv sync`. Settings: `openrouter_api_key: str|None=None`, `openrouter_model: str|None=None`; helper `resolved_model()` → `google/gemini-2.5-flash-lite` when None.
 Test first: `test_config.py` asserts defaults are None and `resolved_model()` fallback/override. Depends: none. Size: ~40.
 
-**T2 / require_teacher + schemas** — Files: `api/app/auth_roles.py`, `api/app/schemas.py`, `api/tests/test_auth_roles.py`.
+**T2 / require_teacher + schemas** — Files: `api/app/roles.py` (Miquel's `TeacherUser`, reused; own `auth_roles.py` removed), `api/app/schemas.py`, `api/tests/test_auth_roles.py`.
 `require_teacher(user: AuthenticatedUser) -> CurrentUser` uses `fetch_profile`; 403 if missing or role != teacher. `TeacherUser = Annotated[...]`. Schemas: `LessonTermInput`, `LessonTerm` (+id, lesson_id), `CreateLessonJson` (title, subject, lesson_date: date, source_text), `CreateLessonResponse`.
 Test first: teacher passes; student → 403; no profile → 403 (monkeypatch `app.auth_roles.fetch_profile`). Depends: none. Size: ~70.
 

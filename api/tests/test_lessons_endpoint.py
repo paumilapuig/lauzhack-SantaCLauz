@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from PIL import Image
 
-import app.auth_roles as auth_roles
+import app.roles as roles
 import app.routers.lessons as router
 from app.auth import get_current_user
 from app.config import Settings, get_settings
@@ -86,7 +86,7 @@ def api_settings():
 @pytest.fixture
 def teacher_client(recorder, api_settings, monkeypatch):
     monkeypatch.setattr(
-        auth_roles, "fetch_profile", lambda user_id: Profile(display_name="t", role="teacher")
+        roles, "fetch_profile", lambda user_id: Profile(display_name="t", role="teacher")
     )
     app.dependency_overrides[get_current_user] = lambda: TEACHER
     yield TestClient(app)
@@ -117,7 +117,7 @@ def test_requires_token(recorder, api_settings):
 
 def test_student_is_forbidden(recorder, api_settings, monkeypatch):
     monkeypatch.setattr(
-        auth_roles, "fetch_profile", lambda user_id: Profile(display_name="s", role="student")
+        roles, "fetch_profile", lambda user_id: Profile(display_name="s", role="student")
     )
     app.dependency_overrides[get_current_user] = lambda: TEACHER
     try:

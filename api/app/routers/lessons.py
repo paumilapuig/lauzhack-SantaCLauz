@@ -5,7 +5,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 from starlette.datastructures import UploadFile
 
-from app.auth_roles import TeacherUser
+from app.roles import TeacherUser
 from app.config import Settings, get_settings
 from app.glossary.errors import InputError, TooLarge, UnsupportedType
 from app.glossary.generate import generate_glossary
