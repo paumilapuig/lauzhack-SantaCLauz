@@ -4,9 +4,12 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
+from tests.fake_storage import FakeStorage
+
 _TABLES_WITH_TIMESTAMP = {
     "class_sessions": "started_at",
     "class_events": "created_at",
+    "clips": "created_at",
 }
 
 
@@ -63,12 +66,23 @@ class _Query:
         self._conflict = [c.strip() for c in on_conflict.split(",")]
         return self
 
+    def delete(self):
+        self._mode = "delete"
+        return self
+
     def execute(self):
+        if self._mode == "delete":
+            return SimpleNamespace(data=self._remove_matching())
         if self._mode == "insert":
             return SimpleNamespace(data=[self._store(row) for row in self._payload])
         if self._mode == "upsert":
             return SimpleNamespace(data=[self._merge(row) for row in self._payload])
         return self._read()
+
+    def _remove_matching(self) -> list[dict]:
+        removed = [r for r in self._rows if all(f(r) for f in self._filters)]
+        self._rows[:] = [r for r in self._rows if r not in removed]
+        return deepcopy(removed)
 
     def _store(self, row: dict) -> dict:
         stored = deepcopy(row)
@@ -109,6 +123,7 @@ class _Query:
 class FakeSupabase:
     def __init__(self, tables: dict[str, list[dict]]):
         self.tables = tables
+        self.storage = FakeStorage()
 
     def table(self, name: str) -> _Query:
         return _Query(name, self.tables[name])

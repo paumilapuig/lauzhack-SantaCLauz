@@ -88,3 +88,15 @@ def test_order_desc_defaults_to_postgres_nulls_first():
     fake = FakeSupabase({"t": [{"a": 1}, {"a": None}, {"a": 2}]})
     rows = fake.table("t").select("*").order("a", desc=True).execute().data
     assert [r["a"] for r in rows] == [None, 2, 1]
+
+
+def test_delete_by_eq_removes_only_matching_rows_and_returns_them():
+    fake = FakeSupabase({"t": [{"id": "a"}, {"id": "b"}]})
+    removed = fake.table("t").delete().eq("id", "a").execute().data
+    assert removed == [{"id": "a"}]
+    assert fake.tables["t"] == [{"id": "b"}]
+
+
+def test_delete_on_missing_table_raises_key_error():
+    with pytest.raises(KeyError):
+        FakeSupabase({}).table("nope").delete()
