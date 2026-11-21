@@ -49,9 +49,13 @@ export function ClipCard({ clip, words }: { clip: HomeClip; words: WordToPractic
 
   function listen() {
     playClip(clip)
-    setPlaying(true)
     clearTimeout(timer.current)
-    timer.current = setTimeout(() => setPlaying(false), durationMs)
+    // reset the sweep first so a second click starts it again from the left
+    setPlaying(false)
+    timer.current = setTimeout(() => {
+      setPlaying(true)
+      timer.current = setTimeout(() => setPlaying(false), durationMs)
+    }, 50)
   }
 
   return (

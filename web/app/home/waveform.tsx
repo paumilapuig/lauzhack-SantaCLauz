@@ -46,7 +46,7 @@ export function Waveform({ seed, mark, markLabel, playing, durationMs }: Props) 
     <div aria-hidden className="relative h-20">
       {mark && markLabel && (
         <span
-          style={{ left: `${mark[0] * 100}%` }}
+          style={{ left: `${Math.min(mark[0], 0.75) * 100}%` }}
           className="absolute -top-7 text-lg text-marker-strong font-[family-name:var(--font-kalam)]"
         >
           {markLabel}

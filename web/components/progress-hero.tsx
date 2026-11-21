@@ -1,6 +1,6 @@
 import { Sprout } from "lucide-react"
 import type { ProgressMessage } from "@/lib/student-contract"
-import { HAND, Highlight } from "./notebook"
+import { HAND } from "./notebook"
 
 // The figure (e.g. "12" new words) set large; a count of words learned, never a percentage
 export function ProgressHero({ message }: { message: ProgressMessage }) {
@@ -10,10 +10,8 @@ export function ProgressHero({ message }: { message: ProgressMessage }) {
       <div className="flex flex-col gap-4">
         <p className={`text-3xl text-marker ${HAND}`}>esta semana</p>
         {figure && (
-          <p aria-hidden className="text-[120px] leading-none font-bold tabular-nums md:text-[160px]">
-            <Highlight strong>
-              {figure}
-            </Highlight>
+          <p aria-hidden className="text-[120px] leading-none font-bold text-marker tabular-nums md:text-[160px]">
+            {figure}
           </p>
         )}
         <h2 className="max-w-md text-[28px] leading-snug font-bold">{message.text}</h2>
