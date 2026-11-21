@@ -2,7 +2,7 @@
 
 | Who | Branch | Doing now | Blocked by | Last update |
 |---|---|---|---|---|
-| Miquel (A) | – | Fet: migració del contracte aplicada al projecte compartit, tipus regenerats, 3 usuaris de demo creats. Següent: `feat/api-classdata` (endpoints de classe) i `feat/db-demo-seed` | mastery.py de Laura | Sat 21 Nov |
+| Miquel (A) | feat/db-demo-seed | Fet: migració del contracte aplicada al projecte compartit, tipus regenerats, 3 usuaris de demo creats; seed de demo només local (README §7) i test 03 (PR obert). Següent: `feat/api-classdata` (endpoints de classe) | mastery.py de Laura | Sat 21 Nov |
 | Laura (B) | laurarebollocrespo/feat/spike-b-glossary | Spike `spikes/b-glossary/` fet (transparència, `mastery.py` pur, glossari multimodal text+imatge amb 1 crida OpenRouter, reducció d'imatge, caché, benchmark de models; 60 tests amb HTTP simulat). Següent: prova real + benchmark quan hi hagi clau, després `feat/api-mastery` | clau d'OpenRouter (Pau) | Sat 21 Nov 18:45 |
 | Paula (C) | feat/spike-c-subtitles | Fet: spike `spikes/c-subtitles/` (PR obert; pàgina cablejada, 37 tests). Següent: prova de micro a Chrome amb `lesson-respiration.md` (retard + N/15), després passar `wordState.ts` a `web/lib/` i començar `/class` | – | Sat 21 Nov 18:45 |
 | Pau (D) | feat/web-home | `/home` (clips + paraules + 3 activitats) i `/progress` (frases, mai %) amb dades falses d'API.md darrere `web/app/home/data.ts`. Pendent: protegir /home i /progress al proxy quan hi hagi dades reals; connectar `data.ts` als endpoints de Laura. Següent: pitch + slides | – | Sat 21 Nov 20:30 |

@@ -104,3 +104,8 @@ scripts/bootstrap-lead.sh scripts/setup-member.sh
 PROMPT-scaffold.md        prompts llestos per enganxar
 ```
 Ajust personal sense afectar l'equip (p. ex. desactivar Caveman): `.claude/settings.local.json` (ignorat per git).
+
+## 7. Demo seed (només LOCAL)
+- Carrega `supabase/seed.sql` a l'stack local: `docker exec -i <contenidor supabase_db> psql -U postgres -d postgres -v ON_ERROR_STOP=1 < supabase/seed.sql` (és idempotent; es pot repetir).
+- Crea els usuaris de demo amb la contrasenya de desenvolupament `demo-local-only`. Només serveix en local; el seed **no s'executa mai** al projecte compartit (ni `db push`, ni `--linked`).
+- Tests: `npx supabase test db --db-url postgresql://postgres:postgres@127.0.0.1:<port>/postgres`. El test 03 necessita el seed carregat abans.
