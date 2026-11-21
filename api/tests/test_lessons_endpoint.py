@@ -9,6 +9,7 @@ import app.auth_roles as auth_roles
 import app.routers.lessons as router
 from app.auth import get_current_user
 from app.config import Settings, get_settings
+from app.glossary.errors import TooLarge
 from app.glossary.generate import Metrics
 from app.glossary.openrouter_client import OpenRouterError
 from app.glossary.parser import GlossaryParseError
@@ -191,15 +192,36 @@ def test_unsupported_content_type_is_415(teacher_client, recorder):
     assert recorder.generate_calls == []
 
 
-def test_empty_source_text_is_422(teacher_client, recorder, monkeypatch):
-    def reject_empty(source_text, jpeg_images, model, api_key, http=None):
-        raise ValueError("empty")
-
-    monkeypatch.setattr(router, "generate_glossary", reject_empty)
+def test_blank_json_source_text_is_422_before_llm(teacher_client, recorder):
     response = teacher_client.post("/api/lessons", json={**JSON_BODY, "source_text": "  "})
 
     assert response.status_code == 422
+    assert recorder.generate_calls == []
     assert recorder.create_calls == []
+
+
+def test_oversized_content_length_is_413_before_parsing(teacher_client, recorder, monkeypatch):
+    monkeypatch.setattr("app.glossary.upload.MAX_UPLOAD_BYTES", 10)
+    body = b"x" * (2 * 1024 * 1024)
+    response = _post_file(teacher_client, "notes.txt", body, "text/plain")
+
+    assert response.status_code == 413
+    assert recorder.generate_calls == []
+
+
+def test_file_read_is_bounded(teacher_client, recorder, monkeypatch):
+    seen = []
+
+    def spy(filename, content_type, data):
+        seen.append(len(data))
+        raise TooLarge("too big")
+
+    monkeypatch.setattr("app.glossary.upload.MAX_UPLOAD_BYTES", 10)
+    monkeypatch.setattr(router, "normalize_upload", spy)
+    response = _post_file(teacher_client, "notes.txt", b"x" * 50, "text/plain")
+
+    assert response.status_code == 413
+    assert seen == [11]
 
 
 def test_empty_file_is_422(teacher_client, recorder):
@@ -267,3 +289,11 @@ def test_save_failure_is_500(teacher_client, recorder):
 
     assert response.status_code == 500
     assert response.json() == {"detail": "could not save lesson"}
+
+
+def test_multipart_without_text_or_images_is_422(teacher_client, recorder, monkeypatch):
+    monkeypatch.setattr(router, "normalize_upload", lambda *args: ("", []))
+    response = _post_file(teacher_client, "scan.pdf", b"%PDF", "application/pdf")
+
+    assert response.status_code == 422
+    assert recorder.generate_calls == []

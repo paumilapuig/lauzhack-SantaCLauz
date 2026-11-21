@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 Role = Literal["student", "teacher"]
 
@@ -48,6 +48,17 @@ class CreateLessonJson(BaseModel):
     subject: str
     lesson_date: date
     source_text: str
+
+
+class CreateLessonJsonRequest(CreateLessonJson):
+    """JSON body: the text is the only content, so it must not be blank."""
+
+    @field_validator("source_text")
+    @classmethod
+    def source_text_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("source_text must not be blank")
+        return value
 
 
 class CreateLessonResponse(BaseModel):

@@ -11,11 +11,14 @@ from app.glossary.errors import InputError, TooLarge, UnsupportedType
 from app.glossary.generate import generate_glossary
 from app.glossary.openrouter_client import OpenRouterError
 from app.glossary.parser import GlossaryParseError
+from app.glossary import upload as upload_limits
 from app.glossary.upload import normalize_upload
 from app.lessons_service import LessonSaveError, create_lesson
-from app.schemas import CreateLessonJson, CreateLessonResponse
+from app.schemas import CreateLessonJson, CreateLessonJsonRequest, CreateLessonResponse
 
 router = APIRouter()
+
+MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
 LessonInput = tuple[CreateLessonJson, list[bytes]]
 
@@ -24,9 +27,9 @@ def _error(status_code: int, detail: str) -> HTTPException:
     return HTTPException(status_code=status_code, detail=detail)
 
 
-def _validated_meta(fields: dict) -> CreateLessonJson:
+def _validated_meta[M: CreateLessonJson](model: type[M], fields: dict) -> M:
     try:
-        return CreateLessonJson.model_validate(fields)
+        return model.model_validate(fields)
     except ValidationError as error:
         raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
 
@@ -36,7 +39,7 @@ async def _read_json(request: Request) -> LessonInput:
         body = await request.json()
     except ValueError as error:
         raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, "Malformed JSON body") from error
-    return _validated_meta(body if isinstance(body, dict) else {}), []
+    return _validated_meta(CreateLessonJsonRequest, body if isinstance(body, dict) else {}), []
 
 
 def _extract_upload(filename: str, content_type: str, data: bytes) -> tuple[str, list[bytes]]:
@@ -51,14 +54,21 @@ def _extract_upload(filename: str, content_type: str, data: bytes) -> tuple[str,
 
 
 async def _read_multipart(request: Request) -> LessonInput:
+    declared_size = int(request.headers.get("content-length") or 0)
+    if declared_size > upload_limits.MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES:
+        raise _error(status.HTTP_413_CONTENT_TOO_LARGE, "Upload too large")
     form = await request.form()
     upload = form.get("file")
     if not isinstance(upload, UploadFile):
         raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, "Missing file field")
-    data = await upload.read()
-    source_text, images = _extract_upload(upload.filename or "", upload.content_type or "", data)
+    data = await upload.read(upload_limits.MAX_UPLOAD_BYTES + 1)
+    source_text, images = await run_in_threadpool(
+        _extract_upload, upload.filename or "", upload.content_type or "", data
+    )
+    if not source_text.strip() and not images:
+        raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, "File has no usable content")
     fields = {key: form.get(key) for key in ("title", "subject", "lesson_date")}
-    return _validated_meta({**fields, "source_text": source_text}), images
+    return _validated_meta(CreateLessonJson, {**fields, "source_text": source_text}), images
 
 
 async def _read_input(request: Request) -> LessonInput:
@@ -84,10 +94,8 @@ async def post_lesson(
             generate_glossary,
             meta.source_text, images, settings.resolved_model(), settings.openrouter_api_key,
         )
-    except ValueError as error:
-        if isinstance(error, GlossaryParseError):
-            raise _error(status.HTTP_502_BAD_GATEWAY, "Could not parse the glossary") from error
-        raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+    except GlossaryParseError as error:
+        raise _error(status.HTTP_502_BAD_GATEWAY, "Could not parse the glossary") from error
     except OpenRouterError as error:
         raise _error(status.HTTP_502_BAD_GATEWAY, "Glossary generation failed") from error
     try:

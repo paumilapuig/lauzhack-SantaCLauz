@@ -74,3 +74,9 @@ def test_unreadable_image():
 def test_non_utf8_text():
     with pytest.raises(InputError):
         normalize_upload("a.txt", "text/plain", b"\xff\xfe\x00bad")
+
+
+def test_decompression_bomb_is_input_error(monkeypatch):
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 100)
+    with pytest.raises(InputError):
+        normalize_upload("a.png", "image/png", _png())
