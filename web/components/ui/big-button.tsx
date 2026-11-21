@@ -26,19 +26,26 @@ export function BigButton({
   const ShownIcon = saved ? Check : Icon
 
   function handleClick() {
+    if (saved) return
     onPress()
     setSaved(true)
     timer.current = setTimeout(() => setSaved(false), SAVED_MS)
   }
 
+  // aria-disabled (not disabled) keeps keyboard focus on the button while saved
   return (
-    <Button
-      onClick={handleClick}
-      disabled={saved}
-      className={`h-[72px] w-full min-w-0 flex-1 shrink gap-3 disabled:opacity-100 text-xl font-bold md:text-[22px] ${className}`}
-    >
-      <ShownIcon className="size-6" aria-hidden />
-      {saved ? "Guardado" : label}
-    </Button>
+    <>
+      <Button
+        onClick={handleClick}
+        aria-disabled={saved}
+        className={`h-[72px] w-full min-w-0 flex-1 shrink gap-3 aria-disabled:cursor-not-allowed text-xl font-bold md:text-[22px] ${className}`}
+      >
+        <ShownIcon className="size-6" aria-hidden />
+        {saved ? "Guardado" : label}
+      </Button>
+      <span role="status" className="sr-only">
+        {saved ? "Guardado" : ""}
+      </span>
+    </>
   )
 }

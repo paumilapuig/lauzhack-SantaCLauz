@@ -24,8 +24,9 @@ describe("BigButton", () => {
     fireEvent.click(button);
     fireEvent.click(button);
     expect(onPress).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("Guardado")).toBeTruthy();
-    expect(button.disabled).toBe(true);
+    expect(button.textContent).toContain("Guardado");
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByRole("status").textContent).toBe("Guardado");
   });
 
   it("restores label and enabled state after 2 s", () => {
@@ -36,6 +37,6 @@ describe("BigButton", () => {
       vi.advanceTimersByTime(2000);
     });
     expect(screen.getByText("No he entendido")).toBeTruthy();
-    expect(button.disabled).toBe(false);
+    expect(button.getAttribute("aria-disabled")).toBe("false");
   });
 });
