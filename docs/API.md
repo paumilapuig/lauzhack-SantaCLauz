@@ -62,7 +62,7 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | GET | /health | – | – | `{ "ok": true }` | A |
 | GET | /api/me | any | – | `{ "id", "email", "display_name", "role" }` | A |
 | GET | /api/lessons | any | – | `[{ "id", "title", "subject", "lesson_date" }]` newest first | A |
-| POST | /api/lessons | teacher | JSON `{ "title", "subject", "lesson_date", "source_text" }` **or** multipart `title, subject, lesson_date, file` (PDF/txt) | `{ "lesson_id", "terms": LessonTerm[] }` | B |
+| POST | /api/lessons | teacher | JSON `{ "title", "subject", "lesson_date", "source_text" }` **or** multipart `title, subject, lesson_date, file` (txt / PDF / png / jpg, max 10 MB) | `{ "lesson_id", "terms": LessonTerm[] }` | B |
 | GET | /api/lessons/{id}/class-pack | student | – | ClassPack (below) | A |
 | POST | /api/sessions | student | `{ "lesson_id" }` | `{ "session_id" }` | A |
 | POST | /api/sessions/{id}/events | student | `{ "t_sec": 12.4, "type": "word"\|"lost", "lemma": "déchet"\|null }` | `{ "ok": true, "level": int\|null }` (type `word` applies −1 and returns the new level) | A (uses B's `mastery`) |
@@ -74,6 +74,11 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | GET | /api/teacher/lessons/{id}/dashboard | teacher | – | Dashboard (below) | A (uses B's `mastery.autonomy`) |
 | GET | /api/lessons/{id}/preview | student | – | `{ "phrases": [{ "text", "audio_url": str\|null, "lemmas": [str] }] }` — `audio_url` null → client uses `speechSynthesis` (F3) | B |
 | POST | /api/lessons/{id}/preview/results | student | `{ "recognized": [lemma] }` | `{ "message": "Mañana entenderás buena parte de la clase" }` (+1 per recognised lemma) (F3) | B |
+
+`POST /api/lessons` details (owner B):
+- PDF with ≥ 200 chars of text → sent as text; otherwise the first 5 pages are rendered and sent as images (vision model). Photos are sent as images. Exactly one LLM call per lesson.
+- Invalid terms from the LLM are dropped; the 5–8 key phrases the LLM returns are **not stored** (no table; F3 only).
+- Errors: `401` no/invalid token · `403` not a teacher · `400` invalid Content-Length · `413` file > 10 MB · `415` unsupported file or content type · `422` missing fields / empty text / unreadable file · `502` LLM error or no valid term · `503` LLM not configured · `500` save failed.
 
 ### ClassPack — `GET /api/lessons/{id}/class-pack` (loaded ONCE at the start of class)
 ```json
