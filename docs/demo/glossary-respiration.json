@@ -1,0 +1,122 @@
+[
+  {
+    "lemma": "respiration cellulaire",
+    "forms": ["respiration cellulaire", "respirations cellulaires"],
+    "translation_es": "respiración celular",
+    "definition_fr": "Façon dont la cellule utilise l'oxygène pour produire de l'énergie.",
+    "transparent": true,
+    "key_phrase": "Aujourd'hui, on parle de la respiration cellulaire."
+  },
+  {
+    "lemma": "cellule",
+    "forms": ["cellule", "cellules"],
+    "translation_es": "célula",
+    "definition_fr": "Plus petite partie vivante du corps.",
+    "transparent": true,
+    "key_phrase": "Chaque cellule de notre corps a besoin d'énergie."
+  },
+  {
+    "lemma": "énergie",
+    "forms": ["énergie", "énergies"],
+    "translation_es": "energía",
+    "definition_fr": "Ce qui permet au corps de bouger et de vivre.",
+    "transparent": true,
+    "key_phrase": "Chaque cellule de notre corps a besoin d'énergie."
+  },
+  {
+    "lemma": "nourriture",
+    "forms": ["nourriture", "nourritures"],
+    "translation_es": "alimento",
+    "definition_fr": "Ce que l'on mange.",
+    "transparent": false,
+    "key_phrase": "Cette énergie vient de la nourriture, surtout du glucose."
+  },
+  {
+    "lemma": "glucose",
+    "forms": ["glucose"],
+    "translation_es": "glucosa",
+    "definition_fr": "Sucre qui donne de l'énergie aux cellules.",
+    "transparent": true,
+    "key_phrase": "Cette énergie vient de la nourriture, surtout du glucose."
+  },
+  {
+    "lemma": "mitochondrie",
+    "forms": ["mitochondrie", "mitochondries"],
+    "translation_es": "mitocondria",
+    "definition_fr": "Petite partie de la cellule qui fabrique l'énergie.",
+    "transparent": true,
+    "key_phrase": "Dans la cellule, il y a de petites usines : les mitochondries."
+  },
+  {
+    "lemma": "oxygène",
+    "forms": ["oxygène"],
+    "translation_es": "oxígeno",
+    "definition_fr": "Gaz de l'air dont le corps a besoin pour vivre.",
+    "transparent": true,
+    "key_phrase": "Les mitochondries utilisent l'oxygène pour transformer le glucose."
+  },
+  {
+    "lemma": "libérer",
+    "forms": ["libérer", "libère", "libèrent", "libéré", "libérée", "libérés"],
+    "translation_es": "liberar",
+    "definition_fr": "Faire sortir, laisser partir.",
+    "transparent": true,
+    "key_phrase": "Cette réaction va libérer de l'énergie pour nos muscles."
+  },
+  {
+    "lemma": "déchet",
+    "forms": ["déchet", "déchets"],
+    "translation_es": "desecho",
+    "definition_fr": "Ce qui reste et ne sert plus.",
+    "transparent": false,
+    "key_phrase": "Elle produit aussi des déchets : de l'eau et du dioxyde de carbone."
+  },
+  {
+    "lemma": "dioxyde de carbone",
+    "forms": ["dioxyde de carbone"],
+    "translation_es": "dióxido de carbono",
+    "definition_fr": "Gaz que l'on rejette quand on expire.",
+    "transparent": true,
+    "key_phrase": "Elle produit aussi des déchets : de l'eau et du dioxyde de carbone."
+  },
+  {
+    "lemma": "rejeter",
+    "forms": ["rejeter", "rejette", "rejettent", "rejetons", "rejetez", "rejeté", "rejetés"],
+    "translation_es": "expulsar",
+    "definition_fr": "Faire sortir du corps.",
+    "transparent": false,
+    "key_phrase": "Le sang transporte ces déchets jusqu'aux poumons, et nous les rejetons quand on expire."
+  },
+  {
+    "lemma": "dégager",
+    "forms": ["dégager", "dégage", "dégagent", "dégagé", "dégagée"],
+    "translation_es": "desprender",
+    "definition_fr": "Produire et laisser sortir (de la chaleur, un gaz).",
+    "transparent": false,
+    "key_phrase": "Une partie de l'énergie se dégage sous forme de chaleur : c'est pour ça qu'on a chaud quand on court."
+  },
+  {
+    "lemma": "chaleur",
+    "forms": ["chaleur", "chaleurs"],
+    "translation_es": "calor",
+    "definition_fr": "Ce qui rend chaud.",
+    "transparent": false,
+    "key_phrase": "Une partie de l'énergie se dégage sous forme de chaleur : c'est pour ça qu'on a chaud quand on court."
+  },
+  {
+    "lemma": "essoufflé",
+    "forms": ["essoufflé", "essoufflée", "essoufflés", "essoufflées"],
+    "translation_es": "sin aliento",
+    "definition_fr": "Qui respire vite et fort après un effort.",
+    "transparent": false,
+    "key_phrase": "Quand on court vite, on est essoufflé, parce que les muscles demandent plus d'oxygène."
+  },
+  {
+    "lemma": "fournir",
+    "forms": ["fournir", "fournit", "fournissent", "fourni", "fournie"],
+    "translation_es": "proporcionar",
+    "definition_fr": "Donner ce qui est nécessaire.",
+    "transparent": false,
+    "key_phrase": "Retenez bien : la respiration cellulaire fournit l'énergie à toutes nos cellules."
+  }
+]
