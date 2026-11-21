@@ -72,6 +72,12 @@ describe("createRecognizer", () => {
     expect(onSpeechStart).toHaveBeenCalledWith(42);
   });
 
+  it("ignores speechstart when no onSpeechStart handler is given", () => {
+    FakeRecognition.instances = [];
+    createRecognizer({ Ctor: FakeRecognition as never, onResult: vi.fn(), onStatus: vi.fn() }).start();
+    expect(() => FakeRecognition.instances[0].onspeechstart?.()).not.toThrow();
+  });
+
   it("restarts after an unexpected end", () => {
     const { fake, onStatus } = setup();
     fake.onend?.();

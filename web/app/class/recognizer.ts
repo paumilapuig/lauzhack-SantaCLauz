@@ -28,7 +28,7 @@ export type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 export interface RecognizerOptions {
   Ctor: SpeechRecognitionCtor;
   onResult(r: { finalText: string; interimText: string; at: number }): void;
-  onSpeechStart(at: number): void;
+  onSpeechStart?(at: number): void;
   onStatus(s: RecognizerStatus, detail?: string): void;
   now?: () => number;
 }
@@ -69,7 +69,7 @@ export function createRecognizer(opts: RecognizerOptions): { start(): void; stop
   };
 
   recognition.onstart = () => opts.onStatus("listening");
-  recognition.onspeechstart = () => opts.onSpeechStart(now());
+  recognition.onspeechstart = () => opts.onSpeechStart?.(now());
   recognition.onresult = (event) => opts.onResult({ ...splitResults(event), at: now() });
   recognition.onerror = (event) => {
     if (!FATAL_ERRORS.has(event.error)) return;

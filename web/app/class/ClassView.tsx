@@ -5,14 +5,15 @@ import { BigButton } from "@/components/ui/big-button";
 import { Button } from "@/components/ui/button";
 import { createAudioRingRecorder } from "@/lib/audioRingRecorder";
 import { getClassApi, type ClassApi, type MockClassApi, type SavedItem } from "./classApi";
+import { createClassSession, type ClassSession } from "./classSession";
 import { createClassButtons, type ButtonResult } from "./classButtons";
 import { MockSavedList } from "./MockSavedList";
 import { createRecognizer, type SpeechRecognitionCtor } from "./recognizer";
 import { createTranscriptBuffer } from "./transcriptBuffer";
 
 const LESSON_ID = "demo-lesson";
-const LOST_WINDOW_SEC = 30;
-const TRANSCRIPT_KEEP_SEC = 60;
+const LOST_WINDOW_SEC = 60;
+const TRANSCRIPT_KEEP_SEC = 90;
 
 type Phase = "idle" | "running" | "error";
 type Buttons = ReturnType<typeof createClassButtons>;
@@ -37,57 +38,60 @@ export function ClassView() {
   const [buttons, setButtons] = useState<Buttons>();
   const [saved, setSaved] = useState<SavedItem[]>([]);
   const apiRef = useRef<ClassApi>(undefined);
-  const stopAll = useRef<() => void>(() => {});
+  const sessionRef = useRef<ClassSession>(undefined);
 
-  useEffect(() => () => stopAll.current(), []);
+  useEffect(() => {
+    const session = createClassSession();
+    sessionRef.current = session;
+    return () => session.dispose();
+  }, []);
 
   function fail(text: string) {
+    sessionRef.current?.stop();
     setMessage(text);
     setPhase("error");
   }
 
   async function start() {
+    const session = sessionRef.current;
+    if (!session) return;
     const Ctor = findRecognitionCtor();
     if (!Ctor) return fail("Este navegador no admite reconocimiento de voz. Usa Chrome.");
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      return fail("No se pudo acceder al micrófono. Permite el acceso y vuelve a intentarlo.");
-    }
     const api = (apiRef.current ??= getClassApi());
-    const sessionId = await api.startSession(LESSON_ID).catch(() => undefined);
-    if (!sessionId) {
-      stream.getTracks().forEach((track) => track.stop());
-      return fail("No se pudo iniciar la clase.");
-    }
-
     const t0 = performance.now();
     const nowSec = () => (performance.now() - t0) / 1000;
-    const transcript = createTranscriptBuffer({ keepSec: TRANSCRIPT_KEEP_SEC });
-    const recorder = createAudioRingRecorder({ stream, now: nowSec });
-    const recognizer = createRecognizer({
-      Ctor,
-      now: nowSec,
-      onResult({ finalText, interimText, at }) {
-        if (finalText.trim()) transcript.add(finalText.trim(), at);
-        transcript.prune(at);
-        setLiveLine(finalText || interimText);
-      },
-      onSpeechStart() {},
-      onStatus(status, detail) {
-        if (status === "error") fail(`Error de reconocimiento de voz (${detail}).`);
+
+    const result = await session.start({
+      openStream: () => navigator.mediaDevices.getUserMedia({ audio: true }),
+      openSession: () => api.startSession(LESSON_ID),
+      assemble(stream, sessionId) {
+        const transcript = createTranscriptBuffer({ keepSec: TRANSCRIPT_KEEP_SEC });
+        const recorder = createAudioRingRecorder({ stream, now: nowSec });
+        const recognizer = createRecognizer({
+          Ctor,
+          now: nowSec,
+          onResult({ finalText, interimText, at }) {
+            if (finalText.trim()) transcript.add(finalText.trim(), at);
+            transcript.prune(at);
+            setLiveLine(finalText || interimText);
+          },
+          onStatus(status, detail) {
+            if (status === "error") fail(`Error de reconocimiento de voz (${detail}).`);
+          },
+        });
+        const value = createClassButtons({ api, recorder, transcript, sessionId, nowSec, lostWindowSec: LOST_WINDOW_SEC });
+        return { recorder, recognizer, value };
       },
     });
-    recorder.start();
-    recognizer.start();
-    stopAll.current = () => {
-      recognizer.stop();
-      recorder.stop();
-      stream.getTracks().forEach((track) => track.stop());
-    };
-    setButtons(createClassButtons({ api, recorder, transcript, sessionId, nowSec, lostWindowSec: LOST_WINDOW_SEC }));
-    setPhase("running");
+
+    if (result.status === "started") {
+      setButtons(result.value);
+      setPhase("running");
+    } else if (result.status === "stream-failed") {
+      fail("No se pudo acceder al micrófono. Permite el acceso y vuelve a intentarlo.");
+    } else if (result.status === "session-failed") {
+      fail("No se pudo iniciar la clase.");
+    }
   }
 
   function press(action: keyof Buttons) {
