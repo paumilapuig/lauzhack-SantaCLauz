@@ -31,9 +31,10 @@ def test_uppercase_lemma_and_forms_are_lowercased():
     assert term.forms == ["cellule", "cellules"]
 
 
-def test_lemma_not_in_forms_is_rejected():
-    with pytest.raises(ValidationError):
-        LessonTermInput(**make_term(forms=["cellules"]))
+def test_lemma_missing_from_forms_is_added_first():
+    term = LessonTermInput(**make_term(forms=["cellules"]))
+
+    assert term.forms == ["cellule", "cellules"]
 
 
 @pytest.mark.parametrize("count", [4, 9])
