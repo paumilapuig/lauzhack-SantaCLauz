@@ -106,13 +106,21 @@ Amplada de contingut: màx. 960 px centrada, marges laterals 24 px (16 px a mòb
 - Barra inferior fixa amb els 2 botons grans (§5). Els subtítols tenen `padding-bottom` per no quedar mai tapats.
 - Res més a la pantalla: ni menú ni comptadors.
 
+### Casa (`/home`, `/progress`) — més rica que la classe
+A casa no hi ha res que distregui de la classe, així que aquestes pantalles poden tenir més caràcter. Direcció: **el quadern de classe al vespre** (paper pautat, fitxes de vocabulari, retolador fluorescent).
+- **Signatura**: el traç de retolador ámbar (`Highlight`, `--marker` `#F8D77A`; sobre fosc `--marker-strong` `#F2B33D`) darrere les paraules clau. Només a casa.
+- **Lletra de boli**: Kalam (`NotebookFont` + `HAND`), només per a glosses castellanes i petites notes, mai per a text llarg.
+- Carcassa `StudentPage`: nav en píndola (`StudentNav`, actiu en tinta), data a la dreta, `h1` 40/52 px + entradeta.
+- Ombres: només una suau i neutra a les targetes grans; mai de color.
+
 ### `/home` — alumna, a casa (castellà)
-- `h1` "Para repasar". Llista de targetes de clip: títol de lliçó, hora (`meta`), transcripció curta amb els termes en `Word` estat groc, botó `default` "Escuchar" (icona `Play`).
-- Dins d'un clip: reproductor nadiu (`<audio controls>`), la transcripció tocable, i les 3 activitats com a passos numerats 1–2–3 (una targeta per pas, el pas actiu amb vora `--primary`). Sense temporitzadors.
-- Paraula superada: es mostra un instant sense subratllat amb el text "Ya no necesitas ayuda para *déchet*". Sense confeti.
+- **Clip** (`ClipCard`): franja fosca (tinta) amb títol, durada, **ona d'àudio** (`Waveform`, barres deterministes) amb la paraula marcada en ámbar i la seva etiqueta a boli; botó "Escuchar" que omple l'ona mentre sona. A sota, en paper, "Lo que dijo tu profe" amb els termes en `Word` groc.
+- **Paraules** (`WordCard`): fitxa de vocabulari pautada (línia cada 32 px, marge vermell), paraula 34 px amb retolador, traducció a boli en `--lost`, definició FR; peu amb "3 actividades" + "Practicar".
+- **Pràctica** (`PracticeFlow`): capçalera de fitxa, barra de 3 passos (fet = cercle `--primary` amb check), opcions com a fitxes grans (80 px), pas 3 amb micro rodó de 96 px. Sense temporitzadors ni confeti.
 
 ### `/progress` — alumna (castellà)
-- `h1` "Tu progreso". Llista vertical de `ProgressMessage`. Res més.
+- Hero fosc amb la xifra de la setmana en gran (120–160 px) subratllada amb retolador i la frase sencera a sota (`ProgressHero`). És un recompte de paraules, mai un %.
+- La resta de missatges en targetes de dues columnes amb una nota a boli ("ya es tuya", "para mañana").
 
 ### `/teacher` — profe (UI en francès)
 - Aquí sí hi ha xifres. Layout de 2 columnes ≥ 1024 px, 1 columna a sota.

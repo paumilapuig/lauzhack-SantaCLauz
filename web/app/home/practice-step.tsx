@@ -1,41 +1,54 @@
-import { Check } from "lucide-react";
+import { Check, Lightbulb } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { cn } from "cn";
 
-export function StepCard({
-  number,
-  title,
-  active,
-  done = false,
-  children,
-}: {
-  number: number;
-  title: string;
-  active: boolean;
-  done?: boolean;
-  children?: ReactNode;
-}) {
+export function StepRail({ steps, current }: { steps: string[]; current: number }) {
+  return (
+    <ol aria-label="Pasos" className="flex items-center gap-2">
+      {steps.map((title, i) => {
+        const done = i < current;
+        return (
+          <li key={title} className="flex flex-1 items-center gap-2 last:flex-none">
+            <span
+              aria-current={i === current ? "step" : undefined}
+              className={cn(
+                "flex size-10 shrink-0 items-center justify-center rounded-full font-mono text-base font-bold transition-colors",
+                done && "bg-primary text-primary-foreground",
+                i === current && "bg-card text-primary ring-2 ring-primary",
+                i > current && "bg-muted text-muted-foreground",
+              )}
+            >
+              {done ? <Check aria-hidden className="size-5" /> : i + 1}
+              <span className="sr-only">{done ? `${title}, completado` : title}</span>
+            </span>
+            {i < steps.length - 1 && (
+              <span aria-hidden className={cn("h-0.5 flex-1 rounded-full", done ? "bg-primary" : "bg-border")} />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+export function StepPanel({ number, title, hint, children }: { number: number; title: string; hint: string; children: ReactNode }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
   useEffect(() => {
-    if (active && !firstRender.current) heading.current?.focus();
+    if (!firstRender.current) heading.current?.focus();
     firstRender.current = false;
-  }, [active]);
+  }, [number]);
 
   return (
-    <Card className={active ? "border-2 border-primary px-4" : "px-4 opacity-70"}>
-      <h3 ref={heading} tabIndex={-1} className="flex items-center gap-2 text-lg font-bold">
-        {done && (
-          <>
-            <Check aria-hidden className="size-5 text-primary" />
-            <span className="sr-only">completado</span>
-          </>
-        )}
-        {number}. {title}
-      </h3>
-      {active && children}
-    </Card>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <h3 ref={heading} tabIndex={-1} className="text-2xl font-bold outline-none">
+          {number}. {title}
+        </h3>
+        <p className="text-lg text-muted-foreground">{hint}</p>
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -52,15 +65,26 @@ export function OptionsStep({
 }) {
   return (
     <>
-      <div className="text-lg">{prompt}</div>
-      <div className="flex flex-col gap-2">
+      {prompt}
+      <div className="grid gap-3 sm:grid-cols-3">
         {options.map((option) => (
-          <Button key={option} variant="outline" lang="fr" className="min-h-11 text-lg" onClick={() => onPick(option)}>
+          <button
+            key={option}
+            type="button"
+            lang="fr"
+            onClick={() => onPick(option)}
+            className="min-h-20 rounded-2xl border-2 border-border bg-card px-4 text-2xl font-bold transition-[transform,border-color,background-color] hover:-translate-y-0.5 hover:border-primary active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
             {option}
-          </Button>
+          </button>
         ))}
       </div>
-      {retry && <p role="status">Casi. Prueba otra vez.</p>}
+      {retry && (
+        <p role="status" className="flex items-center gap-2 rounded-xl bg-marker/40 px-4 py-3 text-lg">
+          <Lightbulb aria-hidden className="size-5 text-word-yellow" />
+          Casi. Prueba otra vez.
+        </p>
+      )}
     </>
   );
 }
