@@ -36,7 +36,7 @@ export function ClipCard({ clip, saved, translate, onToggle }: Props) {
   return (
     <article className="flex flex-col gap-4 py-6">
       <div className="flex flex-col gap-3">
-        <p className="text-[15px] text-label-secondary">
+        <p className="text-[13px] leading-[18px] text-label-secondary">
           <span lang="fr" className="font-semibold text-label">{clip.lesson_title}</span> · Clip de clase · {time}
         </p>
         <ClipTranscript transcript={clip.transcript} saved={saved} translate={translate} onToggle={onToggle} char={playback.char} />
@@ -47,7 +47,7 @@ export function ClipCard({ clip, saved, translate, onToggle }: Props) {
           type="button"
           onClick={playback.toggle}
           aria-label={playback.playing ? "Pausar" : "Escuchar"}
-          className="flex size-10 shrink-0 touch-manipulation items-center justify-center rounded-full bg-primary text-primary-foreground transition-[transform,opacity] hover:opacity-90 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-full bg-primary text-primary-foreground transition-[transform,opacity] hover:opacity-90 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           {playback.playing ? (
             <Pause aria-hidden className="size-5 fill-current" />

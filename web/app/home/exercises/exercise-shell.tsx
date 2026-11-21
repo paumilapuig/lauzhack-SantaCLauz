@@ -48,13 +48,7 @@ function EndScreen({ results, onExit }: { results: ExerciseResult[]; onExit: () 
 
 export function ExerciseShell({ title, current, total, onExit, results, children }: Props) {
   return (
-    <section className="flex flex-col gap-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-[21px] font-semibold tracking-tight text-label">{title}</h1>
-        <button type="button" onClick={onExit} className={cn("text-[17px] font-medium text-primary", FOCUS)}>
-          Salir
-        </button>
-      </header>
+    <section aria-label={title} className="flex flex-col gap-8">
       <ProgressSegments current={results ? total : current} total={total} />
       {results ? <EndScreen results={results} onExit={onExit} /> : children}
     </section>

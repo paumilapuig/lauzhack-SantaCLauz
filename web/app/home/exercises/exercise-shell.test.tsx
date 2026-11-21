@@ -8,13 +8,12 @@ afterEach(cleanup)
 const base = { title: "Tarjetas", current: 1, total: 6, onExit: vi.fn() }
 
 describe("ExerciseShell", () => {
-  it("shows title, children and Salir calls onExit", () => {
-    const onExit = vi.fn()
-    render(<ExerciseShell {...base} onExit={onExit}><p>contenido</p></ExerciseShell>)
-    expect(screen.getByText("Tarjetas")).toBeTruthy()
+  it("labels the region, shows children, renders no h1 or own exit", () => {
+    render(<ExerciseShell {...base}><p>contenido</p></ExerciseShell>)
+    expect(screen.getByRole("region", { name: "Tarjetas" })).toBeTruthy()
     expect(screen.getByText("contenido")).toBeTruthy()
-    fireEvent.click(screen.getByRole("button", { name: "Salir" }))
-    expect(onExit).toHaveBeenCalled()
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Salir" })).toBeNull()
   })
 
   it("end screen lists passed and failed words, no digits, Volver exits", () => {

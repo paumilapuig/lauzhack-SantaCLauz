@@ -22,10 +22,19 @@ describe("HomeReview", () => {
     await waitFor(() => expect(screen.getByLabelText("Quitar mitochondries")).toBeTruthy())
   })
 
-  it("finishing a mode saves practice per word and hides the page title while open", async () => {
+  it("opens a mode in a dialog over the page and Cerrar closes it without saving", async () => {
     render(<HomeReview />)
     fireEvent.click(await screen.findByRole("button", { name: /Tarjetas/ }))
-    expect(screen.queryByRole("heading", { level: 1, name: "Para repasar" })).toBeNull()
+    expect(screen.getByRole("dialog", { name: "Tarjetas" })).toBeTruthy()
+    expect(screen.getByRole("heading", { level: 1, name: "Para repasar", hidden: true })).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+    expect(savePractice).not.toHaveBeenCalled()
+  })
+
+  it("finishing a mode saves practice per word", async () => {
+    render(<HomeReview />)
+    fireEvent.click(await screen.findByRole("button", { name: /Tarjetas/ }))
     while (screen.queryByText("Hecho") === null) {
       fireEvent.click(screen.getByText("Toca para ver"))
       fireEvent.click(screen.getByText("Lo sabía"))

@@ -104,6 +104,20 @@
   --separator: rgb(0 0 0 / 0.1);
 }
 
+/* student pages: pure white in light mode (systemBackground), not the class page's paper */
+.student { --background: #FFFFFF; --card: #FFFFFF; }
+
+@media (prefers-color-scheme: dark) {
+  .student {
+    --background: #000000; --card: #1C1C1E; --foreground: #F5F5F7;
+    --label: #F5F5F7; --label-secondary: #98989D; --muted-foreground: #98989D;
+    --fill: #1C1C1E; --fill-strong: #2C2C2E; --separator: rgb(255 255 255 / 0.15); --border: rgb(255 255 255 / 0.15);
+    --primary: #5EC4CF; --primary-foreground: #00191C; --ring: #5EC4CF; --accent: #10343A;
+    --word-yellow: #F2C14E; --word-yellow-bg: #3A2E0A; --word-orange: #FF8A5B; --marker-strong: #F2B33D;
+    color-scheme: dark;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

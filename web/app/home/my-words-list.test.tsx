@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { MyWord } from "./types"
 import { MyWordsList } from "./my-words-list"
@@ -10,7 +10,10 @@ const words: MyWord[] = [
   { ...base, lemma: "cellule", translation_es: "célula" },
 ]
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe("MyWordsList", () => {
   it("offers Quitar for every word", () => {
@@ -19,11 +22,28 @@ describe("MyWordsList", () => {
     expect(screen.getByLabelText("Quitar cellule")).toBeTruthy()
   })
 
-  it("calls onRemove with the lemma", () => {
+  it("calls onRemove with the lemma after 5 s", () => {
+    vi.useFakeTimers()
     const onRemove = vi.fn()
     render(<MyWordsList words={words} onRemove={onRemove} />)
     fireEvent.click(screen.getByLabelText("Quitar cellule"))
+    expect(screen.getByText("Quitada")).toBeTruthy()
+    act(() => void vi.advanceTimersByTime(4999))
+    expect(onRemove).not.toHaveBeenCalled()
+    act(() => void vi.advanceTimersByTime(1))
+    expect(onRemove).toHaveBeenCalledTimes(1)
     expect(onRemove).toHaveBeenCalledWith("cellule")
+  })
+
+  it("Deshacer keeps the word and never calls onRemove", () => {
+    vi.useFakeTimers()
+    const onRemove = vi.fn()
+    render(<MyWordsList words={words} onRemove={onRemove} />)
+    fireEvent.click(screen.getByLabelText("Quitar cellule"))
+    fireEvent.click(screen.getByText("Deshacer"))
+    act(() => void vi.advanceTimersByTime(10000))
+    expect(onRemove).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("Quitar cellule")).toBeTruthy()
   })
 
   it("shows the empty state", () => {

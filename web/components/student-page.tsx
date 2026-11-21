@@ -1,7 +1,6 @@
 import { Inter } from "next/font/google"
 import type { ReactNode } from "react"
 import { StudentNav } from "./student-nav"
-import { TodayLabel } from "./today-label"
 
 // SF Pro on Apple devices, Inter (closest free cut) everywhere else
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -10,18 +9,15 @@ const SYSTEM =
 
 export function StudentPage({ title, lead, children }: { title?: string; lead?: string; children: ReactNode }) {
   return (
-    <div className={`${inter.variable} ${SYSTEM} min-h-dvh w-full bg-white text-label antialiased`}>
-      <div className="mx-auto w-full max-w-[1180px] px-5 pb-24 md:px-8">
-        <header className="flex h-14 items-center justify-between gap-4 border-b border-separator">
-          <StudentNav />
-          <TodayLabel />
-        </header>
-        <main className="flex flex-col gap-10 pt-8 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
+    <div className={`${inter.variable} ${SYSTEM} student min-h-dvh w-full bg-background text-label antialiased`}>
+      <div className="mx-auto w-full max-w-[1180px] px-5 pb-28 md:px-8 md:pb-16">
+        <StudentNav />
+        <main className="flex flex-col gap-10 pt-6 md:pt-10 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
           {title && (
-          <div className="flex flex-col gap-2">
-            <h1 className="text-balance text-[32px] leading-[1.08] font-semibold tracking-[-0.025em] md:text-[40px]">{title}</h1>
-            <p className="text-[17px] leading-snug text-label-secondary">{lead}</p>
-          </div>
+            <div className="flex flex-col gap-2">
+              <h1 className="text-balance text-[34px] leading-[41px] font-bold tracking-[-0.02em]">{title}</h1>
+              <p className="text-[15px] leading-[20px] text-label-secondary">{lead}</p>
+            </div>
           )}
           {children}
         </main>

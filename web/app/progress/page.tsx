@@ -11,7 +11,7 @@ export default async function ProgressPage() {
   return (
     <StudentPage title="Tu progreso" lead="Cada palabra que dominas deja de necesitar ayuda en clase">
       {hero && <ProgressHero message={hero} />}
-      <ul className="-mt-12 flex flex-col divide-y divide-separator">
+      <ul className="-mt-6 flex flex-col divide-y divide-separator">
         {rest.map((message) => (
           <li key={message.kind}>
             <ProgressMessage message={message} />

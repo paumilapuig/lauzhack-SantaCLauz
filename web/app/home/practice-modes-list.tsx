@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react"
+import { ChevronRight, type LucideIcon } from "lucide-react"
 import type { Need } from "./usable-words"
 
 export type PracticeModeItem = {
@@ -17,7 +17,7 @@ type Props = {
 
 export function PracticeModesList({ modes, wordCount, onOpen }: Props) {
   return (
-    <ul className="grid grid-cols-2 gap-3 pt-4">
+    <ul className="divide-y divide-separator">
       {modes.map((mode) => {
         const { id, name, icon: Icon, minWords } = mode
         const disabled = (typeof wordCount === "function" ? wordCount(mode) : wordCount) < minWords
@@ -29,13 +29,16 @@ export function PracticeModesList({ modes, wordCount, onOpen }: Props) {
               aria-disabled={disabled}
               title={disabled ? reason : undefined}
               onClick={() => !disabled && onOpen(id)}
-              className={`flex min-h-16 w-full items-center gap-3 rounded-xl bg-fill px-3 text-left transition-colors hover:bg-fill-strong ${disabled ? "opacity-50" : ""}`}
+              className={`flex min-h-11 w-full items-center gap-3 py-2 text-left ${disabled ? "opacity-40" : ""}`}
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-primary text-white">
-                <Icon className="size-4" aria-hidden />
+              <span className="flex size-[29px] shrink-0 items-center justify-center rounded-[7px] bg-primary text-primary-foreground">
+                <Icon className="size-[18px]" aria-hidden />
               </span>
-              <span className="text-[15px] font-semibold">{name}</span>
-              {disabled && <span className="sr-only">{reason}</span>}
+              <span className="min-w-0 flex-1">
+                <span className="block text-[17px] leading-[22px]">{name}</span>
+                {disabled && <span className="block text-[13px] leading-[18px] text-label-secondary">{reason}</span>}
+              </span>
+              <ChevronRight aria-hidden className="size-4 shrink-0 text-label-secondary" />
             </button>
           </li>
         )

@@ -11,11 +11,11 @@ const ICONS = {
 export function ProgressMessage({ message }: { message: Message }) {
   const Icon = ICONS[message.kind]
   return (
-    <article className="flex items-center gap-4 py-5">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-primary">
-        <Icon aria-hidden="true" className="size-[22px] text-primary-foreground" />
+    <article className="flex min-h-11 items-center gap-3 py-2.5">
+      <span className="flex size-[29px] shrink-0 items-center justify-center rounded-[7px] bg-primary">
+        <Icon aria-hidden="true" className="size-[18px] text-primary-foreground" />
       </span>
-      <h2 className="text-[19px] leading-snug font-semibold tracking-[-0.01em]">{message.text}</h2>
+      <h2 className="text-[17px] leading-[22px] font-normal">{message.text}</h2>
     </article>
   )
 }

@@ -106,26 +106,22 @@ Amplada de contingut: màx. 960 px centrada, marges laterals 24 px (16 px a mòb
 - Barra inferior fixa amb els 2 botons grans (§5). Els subtítols tenen `padding-bottom` per no quedar mai tapats.
 - Res més a la pantalla: ni menú ni comptadors.
 
-### Casa (`/home`, `/progress`) — més rica que la classe
-Direcció: **pulcre, estil Apple**. Poques caixes: el contingut va directament sobre blanc, separat per espai i línies fines. La riquesa és a la tipografia i a l'ona d'àudio, no a la decoració.
-- **Lletra**: la del sistema (SF Pro a Apple), Inter de reserva (`StudentPage`). Títols semibold amb tracking negatiu (−0.025em a 56 px); text 17–21 px.
-- **Colors** (només casa): `--label` `#1D1D1F`, `--label-secondary` `#6E6E73` (4.8:1 sobre blanc), `--fill` `#F5F5F7` i `--fill-strong` `#E8E8ED` per a botons i pistes, `--separator` negre al 10 %. Accent: `--primary` (verd petroli). Fons blanc pur.
-- **Formes**: res de vores ni ombres a les seccions. Radi només a controls: píndola (botons), 12 px (opcions), 10 px (control segmentat, icones).
-- **Navegació**: control segmentat d'iOS (`StudentNav`), data a la dreta, línia fina a sota.
+### Casa (`/home`, `/progress`) — Apple HIG
+Revisat amb la skill github.com/dickwu/apple-design-skill (HIG d'Apple: `segmented-controls`, `tab-bars`, `color`, `typography`, `layout`, `lists-and-tables`, `buttons`). Especificació: `docs/specs/home-apple-hig.md`.
+- **Contenidor `.student`** (`StudentPage`): fons blanc pur en clar; **mode fosc** amb `prefers-color-scheme` (fons #000, `--label` #F5F5F7, `--label-secondary` #98989D 7.3:1, `--primary` #5EC4CF amb text #00191C, `--word-yellow` #F2C14E). Mai `bg-white`/`text-white` dins de casa.
+- **Lletra**: la del sistema (SF Pro a Apple), Inter de reserva. Escala HIG: Large Title 34, Title 2 22, Title 3 20, Headline/Body 17, Subhead 15, Footnote 13; lectura de la transcripció 20 px.
+- **Navegació = barra de pestanyes** (`StudentNav`, "Repasar" / "Progreso"): al mòbil fixa a baix (icona sobre etiqueta, desenfocament només en aquesta capa flotant); des de `md`, càpsula centrada a dalt. Les seccions de l'app no van en control segmentat.
+- **Formes**: res de vores ni ombres a les seccions; radi només a controls i a la fulla (modal).
 
 ### `/home` — alumna, a casa (castellà)
-- **Layout compacte**: ≥ 1024 px dues columnes (clips a l'esquerra; a la dreta, fixa, "Tus palabras" i "Practicar", 360 px); a sota, una columna en aquest ordre. Contenidor 1180 px, h1 32–40 px.
-- **Seccions**: títol 22 px + recompte en gris, línia fina, llista amb separadors (`divide-separator`).
-- **Clip** (`ClipCard`): meta ("La respiration cellulaire · Clip de clase · 22:10") i **la transcripció primer** (19 px, termes en `Word` groc). A sota, el reproductor: botó rodó play/pausa (40 px, `--primary`) i l'**ona d'àudio** fina (`Waveform`, barres de 2 px; la part reproduïda en tinta; la paraula marcada en ámbar `--marker-strong`) amb capçal `--primary`, temps transcorregut / total i arrossegable (range invisible a sobre, fletxes del teclat).
-- **Karaoke** (`ClipTranscript` + `usePlayback`): la paraula que sona es posa en negreta (traç fi del mateix color, sense canviar l'amplada), el que encara no ha sonat en `--label-secondary`. Temps per paraula: línia de temps per síl·labes i pauses (`timeline` a `karaoke.ts`) que arrenca quan la veu comença de debò (`onstart`) i es reajusta amb cada paraula que la veu notifica. Es prefereix una veu francesa local (les de xarxa no notifiquen paraules).
-- **Marcar paraules**: només als clips de casa (a classe no es marca res); tocar una paraula de la transcripció la desa (groc) i torna a tocar-la la treu; les paraules sense traducció (articles, pronoms) no es toquen.
-- **Tus palabras** (`MyWordsList`): files compactes amb separador, paraula 19 px i traducció en groc al costat; totes es poden treure ("Quitar").
-- **Practicar** (`PracticeModesList`): 7 modes (Tarjetas, Parejas, Dictado, Letras, Ordena la frase, ¿Verdadero o falso?, Paso a paso) en graella de 2 columnes de fitxes grises (`--fill`); icona blanca en requadre `--primary` de 32 px i el nom, sense descripció; deshabilitat (opacitat, `title` amb el motiu) si hi ha poques paraules. El mode obert substitueix tota la pàgina (`ExerciseShell`: títol, "Salir", barra de segments, pantalla final sense números).
-- **Pràctica** (`PracticeFlow`): capçalera amb la paraula 40 px i "Salir" en text accent; barra de 3 segments fins; "Paso N de 3" + títol 28 px; opcions com a botons grisos de 64 px; pas 3 amb micro rodó de 80 px. Sense temporitzadors ni confeti.
+- **Layout**: ≥ 1024 px dues columnes (clips; a la dreta, fixa, "Tus palabras" i "Practicar", 360 px); a sota, una columna.
+- **Clip** (`ClipCard`): meta en Footnote, **la transcripció primer** (karaoke: la paraula que sona en negreta amb traç fi, el que falta en gris; temps per síl·labes i pauses, arrenca amb `onstart` de la veu i es reajusta amb cada paraula notificada), després play/pausa 44 px i l'ona fina amb capçal, temps i arrossegable.
+- **Marcar paraules**: només als clips de casa (a classe no es marca res); tocar = traducció + es desa (groc); tornar a tocar = es treu.
+- **Tus palabras**: files de 44 px (paraula + traducció en groc), botó X amb `aria-label`; treure mostra "Quitada · Deshacer" 5 s abans d'esborrar (si surts de la pàgina, s'esborra igualment).
+- **Practicar**: llista estil Ajustes (icona 29 px en `--primary`, nom, `>`). El mode s'obre en una **fulla modal** (`Dialog`): pantalla completa al mòbil, centrada (720 px) des de `md`; títol + "Cerrar"; Esc tanca sense desar. Acció principal amb estil prominent (`bg-primary`). Pantalla final sense números.
 
 ### `/progress` — alumna (castellà)
-- Resum tipus Apple: "Esta semana" en accent, la xifra a 112–160 px (recompte de paraules, mai un %) i la frase sencera a sota (`ProgressHero`).
-- La resta de missatges com a files amb una icona en quadrat accent de 40 px (estil Ajustes).
+- "Esta semana" en accent, la xifra a 96–120 px (recompte, mai un %), la frase en Title 2; la resta com a files estil Ajustes.
 
 ### `/teacher` — profe (UI en francès)
 - Aquí sí hi ha xifres. Layout de 2 columnes ≥ 1024 px, 1 columna a sota.
