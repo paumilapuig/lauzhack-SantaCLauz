@@ -17,9 +17,21 @@ const FAKE_REVIEW: HomeReview = {
       created_at: "2026-11-21T21:10:00Z",
       t_start: 0.0,
       t_end: 30.0,
-      transcript: "… elle produit aussi des déchets …",
+      transcript:
+        "Les mitochondries utilisent l'oxygène pour transformer le glucose. Cette réaction va libérer de l'énergie pour nos muscles. Elle produit aussi des déchets : de l'eau et du dioxyde de carbone.",
       audio_url: "https://…signed…",
       terms: ["déchet", "dioxyde de carbone"],
+    },
+    {
+      id: "c2…",
+      lesson_title: "La respiration cellulaire",
+      created_at: "2026-11-21T21:14:00Z",
+      t_start: 30.0,
+      t_end: 60.0,
+      transcript:
+        "Le sang transporte ces déchets jusqu'aux poumons, et nous les rejetons quand on expire. Une partie de l'énergie se dégage sous forme de chaleur : c'est pour ça qu'on a chaud quand on court.",
+      audio_url: "https://…signed…",
+      terms: ["déchet", "chaleur"],
     },
   ],
   words_to_practice: [
@@ -30,6 +42,22 @@ const FAKE_REVIEW: HomeReview = {
       key_phrase: "Elle produit aussi des déchets : de l'eau et du dioxyde de carbone.",
       level: 0,
       clip_id: "c1…",
+    },
+    {
+      lemma: "chaleur",
+      translation_es: "calor",
+      definition_fr: "Ce qui rend chaud.",
+      key_phrase: "Une partie de l'énergie se dégage sous forme de chaleur : c'est pour ça qu'on a chaud quand on court.",
+      level: 1,
+      clip_id: "c2…",
+    },
+    {
+      lemma: "essoufflé",
+      translation_es: "sin aliento",
+      definition_fr: "Qui respire vite et fort après un effort.",
+      key_phrase: "Quand on court vite, on est essoufflé, parce que les muscles demandent plus d'oxygène.",
+      level: 0,
+      clip_id: null,
     },
   ],
 };
