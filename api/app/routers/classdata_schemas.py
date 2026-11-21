@@ -42,6 +42,11 @@ class SessionCreated(BaseModel):
     session_id: str
 
 
+class ClipCreated(BaseModel):
+    clip_id: str
+    audio_path: str
+
+
 class ClassEventCreate(BaseModel):
     t_sec: float = Field(ge=0)
     type: Literal["word", "lost"]

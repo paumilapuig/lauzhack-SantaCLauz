@@ -27,7 +27,7 @@ Judges ask what is novel (LauzHack rule 30). Keep `docs/PLAN.md` → "Novelty" s
 ## Ownership (avoid merge conflicts)
 | Area | Owner | Paths |
 |---|---|---|
-| Lead + profe: esquelet, migracions, seed, dades de classe, /teacher, merges, deploy | A — Miquel | `supabase/`, `docs/` (excepte `docs/demo/`), root config, `web/app/teacher/`, `api/app/routers/classdata*`, `api/app/routers/teacher*` |
+| Lead + profe: esquelet, migracions, seed, dades de classe, /teacher, merges, deploy | A — Miquel | `supabase/`, `docs/` (excepte `docs/demo/`), root config, `web/app/teacher/`, `api/app/routers/classdata*`, `api/app/routers/clips*`, `api/app/routers/teacher*`, `api/app/storage.py`, `api/app/roles.py`, `api/tests/test_classdata*`, `api/tests/test_clips*`, `api/tests/test_storage.py`, `api/tests/fake_supabase.py`, `api/tests/fake_storage.py`, `api/tests/classdata_seed.py` |
 | IA i dades: lliçó amb LLM, transparència, nivells, autonomia, practice, progress, F3 | B — Laura | `api/app/` (resta: lessons, mastery, practice, progress, preview), `api/tests/` |
 | Classe: pàgina /class sencera | C — Paula | `web/app/class/`, `web/lib/wordState*`, `web/lib/audio*` |
 | Casa + demo: /home, /progress, disseny, demo, pitch | D — Pau | `web/app/home/`, `web/app/progress/`, `web/components/`, `DESIGN.md`, `docs/demo/` |
