@@ -49,7 +49,7 @@ RLS principle: a student sees only her rows; a teacher sees rows linked to her/h
 | word_mastery | student_id uuid → profiles, lemma text, level int check 0–3, times_tapped int default 0, last_seen_at timestamptz; **PK (student_id, lemma)** | student own rows |
 | class_sessions | id uuid PK, lesson_id uuid → lessons, student_id uuid → profiles, started_at timestamptz default now() | student own; lesson's teacher read |
 | class_events | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_sec real, type text check in ('word','unclear','lost'), lemma text null, created_at | student own; lesson's teacher read |
-| clips | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_start real, t_end real, transcript text, audio_path text, created_at | student own; lesson's teacher read |
+| clips | id uuid PK, session_id uuid → class_sessions, student_id uuid → profiles, t_start real, t_end real, transcript text, audio_path text, **kind text not null default 'concept' check in ('word','concept')**, **lemma text null**, created_at | student own; lesson's teacher read |
 | word_states_log | session_id uuid, student_id uuid, lemma text, state text check in ('green','yellow','orange'); **PK (session_id, student_id, lemma)** | student own; lesson's teacher read |
 | clip_marks | student_id uuid → profiles, clip_id uuid → clips on delete cascade, word text (surface form as tapped, lowercase), lemma text null (glossary lemma of the clip's lesson whose `forms` contain `word`, else null), created_at timestamptz default now(); **PK (student_id, clip_id, word)** | student own; lesson's teacher read |
 | practice_results | id uuid PK, student_id uuid → profiles, lemma text, clip_id uuid null → clips, passed bool, created_at timestamptz default now() | student own |
@@ -68,7 +68,7 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | POST | /api/sessions | student | `{ "lesson_id" }` | `{ "session_id" }` | A |
 | POST | /api/sessions/{id}/events | student | `{ "t_sec": 12.4, "type": "word"\|"lost", "lemma": "déchet"\|null }` | `{ "ok": true, "level": int\|null }` (type `word` applies −1 and returns the new level). `/class` no longer sends `word`: words are marked at home (`clip_marks`); `word` stays until the level decision (STATUS) | A (uses B's `mastery`) |
 | POST | /api/sessions/{id}/word-states | student | `{ "states": [{ "lemma", "state": WordState }] }` — first state shown for each glossary word that appeared; sent at end of class | `{ "ok": true, "autonomy": float }` | A |
-| POST | /api/clips | student | multipart: `audio` (webm), `session_id`, `t_start`, `t_end`, `transcript` | `{ "clip_id", "audio_path" }` — also inserts a class_event `unclear` at `t_end` | A |
+| POST | /api/clips | student | multipart: `audio` (webm), `session_id`, `t_start`, `t_end`, `transcript`, optional `kind` (`word`\|`concept`, default `concept`), optional `lemma` — see [Clips](#clips--post-apiclips) | `{ "clip_id", "audio_path" }` — a `concept` clip also inserts a class_event `unclear` at `t_end`; a `word` clip inserts no event | A |
 | POST | /api/clips/{id}/marks | student (clip owner) | `{ "word": "déchets" }` | `{ "word", "lemma": str\|null, "translation_es": str\|null }` — upsert into `clip_marks` (same word twice = no-op); `translation_es` only for glossary words | A |
 | DELETE | /api/clips/{id}/marks/{word} | student (clip owner) | – | `{ "ok": true }` — undo a mark | A |
 | GET | /api/home/review | student | – | HomeReview (below) | B |
@@ -101,13 +101,36 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 ```
 `mastery` contains EVERY lemma of the lesson (defaults filled). `previously_tapped` = glossary lemmas this student marked at home (`clip_marks.lemma`) on a clip of an earlier session.
 
+### Clips — `POST /api/clips`
+Two kinds of clip (decided Sat 21 Nov, see PLAN › Decisions log):
+- `word` — lexical doubt, a short clip around one unknown word.
+- `concept` — conceptual doubt, a longer clip of an explanation the student did not follow. Default, so a request without `kind` keeps the original meaning.
+
+| Field | Rule |
+|---|---|
+| `audio` | `audio/webm` (base type of the part's `Content-Type`; codec and file name are not checked), max **2 MiB** (2 097 152 bytes; 2 MiB + 1 → 413), not empty |
+| `session_id` | uuid of a session of this student (otherwise 404, nothing is uploaded) |
+| `t_start`, `t_end` | seconds on the same clock as `t_sec` of the events; `t_start >= 0`, `t_end > t_start` |
+| `kind` | `word` \| `concept`, default `concept`; anything else → 422 |
+| `lemma` | optional; when present it must be a lemma of the session's lesson (422 `Unknown lemma for this lesson`); stored as sent. Whether it is useful at all is **pending confirmation by owner B** (since #22 the student marks words at home, not in class) |
+| `transcript` | optional text, max 5000 chars, default `""` |
+
+- **Implementation status:** PR #21 implements the base contract (`audio`, `session_id`, `t_start`, `t_end`, `transcript`, the `unclear` event and the response). `kind`, `lemma`, the duration ranges and the `word` behaviour come in a later PR with the additive migration of `clips`; until then every clip behaves as `concept` without duration ranges.
+- **Duration** (technical tolerance, not a product target): `word` 1–12 s, `concept` 10–70 s of `t_end - t_start`; outside → 422. The server does not measure the audio itself.
+- **Events:** `concept` inserts a `class_events` row of type `unclear` at `t_end`; `word` inserts none (words are marked at home, `clip_marks`).
+- **Check order:** 401, 403, 422 (fields, duration), 415, 413, 422 (empty), 404 (session), 422 (lemma). Nothing is stored when a check fails.
+- **Storage:** private bucket `clips`, path `{student_id}/{clip_id}.webm`, no overwrite. The response never carries a URL; signed URLs (1 h) are generated by `GET /api/home/review` with `app.storage.signed_clip_url`.
+- **Persistence order and rollback:** upload → `clips` row → (`concept` only) `unclear` event. On failure each earlier step is undone best-effort (object, then row); the response is `500` (`Could not store audio` / `Could not save clip`).
+- **Response:** `{ "clip_id", "audio_path" }`.
+
 ### HomeReview — `GET /api/home/review`
 ```json
 {
   "clips": [
     { "id": "c1…", "lesson_title": "La respiration cellulaire", "created_at": "2026-11-21T21:10:00Z",
       "t_start": 0.0, "t_end": 30.0, "transcript": "… elle produit aussi des déchets …",
-      "audio_url": "https://…signed…", "terms": ["déchet", "dioxyde de carbone"] }
+      "audio_url": "https://…signed…", "terms": ["déchet", "dioxyde de carbone"],
+      "kind": "concept", "lemma": null }
   ],
   "words_to_practice": [
     { "word": "déchets", "lemma": "déchet", "translation_es": "desecho", "definition_fr": "Ce qui reste et ne sert plus.",
@@ -115,7 +138,7 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
   ]
 }
 ```
-- A clip is pending until it has a `practice_results` row with `passed = true`. `terms` = glossary lemmas whose forms appear in the transcript.
+- `kind` and `lemma` are the clip's own columns. A `word` clip is pending until it has a `practice_results` row with `passed = true`. A `concept` clip has no lemma, so the 3 activities do not apply: it is always listed, newest first, and has no completion rule. **Proposal, to be confirmed by owner B.** `terms` = glossary lemmas whose forms appear in the transcript (both kinds).
 - `words_to_practice` = one item per `clip_marks` row of this student, newest first; glossary words with level ≥ 2 are left out. `clip_id` = the clip where it was marked. `key_phrase` = the sentence of that clip's transcript that contains `word`. Non-glossary words: `lemma`, `translation_es`, `definition_fr` and `level` are `null`.
 
 ### Dashboard — `GET /api/teacher/lessons/{id}/dashboard`
