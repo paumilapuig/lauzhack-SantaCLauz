@@ -1,4 +1,6 @@
-export type Me = { id: string; email: string };
+export type Role = "student" | "teacher";
+
+export type Me = { id: string; email: string; display_name: string | null; role: Role };
 
 export type TokenProvider = () => Promise<string | null>;
 
