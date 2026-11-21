@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 import type { HomeReview as HomeReviewData, WordToPractice } from "@/lib/student-contract"
-import { HAND } from "@/components/notebook"
 import { ClipCard } from "./clip-card"
 import { getHomeReview } from "./data"
 import { PracticeFlow } from "./practice-flow"
@@ -10,15 +9,17 @@ import { WordCard } from "./word-card"
 
 function Section({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-5">
-      <h2 className="flex items-baseline gap-3 text-[28px] font-bold">
+    <section className="flex flex-col">
+      <h2 className="flex items-baseline gap-2 border-b border-separator pb-4 text-[28px] font-semibold tracking-[-0.02em]">
         {title}
-        {count !== undefined && <span className="font-mono text-lg font-normal text-muted-foreground tabular-nums">{count}</span>}
+        {count !== undefined && <span className="text-[19px] font-normal text-label-secondary tabular-nums">{count}</span>}
       </h2>
       {children}
     </section>
   )
 }
+
+const LIST = "flex flex-col divide-y divide-separator"
 
 export function HomeReview() {
   const [review, setReview] = useState<HomeReviewData | null>(null)
@@ -36,8 +37,8 @@ export function HomeReview() {
       .catch(() => setFailed(true))
   }, [])
 
-  if (failed) return <p role="alert" className="text-lg">No se han podido cargar tus clips.</p>
-  if (!review) return <p className="text-lg text-muted-foreground">Cargando…</p>
+  if (failed) return <p role="alert" className="text-[19px]">No se han podido cargar tus clips.</p>
+  if (!review) return <p className="text-[19px] text-label-secondary">Cargando…</p>
 
   const { clips, words_to_practice: words } = review
   const active = words.find((w) => w.lemma === practicing)
@@ -50,7 +51,7 @@ export function HomeReview() {
   return (
     <>
       <Section title="Tus clips" count={clips.length}>
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className={LIST}>
           {clips.map((clip) => (
             <ClipCard key={clip.id} clip={clip} words={allWords} />
           ))}
@@ -60,13 +61,13 @@ export function HomeReview() {
         {active ? (
           <PracticeFlow key={active.lemma} word={active} onDone={finish} onExit={() => setPracticing(null)} />
         ) : words.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={LIST}>
             {words.map((word) => (
               <WordCard key={word.lemma} word={word} onPractice={() => setPracticing(word.lemma)} />
             ))}
           </div>
         ) : (
-          <p className={`text-3xl text-primary ${HAND}`}>Todo repasado por hoy</p>
+          <p className="py-8 text-[19px] text-label-secondary">Todo repasado por hoy</p>
         )}
       </Section>
     </>

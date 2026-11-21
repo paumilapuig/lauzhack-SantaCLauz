@@ -107,20 +107,21 @@ Amplada de contingut: màx. 960 px centrada, marges laterals 24 px (16 px a mòb
 - Res més a la pantalla: ni menú ni comptadors.
 
 ### Casa (`/home`, `/progress`) — més rica que la classe
-A casa no hi ha res que distregui de la classe, així que aquestes pantalles poden tenir més caràcter. Direcció: **el quadern de classe al vespre** (paper pautat, fitxes de vocabulari, retolador fluorescent).
-- **Signatura**: el traç de retolador ámbar (`Highlight`, `--marker` `#F8D77A`; sobre fosc `--marker-strong` `#F2B33D`) darrere les paraules clau. Només a casa.
-- **Lletra de boli**: Kalam (`NotebookFont` + `HAND`), només per a glosses castellanes i petites notes, mai per a text llarg.
-- Carcassa `StudentPage`: nav en píndola (`StudentNav`, actiu en tinta), data a la dreta, `h1` 40/52 px + entradeta.
-- Ombres: només una suau i neutra a les targetes grans; mai de color.
+Direcció: **pulcre, estil Apple**. Poques caixes: el contingut va directament sobre blanc, separat per espai i línies fines. La riquesa és a la tipografia i a l'ona d'àudio, no a la decoració.
+- **Lletra**: la del sistema (SF Pro a Apple), Inter de reserva (`StudentPage`). Títols semibold amb tracking negatiu (−0.025em a 56 px); text 17–21 px.
+- **Colors** (només casa): `--label` `#1D1D1F`, `--label-secondary` `#6E6E73` (4.8:1 sobre blanc), `--fill` `#F5F5F7` i `--fill-strong` `#E8E8ED` per a botons i pistes, `--separator` negre al 10 %. Accent: `--primary` (verd petroli). Fons blanc pur.
+- **Formes**: res de vores ni ombres a les seccions. Radi només a controls: píndola (botons), 12 px (opcions), 10 px (control segmentat, icones).
+- **Navegació**: control segmentat d'iOS (`StudentNav`), data a la dreta, línia fina a sota.
 
 ### `/home` — alumna, a casa (castellà)
-- **Clip** (`ClipCard`): franja fosca (tinta) amb títol, durada, **ona d'àudio** (`Waveform`, barres deterministes) amb la paraula marcada en ámbar i la seva etiqueta a boli; botó "Escuchar" que omple l'ona mentre sona. A sota, en paper, "Lo que dijo tu profe" amb els termes en `Word` groc.
-- **Paraules** (`WordCard`): fitxa de vocabulari pautada (línia cada 32 px, marge vermell), paraula 34 px amb retolador, traducció a boli en `--lost`, definició FR; peu amb "3 actividades" + "Practicar".
-- **Pràctica** (`PracticeFlow`): capçalera de fitxa, barra de 3 passos (fet = cercle `--primary` amb check), opcions com a fitxes grans (80 px), pas 3 amb micro rodó de 96 px. Sense temporitzadors ni confeti.
+- **Seccions**: títol 28 px + recompte en gris, línia fina, llista amb separadors (`divide-separator`).
+- **Clip** (`ClipCard`): botó rodó de play (48 px, `--primary`), títol + meta ("Clip de clase · 22:10 · 0:00–0:30"), **ona d'àudio** fina (`Waveform`, barres de 2 px, grises; la part reproduïda en tinta; la paraula marcada en ámbar `--marker-strong`), i la transcripció a 21 px amb els termes en `Word` groc.
+- **Paraules** (`WordCard`): fila amb la paraula 24 px, la traducció en ámbar fosc, la definició FR en gris, i botó píndola gris "Practicar ›".
+- **Pràctica** (`PracticeFlow`): capçalera amb la paraula 40 px i "Salir" en text accent; barra de 3 segments fins; "Paso N de 3" + títol 28 px; opcions com a botons grisos de 64 px; pas 3 amb micro rodó de 80 px. Sense temporitzadors ni confeti.
 
 ### `/progress` — alumna (castellà)
-- Hero fosc amb la xifra de la setmana en gran (120–160 px) subratllada amb retolador i la frase sencera a sota (`ProgressHero`). És un recompte de paraules, mai un %.
-- La resta de missatges en targetes de dues columnes amb una nota a boli ("ya es tuya", "para mañana").
+- Resum tipus Apple: "Esta semana" en accent, la xifra a 112–160 px (recompte de paraules, mai un %) i la frase sencera a sota (`ProgressHero`).
+- La resta de missatges com a files amb una icona en quadrat accent de 40 px (estil Ajustes).
 
 ### `/teacher` — profe (UI en francès)
 - Aquí sí hi ha xifres. Layout de 2 columnes ≥ 1024 px, 1 columna a sota.
