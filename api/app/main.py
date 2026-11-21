@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .auth import AuthenticatedUser
 from .config import get_settings
 from .profiles import fetch_profile
+from .routers import classdata, classdata_sessions, classdata_word_states
 from .schemas import Health, Me
 
 app = FastAPI(title="LauzHack API")
@@ -15,6 +16,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(classdata.router)
+app.include_router(classdata_sessions.router)
+app.include_router(classdata_word_states.router)
 
 
 @app.get("/health", response_model=Health)
