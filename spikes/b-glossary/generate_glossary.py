@@ -59,12 +59,14 @@ def generate(
     http: httpx.Client | None = None,
     cache_dir: Path = DEFAULT_CACHE_DIR,
     max_side: int = 1024,
+    image_blobs=(),
 ) -> tuple[GlossaryResult, Metrics]:
     started = time.perf_counter()
-    messages, prepared = build_messages(source_text, image_paths, max_side=max_side)
+    messages, prepared = build_messages(source_text, image_paths, max_side=max_side, image_blobs=image_blobs)
     image_bytes = [image.jpeg_bytes for image in prepared]
     sizes = {
-        "image_bytes_before": sum(Path(path).stat().st_size for path in image_paths),
+        "image_bytes_before": sum(Path(path).stat().st_size for path in image_paths)
+        + sum(len(blob) for blob in image_blobs),
         "image_bytes_after": sum(len(data) for data in image_bytes),
     }
     key = cache.cache_key(model, PROMPT_VERSION, source_text, image_bytes)

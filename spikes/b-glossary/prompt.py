@@ -2,7 +2,7 @@
 
 import base64
 
-from image_prep import PreparedImage, prepare_image
+from image_prep import PreparedImage, prepare_image, prepare_image_bytes
 
 PROMPT_VERSION = "v1"
 
@@ -41,14 +41,15 @@ def _image_part(image: PreparedImage) -> dict:
 
 
 def build_messages(
-    source_text: str, image_paths, max_side: int = 1024
+    source_text: str, image_paths, max_side: int = 1024, image_blobs=()
 ) -> tuple[list[dict], list[PreparedImage]]:
     """Return chat messages plus the prepared images (for size metrics)."""
     has_text = bool(source_text.strip())
-    if not has_text and not image_paths:
+    if not has_text and not image_paths and not image_blobs:
         raise ValueError("Provide lesson text or at least one image")
 
     prepared = [prepare_image(path, max_side=max_side) for path in image_paths]
+    prepared += [prepare_image_bytes(blob, max_side=max_side) for blob in image_blobs]
     parts = ([_text_part(source_text)] if has_text else []) + [_image_part(i) for i in prepared]
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},

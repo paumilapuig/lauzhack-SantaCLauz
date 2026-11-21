@@ -30,13 +30,13 @@ Test: bounds 0 and 3 for each apply_*, all three states, empty autonomy, 2026-12
 Test: reference JSON validates; uppercase lowercased; lemma not in forms / 4 or 9 key_phrases → ValidationError.
 
 **T9 image_prep** — `S/image_prep.py`, `S/test_image_prep.py`. Deps: none. ~70 lines.
-`prepare_image(path, max_side=1024, quality=70) -> PreparedImage{jpeg_bytes, bytes_before, bytes_after}`: downscale keeping aspect, grayscale, JPEG. Non png/jpg (incl. PDF) → ValueError.
+`prepare_image(path, max_side=1024, quality=70) -> PreparedImage{jpeg_bytes, bytes_before, bytes_after}`: downscale keeping aspect, grayscale, JPEG. Non png/jpg → ValueError (PDFs go through `pdf_input`, see T12).
 Test (tmp 3000×2000 color PNG via Pillow): output max side 1024, mode "L", JPEG magic bytes, bytes_after < bytes_before; small image not upscaled; `.pdf` → ValueError.
 
 **T4 prompt** — `S/prompt.py`, `S/test_prompt.py`. Deps: T9. ~120 lines.
 `PROMPT_VERSION` const; `build_messages(source_text, image_paths, max_side=1024) -> (messages, list[PreparedImage])`. English system prompt: strict JSON as GlossaryResult,
 10–20 terms for an A1–A2 Spanish-speaking 14-year-old, ES translations, simple FR definitions, LLM `transparent`, `key_phrase` verbatim from source, terms may come from figure labels, 5–8 key_phrases.
-User parts: text + one `image_url` with `data:image/jpeg;base64,…` per prepared image. No text and no images → ValueError. PDF out of scope.
+User parts: text + one `image_url` with `data:image/jpeg;base64,…` per prepared image. No text and no images → ValueError.
 Test: text only → 1 part; 2 images → 2 jpeg data URLs; empty → ValueError; system prompt contains "JSON".
 
 **T5 openrouter client** — `S/openrouter_client.py`, `S/test_openrouter_client.py`. Deps: none. ~90 lines.
@@ -69,6 +69,9 @@ D global word dictionary across lessons, E A1 frequency pre-filter. Check: `git 
 **T8 docs** — `docs/STATUS.md`, `docs/PLAN.md` (Decisions log line only). Deps: none. ~15 lines.
 STATUS: update Laura (B) line; "Requests to other areas": "Laura → team (SYNC 1): proposal: POST /api/lessons also accepts images (photo of textbook page/blackboard) → vision model, for AXA multimodal; needs PLAN decision + API.md change by A". Note the PLAN.md touch (A's area).
 PLAN Decisions log: "Pillow added for spike B image downscale (frugal vision tokens)."
+
+**T12 PDF input** — `S/pdf_input.py`, `S/test_pdf_input.py`; small changes in image_prep, prompt, generate_glossary, cli, benchmark. Uses PyMuPDF (`pymupdf`).
+`load_pdf(path, min_text_chars=200, max_pages=5, dpi=110) -> PdfContent{text, page_images (PNG bytes), pages_total, used_vision}`: text >= 200 chars → text only; else render first 5 pages to PNG. Non-.pdf, empty or corrupt → ValueError. `lesson_inputs(source_text, content)` merges text and blobs; `generate(..., image_blobs=())` and `build_messages(..., image_blobs=())` accept in-memory images (via `prepare_image_bytes`), included in cache key and image byte metrics. `--pdf FILE` in cli.py and benchmark.py.
 
 ## Parallel plan
 | Wave | Tasks | Files |

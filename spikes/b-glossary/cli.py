@@ -8,6 +8,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from generate_glossary import compare_with_reference, generate
+from pdf_input import describe, lesson_inputs, load_pdf
 
 DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
 OUT_DIR = Path(__file__).parent / "out"
@@ -18,6 +19,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate a lesson glossary with one LLM call")
     parser.add_argument("--text", type=Path, help="file with the lesson text")
     parser.add_argument("--image", type=Path, action="append", default=[], help="lesson photo")
+    parser.add_argument("--pdf", type=Path, help="lesson PDF (text, or page images if scanned)")
     parser.add_argument("--max-side", type=int, default=1024, help="longest image side in px")
     return parser.parse_args(argv)
 
@@ -38,7 +40,15 @@ def main(argv: list[str] | None = None) -> None:
     model = os.environ.get("OPENROUTER_MODEL", DEFAULT_MODEL)
     source_text = args.text.read_text(encoding="utf-8") if args.text else ""
 
-    result, metrics = generate(source_text, args.image, model, api_key, max_side=args.max_side)
+    image_blobs = []
+    if args.pdf:
+        content = load_pdf(args.pdf)
+        print(describe(content))
+        source_text, image_blobs = lesson_inputs(source_text, content)
+
+    result, metrics = generate(
+        source_text, args.image, model, api_key, max_side=args.max_side, image_blobs=image_blobs
+    )
     reference = json.loads(REFERENCE_PATH.read_text(encoding="utf-8"))
     comparison = compare_with_reference(result, reference)
     path = _write_output(result, metrics, comparison)
