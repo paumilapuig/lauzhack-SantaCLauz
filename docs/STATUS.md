@@ -41,3 +41,5 @@
 - Miquel → equip: PLAN › F2 encara diu «tocar una paraula = −1» i buffer de 30 s; falta actualitzar-lo a la sync (nivells encara pendents, vegeu Pau → Miquel).
 - Paula → Miquel: `class_events` needs nullable `context_transcript text` and `concept text`; `POST /api/sessions/{id}/events` with `type:"lost"` accepts optional `context {t_start, transcript}`; `NEXT_PUBLIC_CLASS_API=mock|http` in `web/.env.example`; `web/lib/api.ts` forces JSON Content-Type on every body (breaks multipart; I use my own upload in `web/app/class/classApi.ts`). Details: `docs/specs/c-class-buttons.md` P1–P5.
 - Paula → Laura: `extract_concept(transcript, glossary)` as a server-side background task after a `lost` event, writing `class_events.concept` (never shown to the student). Needs a team decision first (PLAN says no LLM in class): D2 in the spec.
+- Laura: concepts_to_review pendent del PR de contracte del Miquel
+- Laura → Miquel: docs/API.md línia ~141 (clips concept 'always listed') ja no quadra amb la decisió 'tots els clips amb àudio són word'; actualitza-ho al PR de contracte.
