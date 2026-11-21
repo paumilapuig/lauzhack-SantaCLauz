@@ -1,5 +1,10 @@
 # CLAUDE.md — LauzHack 2026 team repo
 
+> **Projecte: "Subtítols que es retiren"** — subtítols en FRANCÈS de la classe en directe per a alumnes nouvinguts (persona: Lucía, 14 anys, A1–A2, 11e HarmoS).
+> Només les paraules del glossari que l'alumna no domina porten ajuda (🟢 sense ajuda · 🟡 traducció ES · 🟠 "te la vas perdre"); l'ajuda es retira quan les aprèn.
+> F1 subtítols · F2 botons + clip de 30 s + 3 activitats a casa · F4 progrés (mai %) + panell del profe (autonomia) · F3 "la classe de demà" (NICE).
+> Frugal: 1 crida a l'LLM per lliçó (OpenRouter), cap en directe; Web Speech al navegador. Detall: `docs/PLAN.md`, `docs/API.md`, `docs/ROLES.md`.
+
 Hackathon: Sat 21 Nov 12:00 → Sun 22 Nov 12:00. Speed > perfection, but the demo MUST work.
 Judges ask what is novel (LauzHack rule 30). Keep `docs/PLAN.md` → "Novelty" section up to date.
 
@@ -22,10 +27,10 @@ Judges ask what is novel (LauzHack rule 30). Keep `docs/PLAN.md` → "Novelty" s
 ## Ownership (avoid merge conflicts)
 | Area | Owner | Paths |
 |---|---|---|
-| Lead / integration / DB | A | `supabase/`, `docs/`, root config |
-| Backend / ML | B | `api/` |
-| Frontend core | C | `web/app/`, `web/lib/` |
-| UI polish / demo / QA | D | `web/components/`, `DESIGN.md`, pitch |
+| Lead + profe: esquelet, migracions, seed, dades de classe, /teacher, merges, deploy | A — Miquel | `supabase/`, `docs/` (excepte `docs/demo/`), root config, `web/app/teacher/`, `api/app/routers/classdata*`, `api/app/routers/teacher*` |
+| IA i dades: lliçó amb LLM, transparència, nivells, autonomia, practice, progress, F3 | B — Laura | `api/app/` (resta: lessons, mastery, practice, progress, preview), `api/tests/` |
+| Classe: pàgina /class sencera | C — Paula | `web/app/class/`, `web/lib/wordState*`, `web/lib/audio*` |
+| Casa + demo: /home, /progress, disseny, demo, pitch | D — Pau | `web/app/home/`, `web/app/progress/`, `web/components/`, `DESIGN.md`, `docs/demo/` |
 Touching someone else's area? Keep it minimal and write it in `docs/STATUS.md`.
 Only owner A creates DB migrations; others request them in STATUS.
 
