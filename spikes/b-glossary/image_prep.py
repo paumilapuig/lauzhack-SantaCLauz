@@ -21,13 +21,16 @@ def prepare_image(path, max_side: int = 1024, quality: int = 70) -> PreparedImag
     path = Path(path)
     if path.suffix.lower() not in SUPPORTED_SUFFIXES:
         raise ValueError(f"Unsupported image type: {path.suffix or path.name} (use png/jpg)")
+    return prepare_image_bytes(path.read_bytes(), max_side, quality)
 
-    original = path.read_bytes()
-    with Image.open(io.BytesIO(original)) as opened:
+
+def prepare_image_bytes(data: bytes, max_side: int = 1024, quality: int = 70) -> PreparedImage:
+    """Same as prepare_image, for an image already in memory (e.g. a rendered PDF page)."""
+    with Image.open(io.BytesIO(data)) as opened:
         image = opened.convert("L")
     image.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
 
     buffer = io.BytesIO()
     image.save(buffer, "JPEG", quality=quality)
     jpeg_bytes = buffer.getvalue()
-    return PreparedImage(jpeg_bytes, len(original), len(jpeg_bytes))
+    return PreparedImage(jpeg_bytes, len(data), len(jpeg_bytes))

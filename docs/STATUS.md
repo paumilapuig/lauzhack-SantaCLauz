@@ -13,3 +13,4 @@
 - Laura → Miquel: signatures de `spikes/b-glossary/mastery.py` llestes per a classdata (initial_level, state, apply_tap, apply_practice, apply_preview, autonomy, weekly_autonomy).
 - Laura → equip (SYNC 1): proposta AXA multimodal — `POST /api/lessons` accepta també fotos (pàgina del llibre/pissarra) → model de visió; cal decisió a PLAN + canvi a API.md (A).
 - Laura ha afegit 1 línia a PLAN.md › Decisions log (Pillow per al spike).
+- Laura ha afegit 1 línia a PLAN.md › Decisions log (PyMuPDF per a l'entrada PDF del spike).
