@@ -26,8 +26,8 @@ Language: English (international jury). Name: **Fondu** (default from the 19:00 
 ## Demo run sheet (slide 6)
 
 1. Laptop: Chrome, tab 1 `/class` logged in as `lucia-w1`, tab 2 `/home`, tab 3 `/teacher` as `prof-demo`. Microphone allowed.
-2. Pau reads `docs/demo/lesson-respiration.md` aloud, calmly. After "des **déchets**": tap the word, then press **No he entendido**. After the sentence on **chaleur**: press **Me he perdido**.
-3. Tab 2 (`/home`): play the clip (words go bold with the audio), tap a word to save it, open **Parejas**, finish, show "Sube de nivel".
+2. Pau reads `docs/demo/lesson-respiration.md` aloud, calmly. Words are NOT tapped in class. Right after "des **déchets**": press **No he entendido** (saves the last 30 s). After the sentence on **chaleur**: press **Me he perdido**.
+3. Tab 2 (`/home`): play the clip (words go bold with the audio), mark **déchets** in the clip (translation appears, word saved), open **Parejas**, finish, show "Sube de nivel".
 4. Log in as `lucia-w4`, same lesson: almost no yellow, one orange (`chaleur`).
 5. Tab 3 (`/teacher`): the minute with most "Me he perdido", autonomy 53 % → 80 %.
 6. Say it out loud: week 1 and week 4 are simulated profiles with prepared data.
