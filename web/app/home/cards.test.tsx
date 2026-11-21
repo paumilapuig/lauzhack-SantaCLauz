@@ -33,15 +33,29 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+const translate = (w: string) => (w === "déchets" ? "desechos" : null)
+const props = { clip, saved: new Set<string>(), translate, onToggle: vi.fn() }
+
 describe("cards", () => {
-  it("ClipCard shows the translation of a known term", () => {
-    render(<ClipCard clip={clip} words={[word]} />)
-    expect(screen.getByText("desecho")).toBeTruthy()
+  it("ClipCard pre-marks no word", () => {
+    const { container } = render(<ClipCard {...props} />)
+    expect(container.querySelector('[data-state="yellow"]')).toBeNull()
+  })
+
+  it("tapping a word calls onToggle with its translation", () => {
+    render(<ClipCard {...props} />)
+    fireEvent.click(screen.getByRole("button", { name: /déchets/ }))
+    expect(props.onToggle).toHaveBeenCalledWith("déchets", "desechos")
+  })
+
+  it("a saved word renders yellow", () => {
+    const { container } = render(<ClipCard {...props} saved={new Set(["déchets"])} />)
+    expect(container.querySelector('[data-state="yellow"]')).not.toBeNull()
   })
 
   it("falls back to speak when audio play rejects", async () => {
     vi.stubGlobal("Audio", class { play = () => Promise.reject(new Error("no")) })
-    render(<ClipCard clip={clip} words={[word]} />)
+    render(<ClipCard {...props} />)
     fireEvent.click(screen.getByRole("button", { name: /Escuchar/ }))
     await waitFor(() => expect(speak).toHaveBeenCalledTimes(1))
     expect(speak).toHaveBeenCalledWith(clip.transcript, 0.85, expect.objectContaining({ onEnd: expect.any(Function) }))

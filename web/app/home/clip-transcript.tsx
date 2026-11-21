@@ -1,46 +1,47 @@
 import { Word } from "@/components/ui/word"
 import { activeWordStart } from "./karaoke"
-import { splitByTerms } from "./transcript"
+import { tokenize } from "./transcript"
 
 // Bold drawn with a thin stroke in the text colour: same glyph widths, so the line never reflows
 const BOLD = "text-label [-webkit-text-stroke:0.6px_currentColor]"
 const style = (active: boolean, ahead: boolean) =>
   `transition-colors ${active ? BOLD : ahead ? "text-label-secondary" : ""}`
 
-function Spoken({ text, active, ahead }: { text: string; active: boolean; ahead: boolean }) {
-  return <span className={style(active, ahead)}>{text}</span>
+type Props = {
+  transcript: string
+  saved: Set<string>
+  translate: (word: string) => string | null
+  onToggle: (word: string, translation: string) => void
+  char: number | null
 }
 
-type Props = { transcript: string; terms: string[]; translations: Map<string, string>; char: number | null }
-
-export function ClipTranscript({ transcript, terms, translations, char }: Props) {
+export function ClipTranscript({ transcript, saved, translate, onToggle, char }: Props) {
   const active = activeWordStart(transcript, char)
-  const segments = splitByTerms(transcript, terms)
-  const starts = segments.map((_, i) => segments.slice(0, i).reduce((sum, seg) => sum + seg.text.length, 0))
+  const pieces: React.ReactNode[] = []
+  let cursor = 0
+
+  for (const { start, end } of tokenize(transcript)) {
+    if (start > cursor) pieces.push(transcript.slice(cursor, start))
+    cursor = end
+    const text = transcript.slice(start, end)
+    const className = style(active !== null && active >= start && active < end, active !== null && start > active)
+    const word = text.toLowerCase()
+    const translation = translate(word)
+    pieces.push(
+      <span key={start} className={className}>
+        {translation ? (
+          <Word text={text} translation={translation} state={saved.has(word) ? "yellow" : "green"} onTap={() => onToggle(word, translation)} />
+        ) : (
+          text
+        )}
+      </span>,
+    )
+  }
+  if (cursor < transcript.length) pieces.push(transcript.slice(cursor))
 
   return (
     <p lang="fr" className="max-w-[34em] text-[21px] leading-[2.1] tracking-[-0.005em]">
-      {segments.map((seg, i) => {
-        const start = starts[i]
-        const end = start + seg.text.length
-        const translation = seg.lemma ? translations.get(seg.lemma) : undefined
-        if (translation) {
-          const on = active !== null && active >= start && active < end
-          const ahead = active !== null && start > active
-          return (
-            <span key={i} className={style(on, ahead)}>
-              <Word text={seg.text} translation={translation} state="yellow" onTap={() => {}} />
-            </span>
-          )
-        }
-        const pieces = seg.text.split(/(\s+)/)
-        return pieces.map((piece, k) => {
-          const at = start + pieces.slice(0, k).join("").length
-          if (!piece.trim()) return piece
-          const on = active !== null && active >= at && active < at + piece.length
-          return <Spoken key={`${i}-${k}`} text={piece} active={on} ahead={active !== null && at > active} />
-        })
-      })}
+      {pieces}
     </p>
   )
 }

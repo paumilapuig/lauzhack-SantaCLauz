@@ -5,6 +5,8 @@ import type {
   ProgressMessage,
 } from "@/lib/student-contract";
 
+import type { MyWord } from "./types";
+
 export const DISTRACTORS = ["chaleur", "nourriture", "fournir", "rejeter", "essoufflé"];
 
 const MAX_LEVEL = 3;
@@ -63,6 +65,51 @@ const FAKE_REVIEW: HomeReview = {
 };
 
 const levels = new Map(FAKE_REVIEW.words_to_practice.map((w) => [w.lemma, w.level]));
+
+const DICTIONARY: Record<string, string> = {
+  mitochondries: "mitocondrias", utilisent: "usan", oxygène: "oxígeno", transformer: "transformar",
+  glucose: "glucosa", réaction: "reacción", libérer: "liberar", énergie: "energía", muscles: "músculos",
+  produit: "produce", aussi: "también", déchets: "desechos", eau: "agua", dioxyde: "dióxido",
+  carbone: "carbono", sang: "sangre", transporte: "transporta", poumons: "pulmones",
+  rejetons: "expulsamos", expire: "espira", partie: "parte", dégage: "se desprende", forme: "forma",
+  chaleur: "calor", chaud: "calor", court: "corre",
+};
+
+// shortcut: static dictionary for the 2 fake clips, swap for a translation endpoint
+export function translate(word: string): string | null {
+  return DICTIONARY[word.toLowerCase()] ?? null;
+}
+
+const marks: MyWord[] = [];
+
+const sentenceWith = (transcript: string, word: string) =>
+  transcript.split(/(?<=[.!?])\s+/).find((s) => s.toLowerCase().includes(word)) ?? transcript;
+
+// shortcut: in-memory marks until owner A adds an endpoint, then swap for request<T>()
+export async function saveMark(word: string, clipId: string): Promise<void> {
+  const lemma = word.toLowerCase();
+  const clip = FAKE_REVIEW.clips.find((c) => c.id === clipId);
+  if (!clip || marks.some((m) => m.lemma === lemma)) return;
+  marks.push({
+    lemma,
+    translation_es: translate(lemma) ?? "",
+    definition_fr: "",
+    key_phrase: sentenceWith(clip.transcript, lemma),
+    level: 0,
+    clip_id: clipId,
+    source: "home",
+  });
+}
+
+export async function removeMark(lemma: string): Promise<void> {
+  const index = marks.findIndex((m) => m.lemma === lemma);
+  if (index >= 0) marks.splice(index, 1);
+}
+
+export async function getMyWords(): Promise<MyWord[]> {
+  const classWords = FAKE_REVIEW.words_to_practice.map((w) => ({ ...w, source: "class" as const }));
+  return [...classWords, ...structuredClone(marks)];
+}
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()
 export async function getHomeReview(): Promise<HomeReview> {

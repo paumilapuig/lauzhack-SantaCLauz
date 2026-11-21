@@ -1,9 +1,9 @@
 "use client"
 
 import { Pause, Play } from "lucide-react"
-import type { HomeClip, WordToPractice } from "@/lib/student-contract"
+import type { HomeClip } from "@/lib/student-contract"
 import { ClipTranscript } from "./clip-transcript"
-import { splitByTerms } from "./transcript"
+import { tokenize } from "./transcript"
 import { usePlayback } from "./use-playback"
 import { Waveform } from "./waveform"
 
@@ -14,19 +14,21 @@ function clock(ms: number) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`
 }
 
-export function ClipCard({ clip, words }: { clip: HomeClip; words: WordToPractice[] }) {
+type Props = {
+  clip: HomeClip
+  saved: Set<string>
+  translate: (word: string) => string | null
+  onToggle: (word: string, translation: string) => void
+}
+
+export function ClipCard({ clip, saved, translate, onToggle }: Props) {
   const playback = usePlayback(clip.transcript, clip.audio_url, SLOW_RATE)
-  const translations = new Map(words.map((w) => [w.lemma, w.translation_es]))
   const time = new Date(clip.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
 
-  let offset = 0
-  let mark: [number, number] | null = null
-  for (const seg of splitByTerms(clip.transcript, clip.terms)) {
-    if (!mark && seg.lemma && translations.has(seg.lemma)) {
-      mark = [offset / clip.transcript.length, (offset + seg.text.length) / clip.transcript.length]
-    }
-    offset += seg.text.length
-  }
+  const first = tokenize(clip.transcript).find((t) => saved.has(clip.transcript.slice(t.start, t.end).toLowerCase()))
+  const mark: [number, number] | null = first
+    ? [first.start / clip.transcript.length, first.end / clip.transcript.length]
+    : null
 
   const elapsed = playback.progress * playback.durationMs
   const position = Math.round(playback.progress * 1000)
@@ -37,7 +39,7 @@ export function ClipCard({ clip, words }: { clip: HomeClip; words: WordToPractic
         <p className="text-[15px] text-label-secondary">
           <span lang="fr" className="font-semibold text-label">{clip.lesson_title}</span> · Clip de clase · {time}
         </p>
-        <ClipTranscript transcript={clip.transcript} terms={clip.terms} translations={translations} char={playback.char} />
+        <ClipTranscript transcript={clip.transcript} saved={saved} translate={translate} onToggle={onToggle} char={playback.char} />
       </div>
 
       <div className="flex items-center gap-4">
