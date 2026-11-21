@@ -97,7 +97,7 @@ def test_comparison_with_reference(tmp_path, reference_terms):
     comparison = compare_with_reference(result, reference_terms)
     assert len(comparison["matched"]) == 15
     assert comparison["missing"] == [] and comparison["extra"] == []
-    assert comparison["transparent_mismatches"] == []
+    assert comparison["reference_transparent_mismatches"] == []
 
 
 def test_comparison_reports_missing_extra_and_mismatch(tmp_path, reference_terms):
@@ -109,7 +109,7 @@ def test_comparison_reports_missing_extra_and_mismatch(tmp_path, reference_terms
     comparison = compare_with_reference(result, altered)
     assert reference_terms[0]["lemma"] in comparison["extra"]
     assert "inventé" in comparison["missing"]
-    assert comparison["transparent_mismatches"] == [altered[1]["lemma"]]
+    assert comparison["reference_transparent_mismatches"] == [altered[1]["lemma"]]
 
 
 def test_cli_without_api_key_exits(monkeypatch):

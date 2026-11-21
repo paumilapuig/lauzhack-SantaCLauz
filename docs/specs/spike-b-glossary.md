@@ -4,7 +4,7 @@
 Prove, in `spikes/b-glossary/` (pure Python, later ported to `api/app/`), the transparency rule, pure mastery/autonomy logic,
 and a frugal multimodal glossary generator (1 cached OpenRouter call per lesson, text and/or downscaled images, model picked by benchmark).
 **Acceptance:** `uv run --with pytest,httpx,pydantic,pillow pytest spikes/b-glossary` is green (all HTTP mocked); with a key,
-`generate_glossary.py --text docs/demo/lesson-respiration.md --image page.jpg` prints metrics + comparison vs `docs/demo/glossary-respiration.json`,
+`spikes/b-glossary/cli.py --text docs/demo/lesson-respiration.md --image page.jpg` prints metrics + comparison vs `docs/demo/glossary-respiration.json`,
 a second run prints `cached: true, cost_usd: 0`, and `benchmark.py` prints one row per model.
 
 ## Contract changes
@@ -52,12 +52,12 @@ Test (tmp_path): same inputs → same key; any input change → different key; s
 `generate(source_text, image_paths, model, api_key, http=None, cache_dir=S/cache, max_side=1024) -> (GlossaryResult, Metrics)`;
 `Metrics{seconds, prompt_tokens, completion_tokens, cost_usd, cached, image_bytes_before, image_bytes_after}`. Cache hit → no HTTP, `cached=True`, `cost_usd=0`.
 Strip ```json fences; invalid JSON/schema → `ValueError("LLM returned invalid glossary: …")`; override `transparent` with `is_transparent`.
-`compare_with_reference(result, reference_terms) -> {matched, missing, extra, transparent_mismatches}` (by lemma; mismatch = LLM flag ≠ rule).
+`compare_with_reference(result, reference_terms) -> {matched, missing, extra, reference_transparent_mismatches}` (by lemma; final rule-applied flag ≠ reference file; LLM-vs-rule count is `Metrics.llm_flag_overrides`).
 CLI `[--text F] [--image F ...] [--max-side N]`; env `OPENROUTER_API_KEY` (missing → exit 1 with message), `OPENROUTER_MODEL` (default `google/gemini-2.5-flash-lite`); writes `S/out/glossary-<ts>.json`.
 Test: fenced fixture parses; override 8/7; garbage → ValueError; metrics from usage; second call hits cache (MockTransport call count 1); comparison; missing key → SystemExit.
 
 **T11 benchmark** — `S/benchmark.py`, `S/test_benchmark.py`. Deps: T6. ~100 lines.
-`run_benchmark(models, source_text, image_paths, api_key, http=None, cache_dir) -> list[Row{model, matched (of 15), transparent_mismatches, cost_usd, seconds, prompt_tokens}]`; `format_table(rows)`.
+`run_benchmark(models, source_text, image_paths, api_key, http=None)` (no cache_dir: fresh tmp cache per model) `-> list[Row{model, matched, reference_size, reference_transparent_mismatches, llm_flag_overrides, cost_usd, seconds, prompt_tokens, error}]`; `format_table(rows)`.
 CLI `--models a,b,c` (configurable default: `google/gemini-2.5-flash-lite,openai/gpt-4.1-nano,meta-llama/llama-4-scout,qwen/qwen2.5-vl-72b-instruct`), same inputs as T6; prints table, writes `S/out/benchmark-<ts>.md`.
 Test (MockTransport answering per model): one row per model in order; table has header + rows; a model returning garbage → row with error, run continues.
 

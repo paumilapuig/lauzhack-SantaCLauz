@@ -37,13 +37,8 @@ def _strip_fences(content: str) -> str:
     return match.group(1) if match else stripped
 
 
-def parse_glossary(content: str) -> GlossaryResult:
-    """Parse the LLM reply and replace its `transparent` flags by the rule-based ones."""
-    return parse_glossary_counting_overrides(content)[0]
-
-
-def parse_glossary_counting_overrides(content: str) -> tuple[GlossaryResult, int]:
-    """Like parse_glossary, also counting the terms where the rule changed the LLM flag."""
+def parse_glossary(content: str) -> tuple[GlossaryResult, int]:
+    """Parse the LLM reply, apply the rule-based `transparent` flags, count how many the rule overrode."""
     try:
         result = GlossaryResult.model_validate(json.loads(_strip_fences(content)))
     except (json.JSONDecodeError, ValidationError) as error:
@@ -80,7 +75,7 @@ def generate(
         return GlossaryResult.model_validate(cached), metrics
 
     content, usage = call_openrouter(messages, model, api_key, http=http)
-    result, overrides = parse_glossary_counting_overrides(content)
+    result, overrides = parse_glossary(content)
     metrics = Metrics(
         seconds=time.perf_counter() - started,
         prompt_tokens=usage.get("prompt_tokens", 0),
@@ -95,7 +90,7 @@ def generate(
 
 
 def compare_with_reference(result: GlossaryResult, reference_terms: list[dict]) -> dict:
-    """Compare lemmas and transparency flags with a hand-made reference glossary."""
+    """Compare lemmas and final (rule-applied) flags against the reference file; LLM-vs-rule is Metrics.llm_flag_overrides."""
     generated = {term.lemma: term.transparent for term in result.terms}
     reference = {term["lemma"].lower(): term["transparent"] for term in reference_terms}
     matched = [lemma for lemma in reference if lemma in generated]
@@ -103,5 +98,5 @@ def compare_with_reference(result: GlossaryResult, reference_terms: list[dict]) 
         "matched": matched,
         "missing": [lemma for lemma in reference if lemma not in generated],
         "extra": [lemma for lemma in generated if lemma not in reference],
-        "transparent_mismatches": [m for m in matched if generated[m] != reference[m]],
+        "reference_transparent_mismatches": [m for m in matched if generated[m] != reference[m]],
     }

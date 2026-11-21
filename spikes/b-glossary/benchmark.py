@@ -27,7 +27,7 @@ class Row:
     model: str
     matched: int = 0
     reference_size: int = 0
-    transparent_mismatches: int = 0
+    reference_transparent_mismatches: int = 0
     llm_flag_overrides: int = 0
     cost_usd: float = 0.0
     seconds: float = 0.0
@@ -52,7 +52,7 @@ def _run_model(model, source_text, image_paths, api_key, http, reference) -> Row
         model=model,
         matched=len(comparison["matched"]),
         reference_size=len(reference),
-        transparent_mismatches=len(comparison["transparent_mismatches"]),
+        reference_transparent_mismatches=len(comparison["reference_transparent_mismatches"]),
         llm_flag_overrides=metrics.llm_flag_overrides,
         cost_usd=metrics.cost_usd,
         seconds=metrics.seconds,
@@ -75,7 +75,7 @@ def run_benchmark(
 def _format_row(row: Row) -> str:
     if row.error:
         return f"| {row.model} | ERROR: {row.error.splitlines()[0]} | | | | | |"
-    cells = [row.model, f"{row.matched}/{row.reference_size}", row.transparent_mismatches,
+    cells = [row.model, f"{row.matched}/{row.reference_size}", row.reference_transparent_mismatches,
              row.llm_flag_overrides, f"{row.cost_usd:.5f}", f"{row.seconds:.1f}", row.prompt_tokens]
     return "| " + " | ".join(str(cell) for cell in cells) + " |"
 
