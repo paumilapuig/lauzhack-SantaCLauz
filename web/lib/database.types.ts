@@ -25,14 +25,14 @@ export type Database = {
           Tables: {
             "class_events": {
                   Row: {
-                    "created_at": string,"id": string,"lemma": string | null,"session_id": string,"student_id": string,"t_sec": number,"type": string
+                    "context_t_start": number | null,"context_transcript": string | null,"created_at": string,"id": string,"lemma": string | null,"session_id": string,"student_id": string,"t_sec": number,"type": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"lemma"?: string | null,"session_id": string,"student_id": string,"t_sec": number,"type": string
+                    "context_t_start"?: number | null,"context_transcript"?: string | null,"created_at"?: string,"id"?: string,"lemma"?: string | null,"session_id": string,"student_id": string,"t_sec": number,"type": string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"lemma"?: string | null,"session_id"?: string,"student_id"?: string,"t_sec"?: number,"type"?: string
+                    "context_t_start"?: number | null,"context_transcript"?: string | null,"created_at"?: string,"id"?: string,"lemma"?: string | null,"session_id"?: string,"student_id"?: string,"t_sec"?: number,"type"?: string
                   }
                   Relationships: [
                     {
@@ -75,16 +75,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"clips": {
+                },"clip_marks": {
                   Row: {
-                    "audio_path": string | null,"created_at": string,"id": string,"session_id": string,"student_id": string,"t_end": number,"t_start": number,"transcript": string | null
+                    "clip_id": string,"created_at": string,"lemma": string | null,"student_id": string,"word": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "audio_path"?: string | null,"created_at"?: string,"id"?: string,"session_id": string,"student_id": string,"t_end": number,"t_start": number,"transcript"?: string | null
+                    "clip_id": string,"created_at"?: string,"lemma"?: string | null,"student_id": string,"word": string
                   }
                   Update: {
-                    "audio_path"?: string | null,"created_at"?: string,"id"?: string,"session_id"?: string,"student_id"?: string,"t_end"?: number,"t_start"?: number,"transcript"?: string | null
+                    "clip_id"?: string,"created_at"?: string,"lemma"?: string | null,"student_id"?: string,"word"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "clip_marks_clip_id_fkey"
+      columns: ["clip_id"]
+isOneToOne: false
+      referencedRelation: "clips"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "clip_marks_student_id_fkey"
+      columns: ["student_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"clips": {
+                  Row: {
+                    "audio_path": string | null,"created_at": string,"id": string,"kind": string,"lemma": string | null,"session_id": string,"student_id": string,"t_end": number,"t_start": number,"transcript": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "audio_path"?: string | null,"created_at"?: string,"id"?: string,"kind"?: string,"lemma"?: string | null,"session_id": string,"student_id": string,"t_end": number,"t_start": number,"transcript"?: string | null
+                  }
+                  Update: {
+                    "audio_path"?: string | null,"created_at"?: string,"id"?: string,"kind"?: string,"lemma"?: string | null,"session_id"?: string,"student_id"?: string,"t_end"?: number,"t_start"?: number,"transcript"?: string | null
                   }
                   Relationships: [
                     {
@@ -98,6 +124,26 @@ isOneToOne: false
       columns: ["student_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"lesson_lost_summaries": {
+                  Row: {
+                    "concepts": NonNullable<Json>,"created_at": string,"lesson_id": string,"lost_count": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "concepts"?: NonNullable<Json>,"created_at"?: string,"lesson_id": string,"lost_count": number
+                  }
+                  Update: {
+                    "concepts"?: NonNullable<Json>,"created_at"?: string,"lesson_id"?: string,"lost_count"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lesson_lost_summaries_lesson_id_fkey"
+      columns: ["lesson_id"]
+isOneToOne: true
+      referencedRelation: "lessons"
       referencedColumns: ["id"]
     }
                   ]
@@ -136,6 +182,32 @@ isOneToOne: false
                     {
       foreignKeyName: "lessons_teacher_id_fkey"
       columns: ["teacher_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"mark_level_changes": {
+                  Row: {
+                    "created_at": string,"lemma": string,"level_delta": number,"session_id": string,"student_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"lemma": string,"level_delta": number,"session_id": string,"student_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"lemma"?: string,"level_delta"?: number,"session_id"?: string,"student_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mark_level_changes_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "class_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mark_level_changes_student_id_fkey"
+      columns: ["student_id"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
