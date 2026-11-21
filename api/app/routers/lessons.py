@@ -53,8 +53,16 @@ def _extract_upload(filename: str, content_type: str, data: bytes) -> tuple[str,
         raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
 
 
+def _declared_size(header: str | None) -> int:
+    if not header:
+        return 0
+    if not header.isdigit():
+        raise _error(status.HTTP_400_BAD_REQUEST, "Invalid Content-Length header")
+    return int(header)
+
+
 async def _read_multipart(request: Request) -> LessonInput:
-    declared_size = int(request.headers.get("content-length") or 0)
+    declared_size = _declared_size(request.headers.get("content-length"))
     if declared_size > upload_limits.MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES:
         raise _error(status.HTTP_413_CONTENT_TOO_LARGE, "Upload too large")
     form = await request.form()

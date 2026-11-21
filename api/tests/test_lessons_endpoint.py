@@ -2,6 +2,7 @@ import io
 
 import pymupdf
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -297,3 +298,15 @@ def test_multipart_without_text_or_images_is_422(teacher_client, recorder, monke
 
     assert response.status_code == 422
     assert recorder.generate_calls == []
+
+
+@pytest.mark.parametrize("header", ["abc", "-5", "1.5"])
+def test_invalid_content_length_header_is_400(header):
+    with pytest.raises(HTTPException) as error:
+        router._declared_size(header)
+
+    assert error.value.status_code == 400
+
+
+def test_missing_content_length_header_counts_as_zero():
+    assert router._declared_size(None) == 0
