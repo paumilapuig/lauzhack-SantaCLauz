@@ -34,5 +34,22 @@ def _post(client: httpx.Client, payload: dict, headers: dict) -> tuple[str, dict
     if response.status_code // 100 != 2:
         excerpt = response.text[:ERROR_EXCERPT_CHARS]
         raise OpenRouterError(f"OpenRouter error {response.status_code}: {excerpt}")
-    data = response.json()
-    return data["choices"][0]["message"]["content"], data.get("usage", {})
+    return _extract_content_and_usage(response)
+
+
+def _extract_content_and_usage(response: httpx.Response) -> tuple[str, dict]:
+    try:
+        data = response.json()
+    except ValueError as error:
+        raise OpenRouterError("OpenRouter returned a non-JSON body") from error
+    if not isinstance(data, dict):
+        raise OpenRouterError("OpenRouter returned an unexpected JSON body")
+    if "error" in data:
+        raise OpenRouterError(f"OpenRouter returned an error: {str(data['error'])[:ERROR_EXCERPT_CHARS]}")
+    try:
+        content = data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as error:
+        raise OpenRouterError("OpenRouter response has no choices[0].message.content") from error
+    if not isinstance(content, str) or not content.strip():
+        raise OpenRouterError("OpenRouter returned empty message content")
+    return content, data.get("usage") or {}

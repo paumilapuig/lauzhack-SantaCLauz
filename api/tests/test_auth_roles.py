@@ -11,10 +11,17 @@ def _profile_with_role(role):
     return lambda user_id: Profile(display_name="x", role=role)
 
 
-def test_teacher_passes(monkeypatch):
-    monkeypatch.setattr(auth_roles, "fetch_profile", _profile_with_role("teacher"))
+def test_teacher_passes_and_profile_is_fetched_for_that_user(monkeypatch):
+    requested_ids = []
+
+    def fetch_profile(user_id):
+        requested_ids.append(user_id)
+        return Profile(display_name="x", role="teacher")
+
+    monkeypatch.setattr(auth_roles, "fetch_profile", fetch_profile)
 
     assert auth_roles.require_teacher(USER) == USER
+    assert requested_ids == [USER.id]
 
 
 def test_student_is_forbidden(monkeypatch):

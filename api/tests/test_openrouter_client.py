@@ -57,3 +57,24 @@ def test_injected_client_is_left_open():
     call_openrouter([], "m", "k", http=client)
 
     assert client.is_closed is False
+
+
+def make_raw_client(response: httpx.Response) -> httpx.Client:
+    return httpx.Client(transport=httpx.MockTransport(lambda request: response))
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(200, json={"usage": USAGE}),
+        httpx.Response(200, json={"error": {"message": "rate limited"}}),
+        httpx.Response(200, json={"choices": []}),
+        httpx.Response(200, text="<html>oops</html>"),
+        httpx.Response(200, json={"choices": [{"message": {"content": None}}]}),
+        httpx.Response(200, json={"choices": [{"message": {"content": ""}}]}),
+        httpx.Response(200, json=["not", "an", "object"]),
+    ],
+)
+def test_malformed_2xx_raises_openrouter_error(response):
+    with pytest.raises(OpenRouterError):
+        call_openrouter([], "m", "k", http=make_raw_client(response))

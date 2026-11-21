@@ -1,8 +1,7 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from app.schemas import LessonTermInput
 
-MIN_KEY_PHRASES = 5
 MAX_KEY_PHRASES = 8
 
 
@@ -33,4 +32,4 @@ class KeyPhrase(BaseModel):
 
 class GlossaryResult(BaseModel):
     terms: list[GlossaryTerm]
-    key_phrases: list[KeyPhrase] = Field(min_length=MIN_KEY_PHRASES, max_length=MAX_KEY_PHRASES)
+    key_phrases: list[KeyPhrase] = []

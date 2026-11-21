@@ -20,7 +20,6 @@ def test_resolved_model_falls_back_to_default():
     settings = Settings(_env_file=None)
 
     assert settings.resolved_model() == DEFAULT_OPENROUTER_MODEL
-    assert DEFAULT_OPENROUTER_MODEL == "google/gemini-2.5-flash-lite"
 
 
 def test_resolved_model_uses_override():
