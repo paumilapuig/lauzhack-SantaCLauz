@@ -106,13 +106,23 @@ Amplada de contingut: màx. 960 px centrada, marges laterals 24 px (16 px a mòb
 - Barra inferior fixa amb els 2 botons grans (§5). Els subtítols tenen `padding-bottom` per no quedar mai tapats.
 - Res més a la pantalla: ni menú ni comptadors.
 
+### Casa (`/home`, `/progress`) — més rica que la classe
+Direcció: **pulcre, estil Apple**. Poques caixes: el contingut va directament sobre blanc, separat per espai i línies fines. La riquesa és a la tipografia i a l'ona d'àudio, no a la decoració.
+- **Lletra**: la del sistema (SF Pro a Apple), Inter de reserva (`StudentPage`). Títols semibold amb tracking negatiu (−0.025em a 56 px); text 17–21 px.
+- **Colors** (només casa): `--label` `#1D1D1F`, `--label-secondary` `#6E6E73` (4.8:1 sobre blanc), `--fill` `#F5F5F7` i `--fill-strong` `#E8E8ED` per a botons i pistes, `--separator` negre al 10 %. Accent: `--primary` (verd petroli). Fons blanc pur.
+- **Formes**: res de vores ni ombres a les seccions. Radi només a controls: píndola (botons), 12 px (opcions), 10 px (control segmentat, icones).
+- **Navegació**: control segmentat d'iOS (`StudentNav`), data a la dreta, línia fina a sota.
+
 ### `/home` — alumna, a casa (castellà)
-- `h1` "Para repasar". Llista de targetes de clip: títol de lliçó, hora (`meta`), transcripció curta amb els termes en `Word` estat groc, botó `default` "Escuchar" (icona `Play`).
-- Dins d'un clip: reproductor nadiu (`<audio controls>`), la transcripció tocable, i les 3 activitats com a passos numerats 1–2–3 (una targeta per pas, el pas actiu amb vora `--primary`). Sense temporitzadors.
-- Paraula superada: es mostra un instant sense subratllat amb el text "Ya no necesitas ayuda para *déchet*". Sense confeti.
+- **Seccions**: títol 28 px + recompte en gris, línia fina, llista amb separadors (`divide-separator`).
+- **Clip** (`ClipCard`): meta ("La respiration cellulaire · Clip de clase · 22:10") i **la transcripció primer** (21 px, termes en `Word` groc). A sota, el reproductor: botó rodó play/pausa (44 px, `--primary`) i l'**ona d'àudio** fina (`Waveform`, barres de 2 px; la part reproduïda en tinta; la paraula marcada en ámbar `--marker-strong`) amb capçal `--primary`, temps transcorregut / total i arrossegable (range invisible a sobre, fletxes del teclat).
+- **Karaoke** (`ClipTranscript` + `usePlayback`): la paraula que sona es posa en negreta (traç fi del mateix color, sense canviar l'amplada), el que encara no ha sonat en `--label-secondary`. Segueix els esdeveniments de paraula de la veu quan n'hi ha; si no, una estimació per temps.
+- **Paraules** (`WordCard`): fila amb la paraula 24 px, la traducció en ámbar fosc, la definició FR en gris, i botó píndola gris "Practicar ›".
+- **Pràctica** (`PracticeFlow`): capçalera amb la paraula 40 px i "Salir" en text accent; barra de 3 segments fins; "Paso N de 3" + títol 28 px; opcions com a botons grisos de 64 px; pas 3 amb micro rodó de 80 px. Sense temporitzadors ni confeti.
 
 ### `/progress` — alumna (castellà)
-- `h1` "Tu progreso". Llista vertical de `ProgressMessage`. Res més.
+- Resum tipus Apple: "Esta semana" en accent, la xifra a 112–160 px (recompte de paraules, mai un %) i la frase sencera a sota (`ProgressHero`).
+- La resta de missatges com a files amb una icona en quadrat accent de 40 px (estil Ajustes).
 
 ### `/teacher` — profe (UI en francès)
 - Aquí sí hi ha xifres. Layout de 2 columnes ≥ 1024 px, 1 columna a sota.

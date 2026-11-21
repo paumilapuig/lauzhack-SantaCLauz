@@ -44,7 +44,7 @@ describe("cards", () => {
     render(<ClipCard clip={clip} words={[word]} />)
     fireEvent.click(screen.getByRole("button", { name: /Escuchar/ }))
     await waitFor(() => expect(speak).toHaveBeenCalledTimes(1))
-    expect(speak).toHaveBeenCalledWith(clip.transcript, 0.85)
+    expect(speak).toHaveBeenCalledWith(clip.transcript, 0.85, expect.objectContaining({ onEnd: expect.any(Function) }))
   })
 
   it("WordCard calls onPractice", () => {

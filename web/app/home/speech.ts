@@ -11,11 +11,21 @@ type Recognition = {
 
 type RecognitionConstructor = new () => Recognition;
 
-export function speak(text: string, rate: number): void {
+export type SpeakHandlers = {
+  /** charIndex (in `text`) of each word as the voice reaches it; not every voice reports it */
+  onWord?: (charIndex: number) => void;
+  onEnd?: () => void;
+};
+
+export function speak(text: string, rate: number, handlers: SpeakHandlers = {}): void {
   if (!globalThis.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "fr-FR";
   utterance.rate = rate;
+  utterance.onboundary = (event) => {
+    if (event.name === "word") handlers.onWord?.(event.charIndex);
+  };
+  utterance.onend = () => handlers.onEnd?.();
   globalThis.speechSynthesis.cancel();
   globalThis.speechSynthesis.speak(utterance);
 }

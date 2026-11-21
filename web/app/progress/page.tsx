@@ -1,22 +1,23 @@
+import { ProgressHero } from "@/components/progress-hero"
 import { ProgressMessage } from "@/components/progress-message"
-import { StudentNav } from "@/components/student-nav"
+import { StudentPage } from "@/components/student-page"
 import { getProgress } from "@/app/home/data"
 
 export default async function ProgressPage() {
   const { messages } = await getProgress()
+  const hero = messages.find((m) => m.kind === "learned_this_week")
+  const rest = messages.filter((m) => m !== hero)
+
   return (
-    <div className="mx-auto w-full max-w-[960px] px-4 py-6 md:px-6">
-      <StudentNav />
-      <main className="mt-6 flex flex-col gap-4">
-        <h1 className="text-3xl font-semibold">Tu progreso</h1>
-        <ul className="flex flex-col gap-4">
-          {messages.map((message) => (
-            <li key={message.kind}>
-              <ProgressMessage message={message} />
-            </li>
-          ))}
-        </ul>
-      </main>
-    </div>
+    <StudentPage title="Tu progreso" lead="Cada palabra que dominas deja de necesitar ayuda en clase">
+      {hero && <ProgressHero message={hero} />}
+      <ul className="-mt-12 flex flex-col divide-y divide-separator">
+        {rest.map((message) => (
+          <li key={message.kind}>
+            <ProgressMessage message={message} />
+          </li>
+        ))}
+      </ul>
+    </StudentPage>
   )
 }

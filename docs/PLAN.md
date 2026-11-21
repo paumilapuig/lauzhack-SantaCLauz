@@ -112,6 +112,7 @@ Usuaris: **alumna** (tauleta o portàtil a classe; supòsit: autoritzat com a me
 
 ## Timeline
 - Sat 17:45 — PR de documentació fusionat (PLAN, API, ROLES, STATUS, demo).
+- Sat 19:00 — Spike B afegeix **PyMuPDF** (extreure text de PDF; si és escanejat, renderitzar pàgines i enviar-les al model de visió). Nota: PyMuPDF és AGPL; per a producció valorar pypdf + pypdfium2.
 - Sat 19:00 — **Sincronització 1**: esquelet + migració a main; spikes de Paula (Web Speech) i Laura (glossari) validats; decisió pla B àudio.
 - Sat 22:30 — **Sincronització 2**: F1 de punta a punta amb `lucia-w1` i `lucia-w4`.
 - Sun 02:00 — **Sincronització 3**: F1+F2+F4 = flux de demo sencer → decisió F3.
