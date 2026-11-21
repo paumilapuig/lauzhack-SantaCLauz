@@ -69,11 +69,11 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.165.0" },
-    { name = "httpx" },
-    { name = "pillow" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pillow", specifier = ">=13.0.0" },
     { name = "pydantic-settings", specifier = ">=2.16.3" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.15.1" },
-    { name = "pymupdf" },
+    { name = "pymupdf", specifier = ">=2.1" },
     { name = "supabase", specifier = ">=2.34.1" },
 ]
 

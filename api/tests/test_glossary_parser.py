@@ -55,6 +55,14 @@ def test_transparency_rule_overrides_llm_flag_and_counts_it():
     assert overrides == 1
 
 
+def test_term_missing_key_phrase_is_rejected():
+    term = make_term()
+    del term["key_phrase"]
+
+    with pytest.raises(GlossaryParseError):
+        parse_glossary(make_reply([term]))
+
+
 @pytest.mark.parametrize("content", ["not json", '{"terms": []}', '{"terms": "x", "key_phrases": []}'])
 def test_malformed_reply_raises_parse_error(content):
     with pytest.raises(GlossaryParseError):

@@ -29,7 +29,7 @@ Test first: parser (valid, duplicate lemmas, malformed → error, transparency s
 Test first: PDFs built in-test with PyMuPDF (text PDF, near-empty PDF → images, garbage bytes → error); classify by suffix/content-type; size cap. Depends: T1. Size: ~140.
 
 **T5 / generate orchestration** — Files: `api/app/glossary/generate.py`, `api/tests/test_generate.py`.
-`generate_glossary(source_text, image_blobs, model, api_key, http=None) -> (GlossaryResult, Metrics)`: build prompt, ONE call, parse. Raises `LlmOutputError` on parse failure.
+`generate_glossary(source_text, jpeg_images, model, api_key, http=None) -> (GlossaryResult, Metrics)`: `build_messages(source_text: str, jpeg_images: Sequence[bytes] = ()) -> list[dict]` (images must already be JPEG bytes prepared by T4's `image_prep`), ONE `call_openrouter(...)` (raises `OpenRouterError`), then `parse_glossary(content) -> (GlossaryResult, overrides)` (raises `GlossaryParseError`). T5 lets both errors propagate; the router (T7) maps `GlossaryParseError` -> 502 and `OpenRouterError` -> 502.
 Test first: MockTransport returns valid/invalid JSON; assert exactly 1 request, result terms, error on invalid. Depends: T1, T3. Size: ~80.
 
 **T6 / lessons_service** — Files: `api/app/lessons_service.py`, `api/tests/test_lessons_service.py`.

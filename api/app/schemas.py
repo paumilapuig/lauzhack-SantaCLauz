@@ -35,7 +35,7 @@ class LessonTermInput(BaseModel):
     translation_es: str
     definition_fr: str
     transparent: bool
-    key_phrase: str | None = None
+    key_phrase: str
 
 
 class LessonTerm(LessonTermInput):

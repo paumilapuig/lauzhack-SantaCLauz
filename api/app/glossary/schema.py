@@ -1,16 +1,13 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.schemas import LessonTermInput
+
 MIN_KEY_PHRASES = 5
 MAX_KEY_PHRASES = 8
 
 
-class LessonTermInput(BaseModel):
-    lemma: str
-    forms: list[str]
-    translation_es: str
-    definition_fr: str
-    transparent: bool
-    key_phrase: str
+class GlossaryTerm(LessonTermInput):
+    """Contract term plus the normalisation rules applied to LLM output."""
 
     @field_validator("lemma")
     @classmethod
@@ -23,7 +20,7 @@ class LessonTermInput(BaseModel):
         return [form.lower() for form in forms]
 
     @model_validator(mode="after")
-    def lemma_must_be_a_form(self) -> "LessonTermInput":
+    def lemma_must_be_a_form(self) -> "GlossaryTerm":
         if self.lemma not in self.forms:
             raise ValueError(f"lemma {self.lemma!r} must be in forms")
         return self
@@ -35,5 +32,5 @@ class KeyPhrase(BaseModel):
 
 
 class GlossaryResult(BaseModel):
-    terms: list[LessonTermInput]
+    terms: list[GlossaryTerm]
     key_phrases: list[KeyPhrase] = Field(min_length=MIN_KEY_PHRASES, max_length=MAX_KEY_PHRASES)

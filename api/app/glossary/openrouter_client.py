@@ -2,11 +2,11 @@ import httpx
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 TIMEOUT_SECONDS = 120
+ERROR_EXCERPT_CHARS = 300
 
 
 class OpenRouterError(RuntimeError):
     pass
-ERROR_EXCERPT_CHARS = 300
 
 
 def call_openrouter(
@@ -23,7 +23,13 @@ def call_openrouter(
         "usage": {"include": True},
     }
     headers = {"Authorization": f"Bearer {api_key}"}
-    client = http or httpx.Client(timeout=TIMEOUT_SECONDS)
+    if http is not None:
+        return _post(http, payload, headers)
+    with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
+        return _post(client, payload, headers)
+
+
+def _post(client: httpx.Client, payload: dict, headers: dict) -> tuple[str, dict]:
     response = client.post(OPENROUTER_URL, json=payload, headers=headers)
     if response.status_code // 100 != 2:
         excerpt = response.text[:ERROR_EXCERPT_CHARS]

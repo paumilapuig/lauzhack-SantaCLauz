@@ -49,3 +49,11 @@ def test_returns_content_and_usage_with_cost():
 def test_non_2xx_raises_with_status_and_excerpt():
     with pytest.raises(OpenRouterError, match="401.*bad key"):
         call_openrouter([], "m", "k", http=make_client(401, {"error": "bad key"}, []))
+
+
+def test_injected_client_is_left_open():
+    client = make_client(200, ok_body(), [])
+
+    call_openrouter([], "m", "k", http=client)
+
+    assert client.is_closed is False
