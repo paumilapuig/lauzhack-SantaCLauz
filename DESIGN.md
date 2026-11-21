@@ -115,7 +115,8 @@ Direcció: **pulcre, estil Apple**. Poques caixes: el contingut va directament s
 
 ### `/home` — alumna, a casa (castellà)
 - **Seccions**: títol 28 px + recompte en gris, línia fina, llista amb separadors (`divide-separator`).
-- **Clip** (`ClipCard`): botó rodó de play (48 px, `--primary`), títol + meta ("Clip de clase · 22:10 · 0:00–0:30"), **ona d'àudio** fina (`Waveform`, barres de 2 px, grises; la part reproduïda en tinta; la paraula marcada en ámbar `--marker-strong`), i la transcripció a 21 px amb els termes en `Word` groc.
+- **Clip** (`ClipCard`): meta ("La respiration cellulaire · Clip de clase · 22:10") i **la transcripció primer** (21 px, termes en `Word` groc). A sota, el reproductor: botó rodó play/pausa (44 px, `--primary`) i l'**ona d'àudio** fina (`Waveform`, barres de 2 px; la part reproduïda en tinta; la paraula marcada en ámbar `--marker-strong`) amb capçal `--primary`, temps transcorregut / total i arrossegable (range invisible a sobre, fletxes del teclat).
+- **Karaoke** (`ClipTranscript` + `usePlayback`): la paraula que sona es posa en negreta (traç fi del mateix color, sense canviar l'amplada), el que encara no ha sonat en `--label-secondary`. Segueix els esdeveniments de paraula de la veu quan n'hi ha; si no, una estimació per temps.
 - **Paraules** (`WordCard`): fila amb la paraula 24 px, la traducció en ámbar fosc, la definició FR en gris, i botó píndola gris "Practicar ›".
 - **Pràctica** (`PracticeFlow`): capçalera amb la paraula 40 px i "Salir" en text accent; barra de 3 segments fins; "Paso N de 3" + títol 28 px; opcions com a botons grisos de 64 px; pas 3 amb micro rodó de 80 px. Sense temporitzadors ni confeti.
 

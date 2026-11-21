@@ -19,11 +19,12 @@ type Props = {
   seed: string
   /** [start, end] of the marked word as fractions of the clip (0–1) */
   mark: [number, number] | null
-  playing: boolean
-  durationMs: number
+  /** 0–1; the played part is drawn in ink */
+  progress: number
+  showHead: boolean
 }
 
-export function Waveform({ seed, mark, playing, durationMs }: Props) {
+export function Waveform({ seed, mark, progress, showHead }: Props) {
   const heights = barHeights(seed)
   const inMark = (i: number) => mark !== null && i / BARS >= mark[0] && i / BARS <= mark[1]
   const bars = (played: boolean) =>
@@ -45,14 +46,17 @@ export function Waveform({ seed, mark, playing, durationMs }: Props) {
     <div aria-hidden className="relative h-12">
       <div className="absolute inset-0 flex items-center justify-between">{bars(false)}</div>
       <div
-        style={{
-          clipPath: playing ? "inset(0 0 0 0)" : "inset(0 100% 0 0)",
-          transitionDuration: playing ? `${durationMs}ms` : "0ms",
-        }}
-        className="absolute inset-0 flex items-center justify-between transition-[clip-path] ease-linear"
+        style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}
+        className="absolute inset-0 flex items-center justify-between"
       >
         {bars(true)}
       </div>
+      {showHead && (
+        <span
+          style={{ left: `${progress * 100}%` }}
+          className="absolute -top-1 -bottom-1 w-0.5 -translate-x-1/2 rounded-full bg-primary"
+        />
+      )}
     </div>
   )
 }
