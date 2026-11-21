@@ -8,7 +8,7 @@ Acceptance: `cd api && uv run pytest` is green with 200/401/403/404/413/415/422/
 None. `docs/API.md` is not modified. No DB migration. No new library (`python-multipart` comes with `fastapi[standard]`; `storage3` comes with supabase-py 2.34.1). No remote Supabase operation.
 
 ## Decisions not in API.md
-1. **Layout:** `api/app/routers/clips.py` (router), `clips_validation.py` (MIME + capped read), `clips_storage.py` (bucket calls), `clips_repository.py` (`clips` row). Response model `ClipCreated{clip_id: str, audio_path: str}` goes in `classdata_schemas.py`. These files are outside owner A's `classdata*` glob, so log them in `docs/STATUS.md`.
+1. **Layout:** `api/app/routers/clips.py` (router), `clips_validation.py` (MIME + capped read), `api/app/storage.py` (shared bucket calls, moved out of `routers/`), `clips_repository.py` (`clips` row). Response model `ClipCreated{clip_id: str, audio_path: str}` goes in `classdata_schemas.py`. Laura confirmed these files are owner A's (CLAUDE.md ownership table updated).
 2. **Form fields:** `audio: UploadFile`, `session_id: UUID`, `t_start: float` (>= 0, finite), `t_end: float` (> 0, finite), `transcript: str` (default `""`, max 5000 chars). A schema failure gives FastAPI's default list `detail` (422). If `t_end <= t_start`: `422 "t_end must be greater than t_start"`.
 3. **Check order** (each check fails before the next one runs): 401 token, 403 role, 422 fields, 415 MIME, 413 size, 422 empty, 404 session. Then upload, then DB writes. Nothing is uploaded or written when any check fails.
 4. **MIME:** base type = `content_type.split(";")[0].strip().lower()`. Only `audio/webm` is accepted, so `audio/webm;codecs=opus` passes. A missing or other type gives `415 "Audio must be audio/webm"`.
@@ -31,7 +31,7 @@ None. `docs/API.md` is not modified. No DB migration. No new library (`python-mu
 `insert_clip(db, clip_id, session_id, student_id, t_start, t_end, transcript, audio_path) -> None` and `delete_clip(db, clip_id) -> None` (best-effort, catches and logs). All ids are `str`.
 - **Test first:** on `seeded_fake()` with `db.tables["clips"] = []`, one row is stored with exactly these fields and `id == clip_id`; `delete_clip` removes it, and on a missing table it does not raise. **Depends on:** none · **Size:** ~50
 
-### T4 — storage helper · **Files:** `api/app/routers/clips_storage.py`, `api/tests/test_clips_storage.py`
+### T4 — storage helper · **Files:** `api/app/storage.py`, `api/tests/test_storage.py`
 `clip_object_path`, `upload_clip(db, path, data)`, `remove_clip(db, path)` (best-effort), `signed_clip_url(db, path, expires=3600)`.
 - **Test first:** the path is `f"{STUDENT}/{clip_id}.webm"`; upload passes content type `audio/webm` and upsert "false" (a duplicate raises); `remove_clip` on a broken bucket does not raise; `signed_clip_url` returns the fake URL with `expires=3600` by default. **Depends on:** T1 · **Size:** ~80
 
@@ -45,7 +45,7 @@ None. `docs/API.md` is not modified. No DB migration. No new library (`python-mu
 - **Depends on:** T2, T3, T4 · **Size:** ~150 (if over, move the 4xx cases to `api/tests/test_clips_api_errors.py`)
 
 ### T6 — wiring + status · **Files:** `api/app/main.py` (+1 `include_router`), `api/tests/test_clips_routes.py`, `docs/STATUS.md`
-- **Test first:** on `main.app` without a token, `POST /api/clips` gives 401 (not 404/405). STATUS gets the Miquel line, plus a note to Laura: new files in `api/tests/` (`fake_storage.py`, `test_clips_*`). It also says: reuse `clips_storage.signed_clip_url` for `/api/home/review`, and `app/routers/clips*` is now owner A's. **Depends on:** T5 · **Size:** ~30
+- **Test first:** on `main.app` without a token, `POST /api/clips` gives 401 (not 404/405). STATUS gets the Miquel line, plus a note to Laura: new files in `api/tests/` (`fake_storage.py`, `test_clips_*`). It also says: reuse `app.storage.signed_clip_url` for `/api/home/review`, and `app/routers/clips*` is now owner A's (confirmed by Laura). **Depends on:** T5 · **Size:** ~30
 
 ## Parallel plan
 - **Wave 1:** T1, T2, T3 (disjoint files).
