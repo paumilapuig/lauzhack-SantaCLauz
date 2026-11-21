@@ -19,7 +19,7 @@ describe("HomeReview", () => {
     render(<HomeReview />)
     const word = await screen.findByRole("button", { name: /mitochondries/i })
     fireEvent.click(word)
-    await waitFor(() => expect(screen.getAllByText("Marcada en casa").length).toBe(1))
+    await waitFor(() => expect(screen.getByLabelText("Quitar mitochondries")).toBeTruthy())
   })
 
   it("finishing a mode saves practice per word and hides the page title while open", async () => {
@@ -30,7 +30,7 @@ describe("HomeReview", () => {
       fireEvent.click(screen.getByText("Toca para ver"))
       fireEvent.click(screen.getByText("Lo sabía"))
     }
-    await waitFor(() => expect(savePractice).toHaveBeenCalledWith(expect.objectContaining({ lemma: "déchet", passed: true })))
+    await waitFor(() => expect(savePractice).toHaveBeenCalledWith(expect.objectContaining({ lemma: "déchets", passed: true })))
     expect(vi.mocked(savePractice).mock.calls.length).toBeGreaterThanOrEqual(3)
   })
 })

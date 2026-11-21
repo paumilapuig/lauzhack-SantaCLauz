@@ -22,9 +22,11 @@ type Props = {
   /** 0–1; the played part is drawn in ink */
   progress: number
   showHead: boolean
+  /** Tailwind height class */
+  heightClass?: string
 }
 
-export function Waveform({ seed, mark, progress, showHead }: Props) {
+export function Waveform({ seed, mark, progress, showHead, heightClass = "h-12" }: Props) {
   const heights = barHeights(seed)
   const inMark = (i: number) => mark !== null && i / BARS >= mark[0] && i / BARS <= mark[1]
   const bars = (played: boolean) =>
@@ -43,7 +45,7 @@ export function Waveform({ seed, mark, progress, showHead }: Props) {
     ))
 
   return (
-    <div aria-hidden className="relative h-12">
+    <div aria-hidden className={`relative ${heightClass}`}>
       <div className="absolute inset-0 flex items-center justify-between">{bars(false)}</div>
       <div
         style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}

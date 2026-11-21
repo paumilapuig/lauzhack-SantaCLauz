@@ -15,9 +15,9 @@ import { usableWords } from "./usable-words"
 function Section({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
   return (
     <section className="flex flex-col">
-      <h2 className="flex items-baseline gap-2 border-b border-separator pb-4 text-[28px] font-semibold tracking-[-0.02em]">
+      <h2 className="flex items-baseline gap-2 border-b border-separator pb-3 text-[22px] font-semibold tracking-[-0.02em]">
         {title}
-        {count !== undefined && <span className="text-[19px] font-normal text-label-secondary tabular-nums">{count}</span>}
+        {count !== undefined && <span className="text-[17px] font-normal text-label-secondary tabular-nums">{count}</span>}
       </h2>
       {children}
     </section>
@@ -49,7 +49,7 @@ export function HomeReview() {
     )
   }
 
-  const saved = new Set(words.filter((w) => w.source === "home").map((w) => w.lemma))
+  const saved = new Set(words.map((w) => w.lemma))
   const toggle = async (word: string, clipId: string) => {
     const lemma = word.toLowerCase()
     await (saved.has(lemma) ? removeMark(lemma) : saveMark(word, clipId))
@@ -64,7 +64,7 @@ export function HomeReview() {
       ) : !review ? (
         <p className="text-[19px] text-label-secondary">Cargando…</p>
       ) : (
-        <>
+        <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_360px]">
           <Section title="Tus clips" count={review.clips.length}>
             <div className="flex flex-col divide-y divide-separator">
               {review.clips.map((clip) => (
@@ -72,13 +72,15 @@ export function HomeReview() {
               ))}
             </div>
           </Section>
-          <Section title="Tus palabras" count={words.length}>
-            <MyWordsList words={words} onRemove={remove} />
-          </Section>
-          <Section title="Practicar">
-            <PracticeModesList modes={PRACTICE_MODES} wordCount={(m) => usableWords(words, m.needs).length} onOpen={setOpenMode} />
-          </Section>
-        </>
+          <div className="flex flex-col gap-10 lg:sticky lg:top-6">
+            <Section title="Tus palabras" count={words.length}>
+              <MyWordsList words={words} onRemove={remove} />
+            </Section>
+            <Section title="Practicar">
+              <PracticeModesList modes={PRACTICE_MODES} wordCount={(m) => usableWords(words, m.needs).length} onOpen={setOpenMode} />
+            </Section>
+          </div>
+        </div>
       )}
     </StudentPage>
   )

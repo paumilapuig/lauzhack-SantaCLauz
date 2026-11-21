@@ -80,7 +80,13 @@ export function translate(word: string): string | null {
   return DICTIONARY[word.toLowerCase()] ?? null;
 }
 
-const marks: MyWord[] = [];
+// demo seed: words marked at home earlier, keyed by the surface form that appears in the transcripts
+const SEED_FORMS: Record<string, string> = { déchet: "déchets" };
+const marks: MyWord[] = FAKE_REVIEW.words_to_practice.map((w) => {
+  const form = SEED_FORMS[w.lemma] ?? w.lemma;
+  // same translation the clip shows for that form
+  return { ...w, lemma: form, translation_es: DICTIONARY[form] ?? w.translation_es };
+});
 
 const sentenceWith = (transcript: string, word: string) =>
   transcript.split(/(?<=[.!?])\s+/).find((s) => s.toLowerCase().includes(word)) ?? transcript;
@@ -97,7 +103,6 @@ export async function saveMark(word: string, clipId: string): Promise<void> {
     key_phrase: sentenceWith(clip.transcript, lemma),
     level: 0,
     clip_id: clipId,
-    source: "home",
   });
 }
 
@@ -107,8 +112,7 @@ export async function removeMark(lemma: string): Promise<void> {
 }
 
 export async function getMyWords(): Promise<MyWord[]> {
-  const classWords = FAKE_REVIEW.words_to_practice.map((w) => ({ ...w, source: "class" as const }));
-  return [...classWords, ...structuredClone(marks)];
+  return structuredClone(marks);
 }
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()

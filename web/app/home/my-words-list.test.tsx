@@ -6,22 +6,16 @@ import { MyWordsList } from "./my-words-list"
 
 const base = { definition_fr: "d", key_phrase: "k", level: 0, clip_id: null }
 const words: MyWord[] = [
-  { ...base, lemma: "déchet", translation_es: "desecho", source: "class" },
-  { ...base, lemma: "cellule", translation_es: "célula", source: "home" },
+  { ...base, lemma: "déchet", translation_es: "desecho" },
+  { ...base, lemma: "cellule", translation_es: "célula" },
 ]
 
 afterEach(cleanup)
 
 describe("MyWordsList", () => {
-  it("shows the source tag per word", () => {
+  it("offers Quitar for every word", () => {
     render(<MyWordsList words={words} onRemove={vi.fn()} />)
-    expect(screen.getByText("De clase")).toBeTruthy()
-    expect(screen.getByText("Marcada en casa")).toBeTruthy()
-  })
-
-  it("offers Quitar only for home words", () => {
-    render(<MyWordsList words={words} onRemove={vi.fn()} />)
-    expect(screen.queryByLabelText("Quitar déchet")).toBeNull()
+    expect(screen.getByLabelText("Quitar déchet")).toBeTruthy()
     expect(screen.getByLabelText("Quitar cellule")).toBeTruthy()
   })
 

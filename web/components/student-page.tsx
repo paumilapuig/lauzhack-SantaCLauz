@@ -11,16 +11,16 @@ const SYSTEM =
 export function StudentPage({ title, lead, children }: { title?: string; lead?: string; children: ReactNode }) {
   return (
     <div className={`${inter.variable} ${SYSTEM} min-h-dvh w-full bg-white text-label antialiased`}>
-      <div className="mx-auto w-full max-w-[980px] px-5 pb-24 md:px-8">
-        <header className="flex h-16 items-center justify-between gap-4 border-b border-separator">
+      <div className="mx-auto w-full max-w-[1180px] px-5 pb-24 md:px-8">
+        <header className="flex h-14 items-center justify-between gap-4 border-b border-separator">
           <StudentNav />
           <TodayLabel />
         </header>
-        <main className="flex flex-col gap-16 pt-12 md:pt-16 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
+        <main className="flex flex-col gap-10 pt-8 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
           {title && (
           <div className="flex flex-col gap-2">
-            <h1 className="text-balance text-[40px] leading-[1.08] font-semibold tracking-[-0.025em] md:text-[56px]">{title}</h1>
-            <p className="text-[19px] leading-snug text-label-secondary md:text-[21px]">{lead}</p>
+            <h1 className="text-balance text-[32px] leading-[1.08] font-semibold tracking-[-0.025em] md:text-[40px]">{title}</h1>
+            <p className="text-[17px] leading-snug text-label-secondary">{lead}</p>
           </div>
           )}
           {children}

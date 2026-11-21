@@ -18,7 +18,11 @@ describe("dictionary and marks", () => {
     expect(missing).toEqual([]);
   });
 
-  it("saveMark adds a home word with its sentence, removeMark deletes it", async () => {
+  it("getMyWords starts with the 3 seeded marks, déchets in its transcript form", async () => {
+    expect((await getMyWords()).map((w) => w.lemma)).toEqual(["déchets", "chaleur", "essoufflé"]);
+  });
+
+  it("saveMark adds a word with its sentence, removeMark deletes it", async () => {
     expect(await getMyWords()).toHaveLength(3);
     await saveMark("mitochondries", "c1…");
     const words = await getMyWords();
@@ -26,7 +30,6 @@ describe("dictionary and marks", () => {
     expect(words[3]).toMatchObject({
       lemma: "mitochondries",
       translation_es: "mitocondrias",
-      source: "home",
       clip_id: "c1…",
       key_phrase: "Les mitochondries utilisent l'oxygène pour transformer le glucose.",
     });

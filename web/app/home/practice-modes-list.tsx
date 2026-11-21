@@ -1,10 +1,9 @@
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import type { Need } from "./usable-words"
 
 export type PracticeModeItem = {
   id: string
   name: string
-  description: string
   icon: LucideIcon
   minWords: number
   needs: Need[]
@@ -18,28 +17,25 @@ type Props = {
 
 export function PracticeModesList({ modes, wordCount, onOpen }: Props) {
   return (
-    <ul className="divide-y divide-separator">
+    <ul className="grid grid-cols-2 gap-3 pt-4">
       {modes.map((mode) => {
-        const { id, name, description, icon: Icon, minWords } = mode
+        const { id, name, icon: Icon, minWords } = mode
         const disabled = (typeof wordCount === "function" ? wordCount(mode) : wordCount) < minWords
+        const reason = `Necesitas al menos ${minWords} palabras`
         return (
           <li key={id}>
             <button
               type="button"
               aria-disabled={disabled}
+              title={disabled ? reason : undefined}
               onClick={() => !disabled && onOpen(id)}
-              className={`flex min-h-16 w-full items-center gap-3 py-2 text-left transition-colors hover:bg-fill ${disabled ? "opacity-50" : ""}`}
+              className={`flex min-h-16 w-full items-center gap-3 rounded-xl bg-fill px-3 text-left transition-colors hover:bg-fill-strong ${disabled ? "opacity-50" : ""}`}
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-primary text-white">
-                <Icon className="size-5" aria-hidden />
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-primary text-white">
+                <Icon className="size-4" aria-hidden />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[19px] font-semibold">{name}</span>
-                <span className="block text-[15px] text-label-secondary">
-                  {disabled ? `Necesitas al menos ${minWords} palabras` : description}
-                </span>
-              </span>
-              <ChevronRight className="size-5 shrink-0 text-label-secondary" aria-hidden />
+              <span className="text-[15px] font-semibold">{name}</span>
+              {disabled && <span className="sr-only">{reason}</span>}
             </button>
           </li>
         )

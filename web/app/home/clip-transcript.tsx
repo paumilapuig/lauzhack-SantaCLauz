@@ -48,7 +48,7 @@ export function ClipTranscript({ transcript, saved, translate, onToggle, char }:
   if (cursor < transcript.length) pieces.push(transcript.slice(cursor))
 
   return (
-    <p lang="fr" className="max-w-[34em] text-[21px] leading-[2.1] tracking-[-0.005em]">
+    <p lang="fr" className="max-w-[34em] text-[19px] leading-[2] tracking-[-0.005em]">
       {pieces}
     </p>
   )

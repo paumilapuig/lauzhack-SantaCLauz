@@ -5,10 +5,11 @@
 | Miquel (A) | feat/api-classdata | Fet: 5 endpoints de classe (`api/app/routers/classdata*`, `api/app/roles.py`), 100+ tests amb Supabase simulat (PR obert). Següent: `/teacher` dashboard + clips | – | Sat 21 Nov |
 | Laura (B) | feat/api-lessons | Fet: `POST /api/lessons` (text/PDF/foto → 1 crida OpenRouter → `lessons` + `lesson_terms`), PR #18 + docs PR #19. **Primera prova real** (gemini-2.5-flash-lite, text de la demo): 15/15 termes, 8 verds/7 grocs = referència, 4,4 s, **0,00083 $**. Següent: prova amb foto + `prof-demo`; després `feat/api-home-review` / `feat/api-practice` | – | Sat 21 Nov 22:00 |
 | Paula (C) | feat/spike-c-subtitles | Fet: spike `spikes/c-subtitles/` (PR obert; pàgina cablejada, 37 tests). Següent: prova de micro a Chrome amb `lesson-respiration.md` (retard + N/15), després passar `wordState.ts` a `web/lib/` i començar `/class` | – | Sat 21 Nov 18:45 |
-| Pau (D) | feat/home-redesign | Redisseny de `/home` i `/progress` (direcció "quadern": clip amb ona d'àudio, fitxes de vocabulari, retolador, hero de progrés) + DESIGN.md §6 Casa. `/home` amb paraules marcades a casa (tocar a la transcripció), "Tus palabras" i 7 modes de pràctica. Pendent: protegir /home i /progress al proxy; connectar `data.ts` als endpoints de Laura. Següent: pitch + slides | – | Sat 21 Nov 21:30 |
+| Pau (D) | feat/home-practice-modes | Marcar paraules només al clip de casa (no a classe), 7 modes de pràctica, dashboard compacte a 2 columnes. Pendent: protegir /home i /progress al proxy; connectar `data.ts` als endpoints de Laura. Següent: pitch + slides | – | Sat 21 Nov 21:30 |
 
 ## Requests to other areas
 - A touched web/lib/api.ts (Me type) for Paula
+- Pau → equip (decisió de producte): les paraules NO es marquen a classe; només es marquen al clip a casa. Afecta F2/PLAN (tocar paraula a classe = −1), l'estat 🟠 (ara: paraula marcada a casa que torna a sortir a classe) i el guió de la demo. Cal decidir-ho a la sync (A actualitza PLAN).
 - (e.g. "Paula → Miquel: need column `x` in `class_events`")
 - Pau → Miquel/Laura: endpoint to save words marked at home (clip_id, word, translation_es) + `source` on words_to_practice
 - Miquel → Laura: nous fitxers a `api/tests/` (`fake_supabase.py`, `classdata_seed.py`, `test_classdata_*`); reutilitza `app.roles` (`StudentUser`/`TeacherUser`) i `classdata_schemas.LessonTerm`.

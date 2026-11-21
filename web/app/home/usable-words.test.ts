@@ -3,7 +3,7 @@ import type { MyWord } from "./types"
 import { usableWords } from "./usable-words"
 
 const word = (over: Partial<MyWord>): MyWord => ({
-  lemma: "a", translation_es: "x", definition_fr: "y", key_phrase: "z", level: 0, clip_id: null, source: "home", ...over,
+  lemma: "a", translation_es: "x", definition_fr: "y", key_phrase: "z", level: 0, clip_id: null, ...over,
 })
 
 describe("usableWords", () => {
