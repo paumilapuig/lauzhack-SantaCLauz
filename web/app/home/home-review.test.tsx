@@ -19,14 +19,14 @@ describe("HomeReview", () => {
     render(<HomeReview />)
     const word = await screen.findByRole("button", { name: /mitochondries/i })
     fireEvent.click(word)
-    await waitFor(() => expect(screen.getByLabelText("Quitar mitochondries")).toBeTruthy())
+    await waitFor(() => expect(screen.getAllByLabelText("Quitar mitochondries").length).toBeGreaterThan(0))
   })
 
   it("opens a mode in a dialog over the page and Cerrar closes it without saving", async () => {
     render(<HomeReview />)
     fireEvent.click(await screen.findByRole("button", { name: /Tarjetas/ }))
     expect(screen.getByRole("dialog", { name: "Tarjetas" })).toBeTruthy()
-    expect(screen.getByRole("heading", { level: 1, name: "Para repasar", hidden: true })).toBeTruthy()
+    expect(screen.getByRole("heading", { level: 1, name: /^Repasar/, hidden: true })).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "Cerrar" }))
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
     expect(savePractice).not.toHaveBeenCalled()

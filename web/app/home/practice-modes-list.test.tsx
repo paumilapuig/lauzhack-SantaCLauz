@@ -7,8 +7,8 @@ import { PracticeModesList } from "./practice-modes-list"
 afterEach(cleanup)
 
 const modes = [
-  { id: "flashcards", name: "Tarjetas", icon: Layers, minWords: 1, needs: [] },
-  { id: "match-pairs", name: "Parejas", icon: Link2, minWords: 2, needs: [] },
+  { id: "flashcards", name: "Tarjetas", description: "Voltea y recuerda", icon: Layers, minWords: 1, needs: [] },
+  { id: "match-pairs", name: "Parejas", description: "Une cada par", icon: Link2, minWords: 2, needs: [] },
 ]
 
 describe("PracticeModesList", () => {
@@ -28,5 +28,11 @@ describe("PracticeModesList", () => {
     expect(row.textContent).toContain("al menos 2 palabras")
     fireEvent.click(row)
     expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it("shows the description, or the reason when disabled", () => {
+    render(<PracticeModesList modes={modes} wordCount={1} onOpen={vi.fn()} />)
+    expect(screen.getByText("Voltea y recuerda")).toBeTruthy()
+    expect(screen.queryByText("Une cada par")).toBeNull()
   })
 })

@@ -50,4 +50,10 @@ describe("MyWordsList", () => {
     render(<MyWordsList words={[]} onRemove={vi.fn()} />)
     expect(screen.getByText(/Aún no tienes palabras/)).toBeTruthy()
   })
+
+  it("compact variant uses h-9 rows and keeps Quitar", () => {
+    const { container } = render(<MyWordsList words={words} onRemove={vi.fn()} variant="compact" />)
+    expect(container.querySelector("li")?.className).toContain("h-9")
+    expect(screen.getByLabelText("Quitar déchet")).toBeTruthy()
+  })
 })

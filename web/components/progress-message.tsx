@@ -7,15 +7,13 @@ const ICONS = {
   keep_going: Footprints,
 } satisfies Record<ProgressKind, typeof Sprout>
 
-// A row with a Settings-style icon tile
+// A plain row: line icon + sentence
 export function ProgressMessage({ message }: { message: Message }) {
   const Icon = ICONS[message.kind]
   return (
-    <article className="flex min-h-11 items-center gap-3 py-2.5">
-      <span className="flex size-[29px] shrink-0 items-center justify-center rounded-[7px] bg-primary">
-        <Icon aria-hidden="true" className="size-[18px] text-primary-foreground" />
-      </span>
-      <h2 className="text-[17px] leading-[22px] font-normal">{message.text}</h2>
+    <article className="flex h-14 items-center gap-3">
+      <Icon aria-hidden="true" strokeWidth={1.5} className="size-[18px] shrink-0 text-label-secondary" />
+      <h2 className="text-[17px] leading-[24px] font-normal">{message.text}</h2>
     </article>
   )
 }
