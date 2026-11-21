@@ -107,6 +107,7 @@ Usuaris: **alumna** (tauleta o portàtil a classe; supòsit: autoritzat com a me
 - Sat 17:20 — Idioma de la UI: **alumna en castellà** (la seva L1), subtítols en francès; **profe en francès**. Les frases de progrés les genera l'API en castellà.
 - Sat 17:20 — Glossari de demo: 15 termes, 8 transparents + 7 no transparents → autonomia inicial `lucia-w1` = 8/15 ≈ 53% ("~55%"), `lucia-w4` = 12/15 = 80%.
 - Sat 17:20 — Model d'LLM configurable amb `OPENROUTER_MODEL`; Laura el tria al spike segons cost/temps mesurats.
+- Sat 18:15 — Spike B fa servir **Pillow** (reduir i passar a gris les imatges abans d'enviar-les al model de visió: menys tokens). Proposta pendent de SYNC 1: imatges a `POST /api/lessons`.
 
 ## Timeline
 - Sat 17:45 — PR de documentació fusionat (PLAN, API, ROLES, STATUS, demo).

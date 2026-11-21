@@ -28,6 +28,7 @@ class Metrics:
     cached: bool
     image_bytes_before: int
     image_bytes_after: int
+    llm_flag_overrides: int = 0
 
 
 def _strip_fences(content: str) -> str:
@@ -38,13 +39,21 @@ def _strip_fences(content: str) -> str:
 
 def parse_glossary(content: str) -> GlossaryResult:
     """Parse the LLM reply and replace its `transparent` flags by the rule-based ones."""
+    return parse_glossary_counting_overrides(content)[0]
+
+
+def parse_glossary_counting_overrides(content: str) -> tuple[GlossaryResult, int]:
+    """Like parse_glossary, also counting the terms where the rule changed the LLM flag."""
     try:
         result = GlossaryResult.model_validate(json.loads(_strip_fences(content)))
     except (json.JSONDecodeError, ValidationError) as error:
         raise ValueError(f"LLM returned invalid glossary: {error}") from error
+    overrides = 0
     for term in result.terms:
-        term.transparent = is_transparent(term.transparent, term.lemma, term.translation_es)
-    return result
+        rule_flag = is_transparent(term.transparent, term.lemma, term.translation_es)
+        overrides += rule_flag != term.transparent
+        term.transparent = rule_flag
+    return result, overrides
 
 
 def generate(
@@ -71,13 +80,14 @@ def generate(
         return GlossaryResult.model_validate(cached), metrics
 
     content, usage = call_openrouter(messages, model, api_key, http=http)
-    result = parse_glossary(content)
+    result, overrides = parse_glossary_counting_overrides(content)
     metrics = Metrics(
         seconds=time.perf_counter() - started,
         prompt_tokens=usage.get("prompt_tokens", 0),
         completion_tokens=usage.get("completion_tokens", 0),
         cost_usd=usage.get("cost", 0),
         cached=False,
+        llm_flag_overrides=overrides,
         **sizes,
     )
     cache.save(key, result.model_dump(), asdict(metrics), cache_dir)

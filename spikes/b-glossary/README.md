@@ -14,11 +14,11 @@ Put the key in your environment (never in git; `api/.env.example` lists the name
     export OPENROUTER_API_KEY=...            # PowerShell: $env:OPENROUTER_API_KEY="..."
     export OPENROUTER_MODEL=google/gemini-2.5-flash-lite   # optional, this is the default
 
-    uv run --with httpx,pydantic,pillow python spikes/b-glossary/generate_glossary.py --text docs/demo/lesson-respiration.md
-    uv run --with httpx,pydantic,pillow python spikes/b-glossary/generate_glossary.py --image page.jpg
-    uv run --with httpx,pydantic,pillow python spikes/b-glossary/generate_glossary.py --text docs/demo/lesson-respiration.md --image page.jpg
+    uv run --with httpx,pydantic,pillow python spikes/b-glossary/cli.py --text docs/demo/lesson-respiration.md
+    uv run --with httpx,pydantic,pillow python spikes/b-glossary/cli.py --image page.jpg
+    uv run --with httpx,pydantic,pillow python spikes/b-glossary/cli.py --text docs/demo/lesson-respiration.md --image page.jpg
 
-Options: `--text F`, `--image F ...` (png/jpg), `--max-side N` (default 1024).
+Paths are relative to the repo root; run all commands from there (cli.py and benchmark.py resolve their own paths). Options: `--text F`, `--image F ...` (png/jpg), `--max-side N` (default 1024).
 Output goes to `spikes/b-glossary/out/glossary-<ts>.json` with metrics and a comparison
 against `docs/demo/glossary-respiration.json`. A second identical run prints `cached: true, cost_usd: 0`.
 
@@ -27,12 +27,12 @@ against `docs/demo/glossary-respiration.json`. A second identical run prints `ca
     uv run --with httpx,pydantic,pillow python spikes/b-glossary/benchmark.py --text docs/demo/lesson-respiration.md \
       --models google/gemini-2.5-flash-lite,openai/gpt-4.1-nano,meta-llama/llama-4-scout,qwen/qwen2.5-vl-72b-instruct
 
-Prints one row per model and writes `out/benchmark-<ts>.md`. A failing model gives an error row; the run continues.
+Same inputs as the CLI (`--text`, `--image`); every model is really called (cache bypassed). Prints one row per model and writes `out/benchmark-<ts>.md`. A failing model gives an error row; the run continues.
 
 ## What is measured
 
 - Coverage: reference terms matched (of 15), missing and extra terms.
-- Transparency: LLM flag vs the rule (`is_transparent`), mismatches.
+- Transparency: mismatches vs the reference, and how many LLM flags the rule (`is_transparent`) overrode.
 - Cost (USD, from OpenRouter usage), latency (seconds), prompt/completion tokens, image bytes before/after downscale.
 
 ## Frugality

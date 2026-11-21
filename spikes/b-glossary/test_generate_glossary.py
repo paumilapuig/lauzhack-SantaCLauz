@@ -117,3 +117,9 @@ def test_cli_without_api_key_exits(monkeypatch):
     with pytest.raises(SystemExit) as exit_info:
         cli.main(["--text", str(FIXTURE)])
     assert "OPENROUTER_API_KEY" in str(exit_info.value)
+
+
+def test_metrics_count_llm_flags_overridden_by_rule(tmp_path):
+    http, _ = _client()
+    _, metrics = _generate(tmp_path, http)
+    assert metrics.llm_flag_overrides == 7
