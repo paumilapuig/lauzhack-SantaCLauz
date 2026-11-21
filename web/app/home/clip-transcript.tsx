@@ -30,7 +30,15 @@ export function ClipTranscript({ transcript, saved, translate, onToggle, char }:
     pieces.push(
       <span key={start} className={className}>
         {translation ? (
-          <Word text={text} translation={translation} state={saved.has(word) ? "yellow" : "green"} onTap={() => onToggle(word, translation)} />
+          // key changes on save/unsave so an un-saved word drops the translation it revealed
+          <Word
+            key={saved.has(word) ? "saved" : "plain"}
+            compact
+            text={text}
+            translation={translation}
+            state={saved.has(word) ? "yellow" : "green"}
+            onTap={() => onToggle(word, translation)}
+          />
         ) : (
           text
         )}

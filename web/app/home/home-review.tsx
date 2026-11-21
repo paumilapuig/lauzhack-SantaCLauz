@@ -1,11 +1,15 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
-import type { HomeReview as HomeReviewData, WordToPractice } from "@/lib/student-contract"
+import { useCallback, useEffect, useState, type ReactNode } from "react"
+import type { HomeReview as HomeReviewData } from "@/lib/student-contract"
+import { StudentPage } from "@/components/student-page"
 import { ClipCard } from "./clip-card"
-import { getHomeReview } from "./data"
-import { PracticeFlow } from "./practice-flow"
-import { WordCard } from "./word-card"
+import { getHomeReview, getMyWords, removeMark, saveMark, savePractice, translate } from "./data"
+import type { ExerciseResult } from "./exercises/types"
+import { MyWordsList } from "./my-words-list"
+import { PRACTICE_MODES } from "./practice-modes"
+import { PracticeModesList } from "./practice-modes-list"
+import type { MyWord } from "./types"
 
 function Section({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
   return (
@@ -19,57 +23,62 @@ function Section({ title, count, children }: { title: string; count?: number; ch
   )
 }
 
-const LIST = "flex flex-col divide-y divide-separator"
-
 export function HomeReview() {
   const [review, setReview] = useState<HomeReviewData | null>(null)
-  const [practicing, setPracticing] = useState<string | null>(null)
+  const [words, setWords] = useState<MyWord[]>([])
+  const [openMode, setOpenMode] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
-  // ClipCard keeps translating words already practised (level is still < 2)
-  const [allWords, setAllWords] = useState<WordToPractice[]>([])
+
+  const refreshWords = useCallback(() => getMyWords().then(setWords), [])
 
   useEffect(() => {
-    getHomeReview()
-      .then((data) => {
-        setAllWords(data.words_to_practice)
-        setReview(data)
-      })
-      .catch(() => setFailed(true))
-  }, [])
+    Promise.all([getHomeReview(), refreshWords()]).then(([data]) => setReview(data)).catch(() => setFailed(true))
+  }, [refreshWords])
 
-  if (failed) return <p role="alert" className="text-[19px]">No se han podido cargar tus clips.</p>
-  if (!review) return <p className="text-[19px] text-label-secondary">Cargando…</p>
-
-  const { clips, words_to_practice: words } = review
-  const active = words.find((w) => w.lemma === practicing)
-
-  const finish = (lemma: string) => {
-    setReview({ ...review, words_to_practice: words.filter((w) => w.lemma !== lemma) })
-    setPracticing(null)
+  const mode = PRACTICE_MODES.find((m) => m.id === openMode)
+  if (mode) {
+    const finish = (results: ExerciseResult[]) =>
+      results.forEach(({ lemma, passed }) =>
+        savePractice({ lemma, clip_id: words.find((w) => w.lemma === lemma)?.clip_id ?? null, passed }),
+      )
+    return (
+      <StudentPage>
+        <mode.Component words={words} onFinish={finish} onExit={() => setOpenMode(null)} />
+      </StudentPage>
+    )
   }
 
+  const saved = new Set(words.filter((w) => w.source === "home").map((w) => w.lemma))
+  const toggle = async (word: string, clipId: string) => {
+    const lemma = word.toLowerCase()
+    await (saved.has(lemma) ? removeMark(lemma) : saveMark(word, clipId))
+    await refreshWords()
+  }
+  const remove = (lemma: string) => removeMark(lemma).then(refreshWords)
+
   return (
-    <>
-      <Section title="Tus clips" count={clips.length}>
-        <div className={LIST}>
-          {clips.map((clip) => (
-            <ClipCard key={clip.id} clip={clip} words={allWords} />
-          ))}
-        </div>
-      </Section>
-      <Section title="Palabras para practicar" count={active ? undefined : words.length}>
-        {active ? (
-          <PracticeFlow key={active.lemma} word={active} onDone={finish} onExit={() => setPracticing(null)} />
-        ) : words.length > 0 ? (
-          <div className={LIST}>
-            {words.map((word) => (
-              <WordCard key={word.lemma} word={word} onPractice={() => setPracticing(word.lemma)} />
-            ))}
-          </div>
-        ) : (
-          <p className="py-8 text-[19px] text-label-secondary">Todo repasado por hoy</p>
-        )}
-      </Section>
-    </>
+    <StudentPage title="Para repasar" lead="Lo que se te escapó hoy en clase, con la voz de tu profe">
+      {failed ? (
+        <p role="alert" className="text-[19px]">No se han podido cargar tus clips.</p>
+      ) : !review ? (
+        <p className="text-[19px] text-label-secondary">Cargando…</p>
+      ) : (
+        <>
+          <Section title="Tus clips" count={review.clips.length}>
+            <div className="flex flex-col divide-y divide-separator">
+              {review.clips.map((clip) => (
+                <ClipCard key={clip.id} clip={clip} saved={saved} translate={translate} onToggle={(word) => toggle(word, clip.id)} />
+              ))}
+            </div>
+          </Section>
+          <Section title="Tus palabras" count={words.length}>
+            <MyWordsList words={words} onRemove={remove} />
+          </Section>
+          <Section title="Practicar">
+            <PracticeModesList modes={PRACTICE_MODES} wordCount={words.length} onOpen={setOpenMode} />
+          </Section>
+        </>
+      )}
+    </StudentPage>
   )
 }

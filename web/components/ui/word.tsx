@@ -21,11 +21,14 @@ export function Word({
   translation,
   state,
   onTap,
+  compact = false,
 }: {
   text: string
   translation: string
   state: WordState
   onTap: () => void
+  /** inside running text: no 44px minimum width, so short words keep normal spacing (height stays 44px) */
+  compact?: boolean
 }) {
   const glossId = useId()
   const [tapped, setTapped] = useState(false)
@@ -52,7 +55,8 @@ export function Word({
       aria-describedby={showTranslation ? glossId : undefined}
       onClick={handleClick}
       className={cn(
-        "inline-flex min-h-11 min-w-11 flex-col items-center justify-center rounded-sm",
+        "inline-flex min-h-11 flex-col items-center justify-center rounded-sm",
+        !compact && "min-w-11",
         "data-[tapped]:bg-word-yellow-bg"
       )}
     >
