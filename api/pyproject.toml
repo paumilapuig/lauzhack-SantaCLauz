@@ -5,6 +5,9 @@ description = "LauzHack team API (FastAPI)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.165.0",
+    "httpx>=0.28.1",
+    "pillow>=13.0.0",
+    "pymupdf>=2.1",
     "pydantic-settings>=2.16.3",
     "pyjwt[crypto]>=2.15.1",
     "supabase>=2.34.1",

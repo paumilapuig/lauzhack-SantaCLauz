@@ -11,11 +11,28 @@ type Recognition = {
 
 type RecognitionConstructor = new () => Recognition;
 
-export function speak(text: string, rate: number): void {
+export type SpeakHandlers = {
+  /** charIndex (in `text`) of each word as the voice reaches it; not every voice reports it */
+  onWord?: (charIndex: number) => void;
+  onEnd?: () => void;
+  /** the voice actually started (network voices start late) */
+  onStart?: () => void;
+};
+
+export function speak(text: string, rate: number, handlers: SpeakHandlers = {}): void {
   if (!globalThis.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "fr-FR";
   utterance.rate = rate;
+  // local voices report word boundaries; network ones (e.g. "Google français") do not
+  const french = globalThis.speechSynthesis.getVoices?.().filter((v) => v.lang?.toLowerCase().startsWith("fr")) ?? [];
+  const voice = french.find((v) => v.localService) ?? french[0];
+  if (voice) utterance.voice = voice;
+  utterance.onstart = () => handlers.onStart?.();
+  utterance.onboundary = (event) => {
+    if (event.name === "word") handlers.onWord?.(event.charIndex);
+  };
+  utterance.onend = () => handlers.onEnd?.();
   globalThis.speechSynthesis.cancel();
   globalThis.speechSynthesis.speak(utterance);
 }

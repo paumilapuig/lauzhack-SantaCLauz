@@ -1,6 +1,5 @@
 import { BadgeCheck, Footprints, Sprout } from "lucide-react"
 import type { ProgressKind, ProgressMessage as Message } from "@/lib/student-contract"
-import { Card } from "./ui/card"
 
 const ICONS = {
   learned_this_week: Sprout,
@@ -8,14 +7,13 @@ const ICONS = {
   keep_going: Footprints,
 } satisfies Record<ProgressKind, typeof Sprout>
 
+// A plain row: line icon + sentence
 export function ProgressMessage({ message }: { message: Message }) {
   const Icon = ICONS[message.kind]
   return (
-    <Card className="flex-row items-center gap-4 px-(--card-spacing)">
-      <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-accent">
-        <Icon aria-hidden="true" className="size-8 text-primary" />
-      </span>
-      <h2 className="text-xl font-semibold">{message.text}</h2>
-    </Card>
+    <article className="flex h-14 items-center gap-3">
+      <Icon aria-hidden="true" strokeWidth={1.5} className="size-[18px] shrink-0 text-label-secondary" />
+      <h2 className="text-[17px] leading-[24px] font-normal">{message.text}</h2>
+    </article>
   )
 }

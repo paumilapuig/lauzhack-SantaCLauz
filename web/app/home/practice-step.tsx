@@ -1,41 +1,39 @@
-import { Check } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { cn } from "cn";
 
-export function StepCard({
-  number,
-  title,
-  active,
-  done = false,
-  children,
-}: {
-  number: number;
-  title: string;
-  active: boolean;
-  done?: boolean;
-  children?: ReactNode;
-}) {
+// Three thin segments, like a story progress bar
+export function StepRail({ steps, current }: { steps: string[]; current: number }) {
+  return (
+    <ol aria-label="Pasos" className="grid grid-cols-3 gap-1.5">
+      {steps.map((title, i) => (
+        <li key={title} aria-current={i === current ? "step" : undefined}>
+          <span className={cn("block h-1 rounded-full transition-colors", i <= current ? "bg-primary" : "bg-fill-strong")} />
+          <span className="sr-only">{i < current ? `${title}, completado` : title}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export function StepPanel({ number, title, hint, children }: { number: number; title: string; hint: string; children: ReactNode }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
   useEffect(() => {
-    if (active && !firstRender.current) heading.current?.focus();
+    if (!firstRender.current) heading.current?.focus();
     firstRender.current = false;
-  }, [active]);
+  }, [number]);
 
   return (
-    <Card className={active ? "border-2 border-primary px-4" : "px-4 opacity-70"}>
-      <h3 ref={heading} tabIndex={-1} className="flex items-center gap-2 text-lg font-bold">
-        {done && (
-          <>
-            <Check aria-hidden className="size-5 text-primary" />
-            <span className="sr-only">completado</span>
-          </>
-        )}
-        {number}. {title}
-      </h3>
-      {active && children}
-    </Card>
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-1">
+        <p className="text-[15px] font-medium text-label-secondary tabular-nums">Paso {number} de 3</p>
+        <h3 ref={heading} tabIndex={-1} className="text-balance text-[28px] font-semibold tracking-[-0.02em]">
+          {title}
+        </h3>
+        <p className="text-[17px] text-label-secondary">{hint}</p>
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -52,15 +50,25 @@ export function OptionsStep({
 }) {
   return (
     <>
-      <div className="text-lg">{prompt}</div>
-      <div className="flex flex-col gap-2">
+      {prompt}
+      <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
         {options.map((option) => (
-          <Button key={option} variant="outline" lang="fr" className="min-h-11 text-lg" onClick={() => onPick(option)}>
+          <button
+            key={option}
+            type="button"
+            lang="fr"
+            onClick={() => onPick(option)}
+            className="h-16 touch-manipulation rounded-xl bg-fill px-4 text-[21px] font-semibold tracking-[-0.01em] transition-[background-color,transform] hover:bg-fill-strong active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
             {option}
-          </Button>
+          </button>
         ))}
       </div>
-      {retry && <p role="status">Casi. Prueba otra vez.</p>}
+      {retry && (
+        <p role="status" className="text-[17px] text-word-orange">
+          Casi. Prueba otra vez.
+        </p>
+      )}
     </>
   );
 }

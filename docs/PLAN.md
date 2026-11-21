@@ -107,10 +107,13 @@ Usuaris: **alumna** (tauleta o portàtil a classe; supòsit: autoritzat com a me
 - Sat 17:20 — Idioma de la UI: **alumna en castellà** (la seva L1), subtítols en francès; **profe en francès**. Les frases de progrés les genera l'API en castellà.
 - Sat 17:20 — Glossari de demo: 15 termes, 8 transparents + 7 no transparents → autonomia inicial `lucia-w1` = 8/15 ≈ 53% ("~55%"), `lucia-w4` = 12/15 = 80%.
 - Sat 17:20 — Model d'LLM configurable amb `OPENROUTER_MODEL`; Laura el tria al spike segons cost/temps mesurats.
+- Sat 18:15 — Spike B fa servir **Pillow** (reduir i passar a gris les imatges abans d'enviar-les al model de visió: menys tokens). Proposta pendent de SYNC 1: imatges a `POST /api/lessons`.
+- Sat 21 — **Dos tipus de clip** (`POST /api/clips`): `word` (dubte lèxic, tolerància 1–12 s, no genera cap event) i `concept` (dubte conceptual, tolerància 10–70 s, genera `unclear`). Les durades són toleràncies tècniques, no objectius de producte. `kind` per defecte `concept`; `lemma` opcional i validat contra la lliçó de la sessió (utilitat pendent de confirmar amb Laura: des del PR #22 les paraules es marquen a casa amb `clip_marks`). Àudio `audio/webm`, màx. 2 MiB. Canvi additiu: columnes `clips.kind` i `clips.lemma` (migració d'A). Els clips conceptuals es llisten sempre a `/api/home/review` (sense regla de compleció, pendent de Laura).
 - Sat 21 — web: jsdom + @testing-library/react (devDeps) for component tests; opt in per file with `// @vitest-environment jsdom`.
 
 ## Timeline
 - Sat 17:45 — PR de documentació fusionat (PLAN, API, ROLES, STATUS, demo).
+- Sat 19:00 — Spike B afegeix **PyMuPDF** (extreure text de PDF; si és escanejat, renderitzar pàgines i enviar-les al model de visió). Nota: PyMuPDF és AGPL; per a producció valorar pypdf + pypdfium2.
 - Sat 19:00 — **Sincronització 1**: esquelet + migració a main; spikes de Paula (Web Speech) i Laura (glossari) validats; decisió pla B àudio.
 - Sat 22:30 — **Sincronització 2**: F1 de punta a punta amb `lucia-w1` i `lucia-w4`.
 - Sun 02:00 — **Sincronització 3**: F1+F2+F4 = flux de demo sencer → decisió F3.

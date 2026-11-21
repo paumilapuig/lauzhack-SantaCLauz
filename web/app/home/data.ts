@@ -5,6 +5,8 @@ import type {
   ProgressMessage,
 } from "@/lib/student-contract";
 
+import type { MyWord } from "./types";
+
 export const DISTRACTORS = ["chaleur", "nourriture", "fournir", "rejeter", "essoufflé"];
 
 const MAX_LEVEL = 3;
@@ -17,9 +19,21 @@ const FAKE_REVIEW: HomeReview = {
       created_at: "2026-11-21T21:10:00Z",
       t_start: 0.0,
       t_end: 30.0,
-      transcript: "… elle produit aussi des déchets …",
+      transcript:
+        "Les mitochondries utilisent l'oxygène pour transformer le glucose. Cette réaction va libérer de l'énergie pour nos muscles. Elle produit aussi des déchets : de l'eau et du dioxyde de carbone.",
       audio_url: "https://…signed…",
       terms: ["déchet", "dioxyde de carbone"],
+    },
+    {
+      id: "c2…",
+      lesson_title: "La respiration cellulaire",
+      created_at: "2026-11-21T21:14:00Z",
+      t_start: 30.0,
+      t_end: 60.0,
+      transcript:
+        "Le sang transporte ces déchets jusqu'aux poumons, et nous les rejetons quand on expire. Une partie de l'énergie se dégage sous forme de chaleur : c'est pour ça qu'on a chaud quand on court.",
+      audio_url: "https://…signed…",
+      terms: ["déchet", "chaleur"],
     },
   ],
   words_to_practice: [
@@ -31,10 +45,75 @@ const FAKE_REVIEW: HomeReview = {
       level: 0,
       clip_id: "c1…",
     },
+    {
+      lemma: "chaleur",
+      translation_es: "calor",
+      definition_fr: "Ce qui rend chaud.",
+      key_phrase: "Une partie de l'énergie se dégage sous forme de chaleur : c'est pour ça qu'on a chaud quand on court.",
+      level: 1,
+      clip_id: "c2…",
+    },
+    {
+      lemma: "essoufflé",
+      translation_es: "sin aliento",
+      definition_fr: "Qui respire vite et fort après un effort.",
+      key_phrase: "Quand on court vite, on est essoufflé, parce que les muscles demandent plus d'oxygène.",
+      level: 0,
+      clip_id: null,
+    },
   ],
 };
 
 const levels = new Map(FAKE_REVIEW.words_to_practice.map((w) => [w.lemma, w.level]));
+
+const DICTIONARY: Record<string, string> = {
+  mitochondries: "mitocondrias", utilisent: "usan", oxygène: "oxígeno", transformer: "transformar",
+  glucose: "glucosa", réaction: "reacción", libérer: "liberar", énergie: "energía", muscles: "músculos",
+  produit: "produce", aussi: "también", déchets: "desechos", eau: "agua", dioxyde: "dióxido",
+  carbone: "carbono", sang: "sangre", transporte: "transporta", poumons: "pulmones",
+  rejetons: "expulsamos", expire: "espira", partie: "parte", dégage: "se desprende", forme: "forma",
+  chaleur: "calor", chaud: "calor", court: "corre",
+};
+
+// shortcut: static dictionary for the 2 fake clips, swap for a translation endpoint
+export function translate(word: string): string | null {
+  return DICTIONARY[word.toLowerCase()] ?? null;
+}
+
+// demo seed: words marked at home earlier, keyed by the surface form that appears in the transcripts
+const SEED_FORMS: Record<string, string> = { déchet: "déchets" };
+const marks: MyWord[] = FAKE_REVIEW.words_to_practice.map((w) => {
+  const form = SEED_FORMS[w.lemma] ?? w.lemma;
+  // same translation the clip shows for that form
+  return { ...w, lemma: form, translation_es: DICTIONARY[form] ?? w.translation_es };
+});
+
+const sentenceWith = (transcript: string, word: string) =>
+  transcript.split(/(?<=[.!?])\s+/).find((s) => s.toLowerCase().includes(word)) ?? transcript;
+
+// shortcut: in-memory marks until owner A adds an endpoint, then swap for request<T>()
+export async function saveMark(word: string, clipId: string): Promise<void> {
+  const lemma = word.toLowerCase();
+  const clip = FAKE_REVIEW.clips.find((c) => c.id === clipId);
+  if (!clip || marks.some((m) => m.lemma === lemma)) return;
+  marks.push({
+    lemma,
+    translation_es: translate(lemma) ?? "",
+    definition_fr: "",
+    key_phrase: sentenceWith(clip.transcript, lemma),
+    level: 0,
+    clip_id: clipId,
+  });
+}
+
+export async function removeMark(lemma: string): Promise<void> {
+  const index = marks.findIndex((m) => m.lemma === lemma);
+  if (index >= 0) marks.splice(index, 1);
+}
+
+export async function getMyWords(): Promise<MyWord[]> {
+  return structuredClone(marks);
+}
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()
 export async function getHomeReview(): Promise<HomeReview> {
@@ -43,9 +122,10 @@ export async function getHomeReview(): Promise<HomeReview> {
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()
 export async function savePractice(req: PracticeRequest): Promise<PracticeResponse> {
-  const level = Math.min((levels.get(req.lemma) ?? 0) + 1, MAX_LEVEL);
+  const current = levels.get(req.lemma) ?? 0;
+  const level = req.passed ? Math.min(current + 1, MAX_LEVEL) : current;
   levels.set(req.lemma, level);
-  return { lemma: req.lemma, level, leveled_up: true };
+  return { lemma: req.lemma, level, leveled_up: level > current };
 }
 
 // shortcut: fake data until owner B's endpoint exists, then swap body for request<T>()
