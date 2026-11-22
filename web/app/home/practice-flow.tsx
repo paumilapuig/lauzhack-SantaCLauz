@@ -18,12 +18,22 @@ const PILL = `inline-flex h-12 touch-manipulation items-center justify-center ro
 
 type Props = { word: { lemma: string; glossary_lemma?: string | null; translation_es: string; key_phrase: string; clip_id: string | null }; onDone: (lemma: string) => void; onExit: () => void };
 
+/** What the end of the card says: a word levels up at most once a day, and only when the voice recognised it. */
+export function practiceOutcome(lemma: string, level: number | null, leveledUp: boolean, understood: boolean): string | null {
+  if (level === null) return null;
+  if (level >= NO_HELP_LEVEL) return `You no longer need help with ${lemma}`;
+  if (leveledUp) return `${lemma} levels up`;
+  return understood ? `Practised. ${lemma} can level up again tomorrow.` : `Say ${lemma} out loud next time to level up.`;
+}
+
 export function PracticeFlow({ word, onDone, onExit }: Props) {
   const [step, setStep] = useState(0);
   const [retry, setRetry] = useState(false);
   const [heardMessage, setHeardMessage] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const [level, setLevel] = useState<number | null>(null);
+  const [leveledUp, setLeveledUp] = useState(false);
+  const [understood, setUnderstood] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const mounted = useRef(true);
   const stopListening = useRef<(() => void) | null>(null);
@@ -61,23 +71,26 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
     const heard = await listening.result;
     if (!mounted.current) return;
     setListening(false);
-    const message = heard && heardMatches(heard, word.lemma) ? "Well done!" : "We didn't hear you well, we'll count it.";
+    // Only a word the voice recognised counts as passed; otherwise the card is done but the level stays.
+    const matched = Boolean(heard && heardMatches(heard, word.lemma));
+    setUnderstood(matched);
+    const message = matched ? "Well done!" : "We didn't hear you well. The card is done.";
     if (word.glossary_lemma === null) {
       setHeardMessage(message); // outside the glossary: nothing to level up on the server
       return;
     }
     try {
-      const result = await getHomeApi().practice({ lemma: word.glossary_lemma ?? word.lemma, clip_id: word.clip_id, passed: true });
+      const result = await getHomeApi().practice({ lemma: word.glossary_lemma ?? word.lemma, clip_id: word.clip_id, passed: matched });
       if (!mounted.current) return;
       setHeardMessage(message);
       setLevel(result.level);
+      setLeveledUp(result.leveled_up);
     } catch {
       if (mounted.current) setSaveFailed(true);
     }
   }
 
-  const outcome =
-    level === null ? null : level >= NO_HELP_LEVEL ? `You no longer need help with ${word.lemma}` : `${word.lemma} levels up`;
+  const outcome = practiceOutcome(word.lemma, level, leveledUp, understood);
 
   return (
     <div className="flex flex-col gap-10 py-8">

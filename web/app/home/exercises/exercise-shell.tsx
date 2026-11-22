@@ -36,7 +36,7 @@ function EndScreen({ results, onExit }: { results: ExerciseResult[]; onExit: () 
     <div className="flex flex-col items-start gap-4">
       <CheckBadge size="lg" />
       <h2 className="text-[28px] font-bold tracking-[-0.01em] text-heading">Done</h2>
-      {passed && <p className="animate-rise text-[17px] text-label">Leveled up: {passed}</p>}
+      {passed && <p className="animate-rise text-[17px] text-label">You got right: {passed}</p>}
       {failed && <p className="animate-rise text-[17px] text-label-secondary [--i:1]">To review again: {failed}</p>}
       <ActionButton onClick={onExit} className="mt-4">
         Back

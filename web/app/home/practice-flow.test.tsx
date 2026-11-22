@@ -45,14 +45,15 @@ describe("PracticeFlow", () => {
     expect(savePractice).not.toHaveBeenCalled();
   });
 
-  it("falls back when nothing is heard, still passes, saves once", async () => {
+  it("when nothing is heard, the card is done but it is saved as not passed (no level up)", async () => {
     mockHeard(null);
+    vi.mocked(savePractice).mockResolvedValueOnce({ lemma: "déchet", level: 0, leveled_up: false });
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Speak/ }));
     await screen.findByText(/We didn't hear you well/);
-    await screen.findByText("déchet levels up");
+    await screen.findByText("Say déchet out loud next time to level up.");
     expect(savePractice).toHaveBeenCalledTimes(1);
-    expect(savePractice).toHaveBeenCalledWith({ lemma: "déchet", clip_id: "c1", passed: true });
+    expect(savePractice).toHaveBeenCalledWith({ lemma: "déchet", clip_id: "c1", passed: false });
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(onDone).toHaveBeenCalledWith("déchet");
   });
@@ -74,10 +75,20 @@ describe("PracticeFlow", () => {
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Speak/ }));
     await waitFor(() => expect(screen.getByText("Well done!")).toBeTruthy());
+    await screen.findByText("déchet levels up");
+    expect(savePractice).toHaveBeenCalledWith({ lemma: "déchet", clip_id: "c1", passed: true });
+  });
+
+  it("says when a word was already raised today", async () => {
+    mockHeard("des déchets");
+    vi.mocked(savePractice).mockResolvedValueOnce({ lemma: "déchet", level: 1, leveled_up: false });
+    await reachSpeaking();
+    fireEvent.click(screen.getByRole("button", { name: /Speak/ }));
+    await screen.findByText("Practised. déchet can level up again tomorrow.");
   });
 
   it("shows an error and lets her retry when saving fails", async () => {
-    mockHeard(null);
+    mockHeard("déchet");
     vi.mocked(savePractice).mockRejectedValueOnce(new Error("down"));
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Speak/ }));

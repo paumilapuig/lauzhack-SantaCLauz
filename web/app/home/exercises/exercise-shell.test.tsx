@@ -25,7 +25,7 @@ describe("ExerciseShell", () => {
       ]}><p>contenido</p></ExerciseShell>,
     )
     expect(screen.getByText("Done")).toBeTruthy()
-    expect(screen.getByText(/Leveled up: déchet/)).toBeTruthy()
+    expect(screen.getByText(/You got right: déchet/)).toBeTruthy()
     expect(screen.getByText(/To review again: énergie/)).toBeTruthy()
     expect(screen.queryByText("contenido")).toBeNull()
     expect(container.textContent).not.toMatch(/\d|%/)

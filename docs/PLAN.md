@@ -85,7 +85,7 @@ ja demana les frases clau a l'LLM, però no es desen; falten taula, `GET /api/le
 - Nivell per alumna i paraula, de 0 a 3. Inicial: **3** si és transparent des del castellà, **0** si no.
 - Estat: nivell ≥ 2 → 🟢 sense ajuda; < 2 → 🟡 amb ajuda; < 2 i marcada a casa abans → 🟠 «ja l'havies marcat».
 - Marcar-la a casa → −1 (mínim 0), un cop per paraula i classe; desmarcar ho desfà exactament (`mark_level_changes`).
-  Joc superat → +1 (màxim 3).
+  Joc superat → +1 (màxim 3), **com a molt un cop per paraula i dia**; «Step by step» només compta si la veu reconeix la paraula.
 - Transparència: l'LLM la proposa i l'API la valida: `similitud(lema, traducció) ≥ 0.7` (difflib, sense accents).
   *libérer/liberar* 0.86 ✅, *oxygène/oxígeno* 0.71 ✅, *déchet/desecho* 0.62 ❌, *chaleur/calor* 0.67 ❌.
 - Autonomia d'una sessió = paraules en 🟢 ÷ paraules del glossari que han sortit. Setmanal = mitjana per setmana ISO.
@@ -124,7 +124,6 @@ Enunciats oficials dels sponsors (diumenge al matí). Un deck i un guió per rep
 
 ## Limitacions conegudes (honestes)
 - Una paraula groga que l'alumna mai marca no puja de nivell sola: només es practica el que es marca.
-- Cada joc superat suma +1: dues rondes poden posar una paraula en verd.
 - Els exercicis d'un concepte són sempre els mateixos en repetir.
 - Sense `OPENROUTER_API_KEY` a la màquina de l'API no hi ha resums ni traduccions (no hi ha cap error visible).
 - Cal Chrome a classe (Web Speech API) i xarxa per desar clips.

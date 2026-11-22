@@ -33,11 +33,21 @@ def fetch_level(db: Client, student_id: str, lemma: str) -> int | None:
     return rows[0]["level"] if rows else None
 
 
+def passed_on_day(db: Client, student_id: str, lemma: str, now: datetime) -> bool:
+    """Whether this student already passed a practice of this word on `now`'s UTC day."""
+    rows = (
+        db.table("practice_results").select("created_at")
+        .eq("student_id", student_id).eq("lemma", lemma).eq("passed", True).execute().data
+    )
+    day = now.date().isoformat()
+    return any(str(row.get("created_at", ""))[:10] == day for row in rows)
+
+
 def insert_practice_result(
-    db: Client, student_id: str, lemma: str, clip_id: str | None, passed: bool
+    db: Client, student_id: str, lemma: str, clip_id: str | None, passed: bool, now: datetime
 ) -> None:
     db.table("practice_results").insert(
-        {"student_id": student_id, "lemma": lemma, "clip_id": clip_id, "passed": passed}
+        {"student_id": student_id, "lemma": lemma, "clip_id": clip_id, "passed": passed, "created_at": now.isoformat()}
     ).execute()
 
 
