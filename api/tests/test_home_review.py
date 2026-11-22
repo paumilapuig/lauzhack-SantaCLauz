@@ -54,6 +54,7 @@ def seed(clips=(), results=(), marks=(), mastery=(), terms=None, store_audio=Tru
         "practice_results": list(results),
         "clip_marks": list(marks),
         "word_mastery": list(mastery),
+        "concept_gaps": [],
     })
     if store_audio:
         for row in clips:
@@ -125,7 +126,7 @@ def test_clip_without_storage_object_is_left_out_and_logged(client_for, caplog):
 
 
 def test_student_without_data_gets_empty_lists(client_for):
-    assert get_review(client_for, seed()) == {"clips": [], "words_to_practice": []}
+    assert get_review(client_for, seed()) == {"clips": [], "words_to_practice": [], "concepts_to_learn": []}
 
 
 def test_teacher_gets_403(client_for, role):

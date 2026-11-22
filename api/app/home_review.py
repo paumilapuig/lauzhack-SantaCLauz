@@ -4,7 +4,7 @@ import re
 from collections.abc import Callable
 
 from app import mastery as mastery_rules
-from app.home_schemas import ReviewClip, WordToPractice
+from app.home_schemas import ConceptExerciseForStudent, ConceptGapForStudent, ReviewClip, WordToPractice
 from app.term_matching import find_lemmas
 
 SignAudio = Callable[[str, str], str | None]
@@ -112,3 +112,22 @@ def build_words(
             )
         )
     return words
+
+
+def build_concepts(gaps: list[dict], lessons_by_id: dict[str, str]) -> list[ConceptGapForStudent]:
+    """Gaps (input order kept) with the lesson title; exercise answers are never copied."""
+    return [
+        ConceptGapForStudent(
+            id=gap["id"],
+            lesson_title=lessons_by_id.get(gap["lesson_id"], ""),
+            concept=gap["concept"],
+            lemmas=gap["lemmas"],
+            explanation=gap["explanation"],
+            exercises=[
+                ConceptExerciseForStudent(question=e["question"], options=e["options"])
+                for e in gap["exercises"]
+            ],
+            status=gap["status"],
+        )
+        for gap in gaps
+    ]

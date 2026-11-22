@@ -28,6 +28,28 @@ class WordToPractice(BaseModel):
     clip_id: str
 
 
+class ConceptStep(BaseModel):
+    fr: str
+    es: str
+    visual: str
+
+
+class ConceptExerciseForStudent(BaseModel):
+    question: str
+    options: list[str]
+
+
+class ConceptGapForStudent(BaseModel):
+    id: str
+    lesson_title: str
+    concept: str
+    lemmas: list[str]
+    explanation: list[ConceptStep]
+    exercises: list[ConceptExerciseForStudent]
+    status: Literal["pending", "review"]
+
+
 class HomeReview(BaseModel):
     clips: list[ReviewClip]
     words_to_practice: list[WordToPractice]
+    concepts_to_learn: list[ConceptGapForStudent] = []
