@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { HomeReview } from "@/lib/student-contract"
-import { marksFrom, withMark, withoutMark, type ClipMarks } from "./clip-marks"
+import { marksFrom, withMark, withoutMark, withTranslation, type ClipMarks } from "./clip-marks"
 import type { ExerciseResult } from "./exercises/types"
 import { getHomeApi } from "./getHomeApi"
 import { toMyWord } from "./homeApi"
 import type { PracticeOutcome, PracticeSummaryData } from "./practice-summary"
+import { translateFrToEs } from "./translate/browser-translator"
+
+const TRANSLATING = "…"
 
 /** /home state: pending clips, the words marked on them, and the actions that change them. */
 export function useHomeReview() {
@@ -37,7 +40,11 @@ export function useHomeReview() {
       await api.unmark(clipId, word.toLowerCase())
     } else {
       const result = await api.mark(clipId, word.toLowerCase())
-      setMarks((current) => withMark(current, clipId, word, result.translation_es ?? ""))
+      setMarks((current) => withMark(current, clipId, word, result.translation_es ?? TRANSLATING))
+      if (result.translation_es) return
+      // not in the glossary: the browser translates it now (the LLM refines it when she presses Done)
+      const es = await translateFrToEs(word.toLowerCase())
+      setMarks((current) => withTranslation(current, clipId, word, es ?? ""))
     }
   }
 

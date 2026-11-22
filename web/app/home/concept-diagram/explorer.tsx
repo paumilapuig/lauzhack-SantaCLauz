@@ -5,7 +5,9 @@ import { useMemo, useState, type ReactNode } from "react"
 import type { ConceptGap, ConceptWordResult } from "@/lib/student-contract"
 import { ConceptDiagram } from "./diagram"
 import styles from "./diagram.module.css"
+import { hasBoxDiagram } from "./diagram-fit"
 import { layoutDiagram } from "./diagram-layout"
+import { ConceptStoryboard } from "./storyboard"
 import { TappableText } from "./tappable-text"
 import { translateFrToEs } from "../translate/browser-translator"
 import { glossFor } from "./words"
@@ -57,11 +59,11 @@ export function ConceptExplorer({ gap, onTapWord, questions }: Props) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="-mx-2 overflow-x-auto px-2">
-        <div className="min-w-[640px]">
-          <ConceptDiagram layout={layout} current={finished ? steps.length : current} saved={saved} onTap={tap} onSelectStep={go} />
-        </div>
-      </div>
+      {hasBoxDiagram(steps) ? (
+        <ConceptDiagram layout={layout} current={finished ? steps.length : current} saved={saved} onTap={tap} onSelectStep={go} />
+      ) : (
+        <ConceptStoryboard steps={steps} current={finished ? steps.length : current} saved={saved} onTap={tap} onSelectStep={go} />
+      )}
       <div aria-live="polite" className="flex flex-col gap-3 rounded-[16px] border border-[#EBEBEB] bg-white p-5">
         <div className="flex items-center gap-1.5">
           {steps.map((_, i) => (
@@ -103,7 +105,7 @@ export function ConceptExplorer({ gap, onTapWord, questions }: Props) {
         )}
         {next && (
           <button type="button" onClick={() => go(current + 1)} className={`${PILL} ${styles.press} bg-[#F47D31] text-white`}>
-            Explore{nextLabel ? `: ${nextLabel}` : ""} <Play aria-hidden className="size-4 fill-current" />
+            {nextLabel ? `Explore: ${nextLabel}` : "Next step"} <Play aria-hidden className="size-4 fill-current" />
           </button>
         )}
         {!next && !finished && (

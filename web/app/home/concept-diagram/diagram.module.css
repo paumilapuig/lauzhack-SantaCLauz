@@ -5,8 +5,9 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* The current arrow has pathLength="1", so one dash is exactly the whole arrow, however long it is. */
 @keyframes draw {
-  from { stroke-dashoffset: 400; }
+  from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
 }
 
@@ -25,8 +26,8 @@
 }
 
 .drawing {
-  stroke-dasharray: 400;
-  animation: draw 900ms ease-out both;
+  stroke-dasharray: 1;
+  animation: draw 700ms cubic-bezier(0.215, 0.61, 0.355, 1) 150ms both;
 }
 
 .pop {
