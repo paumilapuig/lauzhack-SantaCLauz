@@ -11,13 +11,16 @@ export type HomeClip = {
 };
 
 export type WordToPractice = {
-  lemma: string;
-  translation_es: string;
-  definition_fr: string;
+  word: string;
+  lemma: string | null;
+  translation_es: string | null;
+  definition_fr: string | null;
   key_phrase: string;
-  level: number;
+  level: number | null;
   clip_id: string | null;
 };
+
+export type MarkResult = { word: string; lemma: string | null; translation_es: string | null; level: number | null };
 
 export type HomeReview = { clips: HomeClip[]; words_to_practice: WordToPractice[] };
 

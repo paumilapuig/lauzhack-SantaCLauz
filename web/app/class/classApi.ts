@@ -8,6 +8,7 @@ import type {
   WordStatesRequest,
 } from "@/lib/contract";
 import { ApiError, type TokenProvider } from "@/lib/api";
+import { apiMode } from "@/lib/apiMode";
 
 export interface ClassApi {
   isSignedIn(): Promise<boolean>;
@@ -127,9 +128,7 @@ async function getAccessToken(): Promise<string | null> {
   return data.session?.access_token ?? null;
 }
 
-export function classApiMode(setting = process.env.NEXT_PUBLIC_CLASS_API): "http" | "mock" {
-  return setting === "http" ? "http" : "mock";
-}
+export const classApiMode = apiMode;
 
 export function getClassApi(): ClassApi {
   if (classApiMode() === "http") {

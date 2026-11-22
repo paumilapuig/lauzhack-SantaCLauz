@@ -12,7 +12,7 @@ type ListState =
   | { kind: "error"; message: string }
   | { kind: "ready"; lessons: LessonSummary[] };
 
-const formatDate = (isoDate: string): string => new Date(`${isoDate}T00:00:00`).toLocaleDateString("fr-CH");
+const formatDate = (isoDate: string): string => new Date(`${isoDate}T00:00:00`).toLocaleDateString("en-GB");
 
 export function LessonList() {
   const [state, setState] = useState<ListState>({ kind: "loading" });
@@ -27,9 +27,9 @@ export function LessonList() {
       });
   }, []);
 
-  if (state.kind === "loading") return <p className="text-base text-neutral-600">Chargement…</p>;
+  if (state.kind === "loading") return <p className="text-base text-neutral-600">Loading…</p>;
   if (state.kind === "error") return <p role="alert" className="text-base text-red-700">{state.message}</p>;
-  if (state.lessons.length === 0) return <p className="text-base text-neutral-600">Aucune leçon pour l&apos;instant.</p>;
+  if (state.lessons.length === 0) return <p className="text-base text-neutral-600">No lessons yet.</p>;
 
   return (
     <ul className="flex flex-col gap-3">

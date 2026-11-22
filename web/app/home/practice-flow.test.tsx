@@ -3,13 +3,11 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PracticeFlow } from "./practice-flow";
 import { listenOnce } from "./speech";
-import { savePractice } from "./data";
 
+const savePractice = vi.hoisted(() => vi.fn(async () => ({ lemma: "déchet", level: 1, leveled_up: true })));
 vi.mock("./speech", () => ({ speak: vi.fn(), listenOnce: vi.fn() }));
-vi.mock("./data", () => ({
-  DISTRACTORS: ["chaleur", "nourriture", "fournir"],
-  savePractice: vi.fn(async () => ({ lemma: "déchet", level: 1, leveled_up: true })),
-}));
+vi.mock("./distractors", () => ({ DISTRACTORS: ["chaleur", "nourriture", "fournir"] }));
+vi.mock("./getHomeApi", () => ({ getHomeApi: () => ({ practice: savePractice }) }));
 
 const word = {
   lemma: "déchet",
@@ -30,7 +28,7 @@ afterEach(cleanup);
 async function reachSpeaking() {
   render(<PracticeFlow word={word} onDone={onDone} onExit={vi.fn()} />);
   fireEvent.click(screen.getByRole("button", { name: "chaleur" }));
-  expect(screen.getByText("Casi. Prueba otra vez.")).toBeTruthy();
+  expect(screen.getByText("Almost. Try again.")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "déchet" }));
   expect(screen.getByText(/____/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "déchets" }));
@@ -38,11 +36,11 @@ async function reachSpeaking() {
 }
 
 describe("PracticeFlow", () => {
-  it("shows the word header and Salir leaves without saving", () => {
+  it("shows the word header and Exit leaves without saving", () => {
     render(<PracticeFlow word={word} onDone={onDone} onExit={onDone} />);
-    expect(screen.getByText("Practicamos")).toBeTruthy();
+    expect(screen.getByText("Practising")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 2, name: "déchet" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Salir" }));
+    fireEvent.click(screen.getByRole("button", { name: "Exit" }));
     expect(onDone).toHaveBeenCalled();
     expect(savePractice).not.toHaveBeenCalled();
   });
@@ -51,11 +49,11 @@ describe("PracticeFlow", () => {
     mockHeard(null);
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
-    await screen.findByText(/No te hemos oído bien/);
-    await screen.findByText("déchet sube de nivel");
+    await screen.findByText(/We didn't hear you well/);
+    await screen.findByText("déchet levels up");
     expect(savePractice).toHaveBeenCalledTimes(1);
     expect(savePractice).toHaveBeenCalledWith({ lemma: "déchet", clip_id: "c1", passed: true });
-    fireEvent.click(screen.getByRole("button", { name: "Volver" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(onDone).toHaveBeenCalledWith("déchet");
   });
 
@@ -63,7 +61,7 @@ describe("PracticeFlow", () => {
     mockHeard("des déchets");
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
-    await waitFor(() => expect(screen.getByText("¡Muy bien!")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Well done!")).toBeTruthy());
   });
 
   it("shows an error and lets her retry when saving fails", async () => {
@@ -71,10 +69,10 @@ describe("PracticeFlow", () => {
     vi.mocked(savePractice).mockRejectedValueOnce(new Error("down"));
     await reachSpeaking();
     fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
-    await screen.findByText("No se ha podido guardar. Inténtalo otra vez.");
-    expect(screen.queryByText("déchet sube de nivel")).toBeNull();
+    await screen.findByText("Could not save. Please try again.");
+    expect(screen.queryByText("déchet levels up")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
-    await screen.findByText("déchet sube de nivel");
+    await screen.findByText("déchet levels up");
     expect(screen.queryByText(/No se ha podido guardar/)).toBeNull();
   });
 
@@ -99,6 +97,6 @@ describe("PracticeFlow", () => {
   it("moves focus to the new step heading", () => {
     render(<PracticeFlow word={word} onDone={onDone} onExit={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "déchet" }));
-    expect(document.activeElement?.textContent).toContain("Completa la frase");
+    expect(document.activeElement?.textContent).toContain("Complete the sentence");
   });
 });

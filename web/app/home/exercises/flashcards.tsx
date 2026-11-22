@@ -25,7 +25,7 @@ export function Flashcards({ words, onFinish, onExit }: ExerciseProps) {
   }
 
   return (
-    <ExerciseShell title="Tarjetas" current={index} total={words.length} onExit={onExit} results={done ? results : undefined}>
+    <ExerciseShell title="Flashcards" current={index} total={words.length} onExit={onExit} results={done ? results : undefined}>
       <div className="flex flex-col gap-6">
         <button
           type="button"
@@ -39,16 +39,16 @@ export function Flashcards({ words, onFinish, onExit }: ExerciseProps) {
               {word.definition_fr && <span lang="fr" className="text-[17px] text-label-secondary">{word.definition_fr}</span>}
             </>
           ) : (
-            <span className="text-[15px] text-label-secondary">Toca para ver</span>
+            <span className="text-[15px] text-label-secondary">Tap to see</span>
           )}
         </button>
         {flipped && (
           <div className="flex flex-col gap-3">
             <button type="button" onClick={() => answer(true)} className={cn("h-16 rounded-xl bg-fill text-[17px] font-semibold text-label", FOCUS)}>
-              Lo sabía
+              I knew it
             </button>
             <button type="button" onClick={() => answer(false)} className={cn("h-16 rounded-xl bg-fill text-[17px] font-semibold text-label", FOCUS)}>
-              Aún no
+              Not yet
             </button>
           </div>
         )}

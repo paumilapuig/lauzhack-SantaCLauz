@@ -1,26 +1,26 @@
-const SESSION_EXPIRED = "Session expirée, reconnectez-vous.";
-const UNREACHABLE = "Serveur injoignable.";
+const SESSION_EXPIRED = "Session expired, please sign in again.";
+const UNREACHABLE = "Server unreachable.";
 
 const CREATE_LESSON_ERRORS: Record<number, string> = {
   401: SESSION_EXPIRED,
-  403: "Réservé aux enseignants.",
-  413: "Fichier trop lourd (10 Mo maximum).",
-  415: "Format non accepté : txt, PDF, PNG ou JPG.",
-  422: "Il manque un champ, ou le texte/fichier est vide ou illisible.",
-  500: "Impossible d'enregistrer la leçon. Réessayez.",
-  502: "L'IA n'a pas pu préparer le glossaire. Réessayez.",
-  503: "L'IA n'est pas configurée sur le serveur.",
+  403: "Teachers only.",
+  413: "File too large (10 MB maximum).",
+  415: "Format not accepted: txt, PDF, PNG or JPG.",
+  422: "A field is missing, or the text/file is empty or unreadable.",
+  500: "Could not save the lesson. Please try again.",
+  502: "The AI could not prepare the glossary. Please try again.",
+  503: "The AI is not configured on the server.",
   0: UNREACHABLE,
 };
 
 const LOAD_ERRORS: Record<number, string> = {
   401: SESSION_EXPIRED,
-  403: "Cette leçon n'est pas la vôtre.",
-  404: "Leçon introuvable",
+  403: "This lesson is not yours.",
+  404: "Lesson not found",
   0: UNREACHABLE,
 };
 
-const unexpected = (status: number) => `Erreur inattendue (code ${status}).`;
+const unexpected = (status: number) => `Unexpected error (code ${status}).`;
 
 export const createLessonErrorFr = (status: number): string =>
   CREATE_LESSON_ERRORS[status] ?? unexpected(status);

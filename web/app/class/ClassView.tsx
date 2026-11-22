@@ -80,9 +80,9 @@ export function ClassView() {
 
   async function startSession(session: ClassSession) {
     const Ctor = findRecognitionCtor();
-    if (!Ctor) return fail("Este navegador no admite reconocimiento de voz. Usa Chrome.");
+    if (!Ctor) return fail("Ce navigateur ne reconnaît pas la voix. Utilise Chrome.");
     const api = (apiRef.current ??= getClassApi());
-    if (!(await api.isSignedIn())) return fail("Inicia sesión como alumna para empezar la clase.", true);
+    if (!(await api.isSignedIn())) return fail("Connecte-toi pour commencer le cours.", true);
     let words: SeenWords | undefined;
     const t0 = performance.now();
     const nowSec = () => (performance.now() - t0) / 1000;
@@ -110,7 +110,7 @@ export function ClassView() {
             setSubtitles((lines) => addResult(lines, { finalText, interimText, at }));
           },
           onStatus(status, detail) {
-            if (status === "error") fail(`Error de reconocimiento de voz (${detail}).`);
+            if (status === "error") fail(`Erreur de reconnaissance vocale (${detail}).`);
           },
         });
         const value = createClassButtons({ api, recorder, transcript, seen, sessionId, nowSec, lostWindowSec: LOST_WINDOW_SEC });
@@ -123,9 +123,9 @@ export function ClassView() {
       setSubtitles(EMPTY_SUBTITLES);
       setPhase("running");
     } else if (result.status === "stream-failed") {
-      fail("No se pudo acceder al micrófono. Permite el acceso en el navegador y vuelve a intentarlo.");
+      fail("Impossible d'accéder au micro. Autorise-le dans le navigateur et réessaie.");
     } else if (result.status === "session-failed") {
-      fail("No se pudo iniciar la clase.");
+      fail("Impossible de commencer le cours.");
     }
   }
 
@@ -145,8 +145,8 @@ export function ClassView() {
   return (
     <StudentShell hideTabbar={running}>
       {running ? (
-        <main className="relative mx-auto flex h-[calc(100dvh-4rem)] w-full max-w-[1200px] flex-col gap-4 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pb-8">
-          <h1 className="sr-only">Clase</h1>
+        <main lang="fr" className="relative mx-auto flex h-[calc(100dvh-4rem)] w-full max-w-[1200px] flex-col gap-4 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pb-8">
+          <h1 className="sr-only">Cours</h1>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" onClick={end}>
@@ -163,20 +163,20 @@ export function ClassView() {
           </div>
         </main>
       ) : (
-        <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 pt-8 pb-28 lg:px-8 lg:pt-10">
+        <main lang="fr" className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 pt-8 pb-28 lg:px-8 lg:pt-10">
           <header className="flex flex-col gap-2">
-            <PageTitle title="Clase" />
+            <PageTitle title="Cours" />
             <p className="max-w-[36em] text-[16px] leading-6 text-label-secondary">
-              Subtítulos en directo. Puedes ocultarlos; el micrófono sigue. Pulsa si no entiendes o te pierdes.
+              Sous-titres en direct. Tu peux les cacher, le micro continue. Appuie si tu ne comprends pas ou si tu perds le fil.
             </p>
           </header>
           <div className="flex flex-col items-start gap-4 rounded-[24px] border border-border bg-card p-6 md:p-8">
             <p className="text-[15px] text-muted-foreground">
-              Necesitas Chrome y permiso de micrófono. Luego verás los subtítulos y los dos botones grandes.
+              Il faut Chrome et l&apos;accès au micro. Ensuite tu verras les sous-titres et les deux grands boutons.
             </p>
             {DEMO_MODE && <DemoModeBadge />}
             <Button onClick={start} disabled={starting}>
-              {starting ? "Pidiendo micrófono…" : "Empezar clase"}
+              {starting ? "Accès au micro…" : "Commencer le cours"}
             </Button>
             {phase === "error" && (
               <p role="alert" className="text-base font-medium text-word-orange">
@@ -185,7 +185,7 @@ export function ClassView() {
                   <>
                     {" "}
                     <Link href="/login" className="underline underline-offset-4">
-                      Iniciar sesión
+                      Se connecter
                     </Link>
                   </>
                 )}

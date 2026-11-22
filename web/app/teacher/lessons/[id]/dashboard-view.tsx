@@ -27,11 +27,11 @@ function Dashboard({ dashboard }: { dashboard: TeacherDashboard }) {
   const sentences = insights(dashboard);
   return (
     <div className="flex flex-col gap-6">
-      <BackLink label="← Mes leçons" />
+      <BackLink label="← My lessons" />
       <h1 className="text-3xl font-semibold">{dashboard.lesson.title}</h1>
       {sentences.length > 0 && <InsightsCard sentences={sentences} />}
       {dashboard.students.length === 0 ? (
-        <p className="text-base text-neutral-600">Aucun élève n&apos;a encore suivi cette leçon.</p>
+        <p className="text-base text-neutral-600">No student has taken this lesson yet.</p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           {dashboard.students.map((student) => (
@@ -58,12 +58,12 @@ export function DashboardView({ lessonId }: { lessonId: string }) {
       });
   }, [lessonId]);
 
-  if (state.kind === "loading") return <p className="text-base text-neutral-600">Chargement…</p>;
+  if (state.kind === "loading") return <p className="text-base text-neutral-600">Loading…</p>;
   if (state.kind === "error") {
     return (
       <div className="flex flex-col gap-4">
         <p role="alert" className="text-base text-red-700">{state.message}</p>
-        <BackLink label="Retour aux leçons" />
+        <BackLink label="Back to lessons" />
       </div>
     );
   }

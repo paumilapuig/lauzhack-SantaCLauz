@@ -22,17 +22,17 @@ export function ApiStatus() {
       });
   }, []);
 
-  if (status.kind === "loading") return <p className="text-sm">Comprobando el servidor…</p>;
+  if (status.kind === "loading") return <p className="text-sm">Checking the server…</p>;
   if (status.kind === "error") {
     return (
       <p data-testid="api-status" className="text-sm font-medium text-word-orange">
-        Servidor no disponible ({status.message}). Arranca la API: <code>uv run fastapi dev app/main.py</code>
+        Server not available ({status.message}). Start the API: <code>uv run fastapi dev app/main.py</code>
       </p>
     );
   }
   return (
     <p data-testid="api-status" className="text-sm">
-      Servidor conectado
+      Server connected
     </p>
   );
 }

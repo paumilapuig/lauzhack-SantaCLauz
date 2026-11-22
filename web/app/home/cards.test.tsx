@@ -60,7 +60,7 @@ describe("cards", () => {
   it("falls back to speak when audio play rejects", async () => {
     vi.stubGlobal("Audio", class { play = () => Promise.reject(new Error("no")) })
     render(<ClipCard {...props} />)
-    fireEvent.click(screen.getByRole("button", { name: /Escuchar/ }))
+    fireEvent.click(screen.getByRole("button", { name: /Listen/ }))
     await waitFor(() => expect(speak).toHaveBeenCalledTimes(1))
     expect(speak).toHaveBeenCalledWith(clip.transcript, 0.85, expect.objectContaining({ onEnd: expect.any(Function) }))
   })

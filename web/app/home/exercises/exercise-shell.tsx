@@ -32,15 +32,15 @@ function EndScreen({ results, onExit }: { results: ExerciseResult[]; onExit: () 
   const failed = lemmasWhere(results, false);
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-[28px] font-bold tracking-[-0.03em] text-label">Hecho</h2>
-      {passed && <p className="text-[17px] text-label">Sube de nivel: {passed}</p>}
-      {failed && <p className="text-[17px] text-label-secondary">Para repasar otra vez: {failed}</p>}
+      <h2 className="text-[28px] font-bold tracking-[-0.03em] text-label">Done</h2>
+      {passed && <p className="text-[17px] text-label">Leveled up: {passed}</p>}
+      {failed && <p className="text-[17px] text-label-secondary">To review again: {failed}</p>}
       <button
         type="button"
         onClick={onExit}
         className={cn("mt-4 inline-flex h-11 w-fit items-center justify-center rounded-full bg-primary px-6 text-[17px] font-semibold text-primary-foreground", FOCUS)}
       >
-        Volver
+        Back
       </button>
     </div>
   );

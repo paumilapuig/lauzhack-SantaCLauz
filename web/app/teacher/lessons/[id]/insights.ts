@@ -11,7 +11,7 @@ function studentSentences({ students }: TeacherDashboard): string[] {
     .map(({ name, weekly }) => {
       const first = formatAutonomy(weekly[0].autonomy);
       const last = formatAutonomy(weekly[weekly.length - 1].autonomy);
-      return `${name} : autonomie ${first} → ${last} en ${weekly.length} semaines.`;
+      return `${name}: autonomy ${first} → ${last} over ${weekly.length} weeks.`;
     });
 }
 
@@ -31,16 +31,16 @@ function peakSentences(data: TeacherDashboard): string[] {
   const peak = strongestPeak(data.lost_peaks);
   if (!peak || peak.count < MIN_PEAK_COUNT) return [];
   const gap = data.concept_gaps.find((row) => row.minutes.includes(peak.minute));
-  const guess = gap ? ` — probablement « ${gap.concept} »` : "";
+  const guess = gap ? ` — probably "${gap.concept}"` : "";
   return [
-    `Minute ${peak.minute} : ${peak.count} signalements « je me suis perdu »${guess}.`,
+    `Minute ${peak.minute}: ${peak.count} "I lost the thread" reports${guess}.`,
   ];
 }
 
 function wordSentences({ top_words }: TeacherDashboard): string[] {
   const top = top_words[0];
   if (!top || top.taps < MIN_WORD_TAPS) return [];
-  return [`« ${top.lemma} » a été marqué ${top.taps} fois.`];
+  return [`"${top.lemma}" was marked ${top.taps} times.`];
 }
 
 export function insights(dashboard: TeacherDashboard): string[] {

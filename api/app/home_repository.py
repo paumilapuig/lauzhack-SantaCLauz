@@ -12,23 +12,12 @@ logger = logging.getLogger(__name__)
 def fetch_student_clips(db: Client, student_id: str) -> list[dict]:
     result = (
         db.table("clips")
-        .select("id, session_id, t_start, t_end, transcript, audio_path, created_at")
+        .select("id, session_id, t_start, t_end, transcript, audio_path, created_at, reviewed_at")
         .eq("student_id", student_id)
         .order("created_at", desc=True)
         .execute()
     )
     return result.data
-
-
-def fetch_passed_clip_ids(db: Client, student_id: str) -> set[str]:
-    result = (
-        db.table("practice_results")
-        .select("clip_id")
-        .eq("student_id", student_id)
-        .eq("passed", True)
-        .execute()
-    )
-    return {row["clip_id"] for row in result.data if row["clip_id"] is not None}
 
 
 def fetch_concept_gaps(db: Client, student_id: str) -> list[dict]:

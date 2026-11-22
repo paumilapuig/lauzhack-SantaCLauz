@@ -30,7 +30,6 @@ def get_home_review(user: StudentUser, client: SupabaseClient) -> HomeReview:
     return HomeReview(
         clips=build_clips(
             clips,
-            repo.fetch_passed_clip_ids(client, user.id),
             sessions,
             repo.fetch_lessons(client, lesson_ids),
             lesson_terms,

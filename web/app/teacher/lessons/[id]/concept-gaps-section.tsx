@@ -4,9 +4,9 @@ import { formatMinutes, statusLabelFr } from "./dashboard-format";
 export function ConceptGapsSection({ gaps }: { gaps: ConceptGapRow[] }) {
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="text-base font-bold">Notions à revoir</h3>
+      <h3 className="text-base font-bold">Concepts to review</h3>
       {gaps.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aucune notion à revoir.</p>
+        <p className="text-sm text-muted-foreground">No concepts to review.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {gaps.map(({ student, concept, minutes, status }) => (

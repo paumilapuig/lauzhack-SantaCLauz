@@ -14,19 +14,19 @@ const lessons = [
 describe("StudentHub", () => {
   it("offers to start the class of each lesson", () => {
     render(<StudentHub email="lucia@demo" lessons={lessons} />);
-    const links = screen.getAllByRole("link", { name: /Empezar la clase/ });
+    const links = screen.getAllByRole("link", { name: /Start the class/ });
     expect(links.map((link) => link.getAttribute("href"))).toEqual(["/class?lesson=l-new", "/class?lesson=l-old"]);
     expect(screen.getByText("La respiration cellulaire")).toBeTruthy();
   });
 
   it("explains when there is no lesson yet", () => {
     render(<StudentHub email="lucia@demo" lessons={[]} />);
-    expect(screen.getByText(/Todavía no hay ninguna clase/)).toBeTruthy();
+    expect(screen.getByText(/No classes yet/)).toBeTruthy();
   });
 
   it("shows who is signed in and a way to sign out", () => {
     render(<StudentHub email="lucia@demo" lessons={lessons} />);
     expect(screen.getByText("lucia@demo")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Salir" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
   });
 });

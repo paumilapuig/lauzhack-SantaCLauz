@@ -27,7 +27,7 @@ describe("Unscramble", () => {
     render(<Unscramble words={words} onFinish={vi.fn()} onExit={vi.fn()} />)
     tap("e")
     expect(screen.getByTestId("answer").textContent).toBe("e")
-    fireEvent.click(screen.getByRole("button", { name: "Deshacer" }))
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }))
     expect(screen.getByTestId("answer").textContent).toBe("")
   })
 
@@ -35,21 +35,21 @@ describe("Unscramble", () => {
     const onFinish = vi.fn()
     render(<Unscramble words={words} onFinish={onFinish} onExit={vi.fn()} />)
     for (const c of "eau") tap(c)
-    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }))
+    fireEvent.click(screen.getByRole("button", { name: "Next" }))
     for (const c of "mer") tap(c)
-    fireEvent.click(screen.getByRole("button", { name: "Terminar" }))
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }))
     expect(onFinish).toHaveBeenCalledWith([
       { lemma: "eau", passed: true },
       { lemma: "mer", passed: true },
     ])
-    expect(screen.getByText("Hecho")).toBeTruthy()
+    expect(screen.getByText("Done")).toBeTruthy()
   })
 
   it("wrong order counts as not passed", () => {
     const onFinish = vi.fn()
     render(<Unscramble words={[words[0]]} onFinish={onFinish} onExit={vi.fn()} />)
     for (const c of "uae") tap(c)
-    fireEvent.click(screen.getByRole("button", { name: "Terminar" }))
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }))
     expect(onFinish).toHaveBeenCalledWith([{ lemma: "eau", passed: false }])
   })
 })

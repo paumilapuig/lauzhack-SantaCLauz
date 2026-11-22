@@ -12,9 +12,9 @@ export interface PeakBar {
 }
 
 const STATUS_LABELS_FR: Record<ConceptGapStatus, string> = {
-  pending: "à faire",
-  review: "à revoir",
-  understood: "compris",
+  pending: "to do",
+  review: "to review",
+  understood: "understood",
 };
 
 export function peakBars(peaks: LostPeak[]): PeakBar[] {

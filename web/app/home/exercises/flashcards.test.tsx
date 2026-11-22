@@ -19,18 +19,18 @@ describe("Flashcards", () => {
     expect(screen.getByText("residuo")).toBeTruthy();
   });
 
-  it("'Aún no' gives passed false in onFinish", () => {
+  it("'Not yet' gives passed false in onFinish", () => {
     const onFinish = vi.fn();
     render(<Flashcards words={words} onFinish={onFinish} onExit={vi.fn()} />);
     fireEvent.click(screen.getByText("déchet"));
-    fireEvent.click(screen.getByText("Aún no"));
+    fireEvent.click(screen.getByText("Not yet"));
     fireEvent.click(screen.getByText("tri"));
-    fireEvent.click(screen.getByText("Lo sabía"));
+    fireEvent.click(screen.getByText("I knew it"));
     expect(onFinish).toHaveBeenCalledWith([
       { lemma: "déchet", passed: false },
       { lemma: "tri", passed: true },
     ]);
-    expect(screen.getByText("Hecho")).toBeTruthy();
+    expect(screen.getByText("Done")).toBeTruthy();
   });
 
   it("recordAnswer appends", () => {

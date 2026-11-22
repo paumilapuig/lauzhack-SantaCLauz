@@ -42,13 +42,13 @@ export function Dictation({ words, onFinish, onExit }: ExerciseProps) {
   const passed = results[index]?.passed;
 
   return (
-    <ExerciseShell title="Dictado" current={index} total={words.length} onExit={onExit} results={done ? results : undefined}>
+    <ExerciseShell title="Dictation" current={index} total={words.length} onExit={onExit} results={done ? results : undefined}>
       <div className="flex flex-col gap-4">
         <button type="button" onClick={() => speak(word.lemma, SPEAK_RATE)} className={cn(PILL, "bg-fill text-label")}>
-          Escuchar otra vez
+          Listen again
         </button>
         <label htmlFor="dictation-input" className="text-[17px] text-label-secondary">
-          Escribe lo que oyes
+          Write what you hear
         </label>
         <input
           id="dictation-input"
@@ -63,16 +63,16 @@ export function Dictation({ words, onFinish, onExit }: ExerciseProps) {
         />
         {checked && (
           <p className="text-[17px] text-label" aria-live="polite">
-            {passed ? "¡Bien!" : "Se escribe:"} <strong>{word.lemma}</strong>
+            {passed ? "Well done!" : "It's spelled:"} <strong>{word.lemma}</strong>
           </p>
         )}
         {checked ? (
           <button type="button" onClick={next} className={cn(PILL, "bg-primary text-primary-foreground")}>
-            Siguiente
+            Next
           </button>
         ) : (
           <button type="button" onClick={check} disabled={!typed.trim()} className={cn(PILL, "bg-primary text-primary-foreground disabled:opacity-40")}>
-            Comprobar
+            Check
           </button>
         )}
       </div>

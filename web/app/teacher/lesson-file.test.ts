@@ -10,13 +10,13 @@ describe("validateLessonFile", () => {
 
   it("rejects one byte over the maximum", () => {
     expect(validateLessonFile(file("a.pdf", MAX_LESSON_FILE_BYTES + 1))).toBe(
-      "Fichier trop lourd (10 Mo maximum).",
+      "File too large (10 MB maximum).",
     );
   });
 
   it("rejects unsupported formats", () => {
     expect(validateLessonFile(file("a.docx", 10))).toBe(
-      "Format non accepté : txt, PDF, PNG ou JPG.",
+      "Format not accepted: txt, PDF, PNG or JPG.",
     );
   });
 
@@ -29,6 +29,6 @@ describe("validateLessonFile", () => {
   });
 
   it("rejects an empty file", () => {
-    expect(validateLessonFile(file("a.txt", 0))).toBe("Le fichier est vide.");
+    expect(validateLessonFile(file("a.txt", 0))).toBe("The file is empty.");
   });
 });

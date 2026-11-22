@@ -5,7 +5,7 @@ export function InsightsCard({ sentences }: { sentences: string[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">À retenir</CardTitle>
+        <CardTitle className="text-xl">Key points</CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="flex list-disc flex-col gap-2 pl-5 text-base">

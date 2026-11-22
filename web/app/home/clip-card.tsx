@@ -24,7 +24,7 @@ type Props = {
 
 export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
   const playback = usePlayback(clip.transcript, clip.audio_url, SLOW_RATE)
-  const time = new Date(clip.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+  const time = new Date(clip.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
 
   const marks = tokenize(clip.transcript)
     .map((t) => ({ at: t.start / clip.transcript.length, label: clip.transcript.slice(t.start, t.end).toLowerCase() }))
@@ -55,7 +55,7 @@ export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
         <button
           type="button"
           onClick={playback.toggle}
-          aria-label={playback.playing ? "Pausar" : "Escuchar"}
+          aria-label={playback.playing ? "Pause" : "Listen"}
           className="flex size-12 shrink-0 touch-manipulation items-center justify-center rounded-full bg-charcoal text-primary-foreground shadow-[var(--shadow-subtle)] transition-[transform,opacity] hover:opacity-90 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           {playback.playing ? (
@@ -74,8 +74,8 @@ export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
               step={10}
               value={position}
               onChange={(e) => playback.seek(Number(e.target.value) / 1000)}
-              aria-label="Posición del audio"
-              aria-valuetext={`${clock(elapsed)} de ${clock(playback.durationMs)}`}
+              aria-label="Audio position"
+              aria-valuetext={`${clock(elapsed)} of ${clock(playback.durationMs)}`}
               className="absolute inset-0 h-full w-full cursor-pointer touch-manipulation opacity-0"
             />
           </div>

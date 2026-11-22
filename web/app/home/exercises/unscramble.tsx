@@ -20,7 +20,7 @@ function WordRound({ word, seed, isLast, onDone }: WordProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-[13px] text-label-secondary">Ordena las letras</p>
+        <p className="text-[13px] text-label-secondary">Put the letters in order</p>
         <p className="text-[21px] font-semibold text-label">{word.translation_es}</p>
       </div>
       <div data-testid="answer" lang="fr" className="flex min-h-12 flex-wrap gap-2 border-b border-border pb-2 text-[21px] font-semibold text-label">
@@ -41,11 +41,11 @@ function WordRound({ word, seed, isLast, onDone }: WordProps) {
       </div>
       <div className="flex gap-3">
         <button type="button" disabled={placed.length === 0} onClick={() => setPlaced(placed.slice(0, -1))} className={cn(PILL, "bg-fill text-label disabled:opacity-30", FOCUS)}>
-          Deshacer
+          Undo
         </button>
         {complete && (
           <button type="button" onClick={() => onDone(spell(placed) === word.lemma)} className={cn(PILL, "bg-primary text-primary-foreground", FOCUS)}>
-            {isLast ? "Terminar" : "Siguiente"}
+            {isLast ? "Finish" : "Next"}
           </button>
         )}
       </div>
@@ -67,7 +67,7 @@ export function Unscramble({ words, onFinish, onExit }: ExerciseProps) {
   }
 
   return (
-    <ExerciseShell title="Letras" current={index} total={words.length} onExit={onExit} results={finished ? results : undefined}>
+    <ExerciseShell title="Letters" current={index} total={words.length} onExit={onExit} results={finished ? results : undefined}>
       <WordRound key={index} word={words[index]} seed={index + 1} isLast={index + 1 === words.length} onDone={handleDone} />
     </ExerciseShell>
   );

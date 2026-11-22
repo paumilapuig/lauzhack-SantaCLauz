@@ -11,8 +11,8 @@ export default function LoginPage() {
         </p>
         <Card className="w-full shadow-none">
           <CardHeader>
-            <CardTitle>Entrar</CardTitle>
-            <CardDescription>Email y contraseña, o un enlace mágico.</CardDescription>
+            <CardTitle>Sign in</CardTitle>
+            <CardDescription>Email and password, or a magic link.</CardDescription>
           </CardHeader>
           <CardContent>
             <LoginForm />

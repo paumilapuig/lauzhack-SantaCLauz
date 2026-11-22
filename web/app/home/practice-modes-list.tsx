@@ -22,7 +22,7 @@ export function PracticeModesList({ modes, wordCount, onOpen }: Props) {
       {modes.map((mode) => {
         const { id, name, description, icon: Icon, minWords } = mode
         const disabled = (typeof wordCount === "function" ? wordCount(mode) : wordCount) < minWords
-        const reason = `Necesitas al menos ${minWords} palabras`
+        const reason = `You need at least ${minWords} words`
         return (
           <li key={id}>
             <button

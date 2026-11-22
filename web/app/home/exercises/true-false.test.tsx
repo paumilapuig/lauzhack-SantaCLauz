@@ -29,8 +29,8 @@ describe("TrueFalse", () => {
     const onFinish = vi.fn();
     render(<TrueFalse words={words} onFinish={onFinish} onExit={vi.fn()} />);
     for (const item of buildItems(words, 1)) {
-      fireEvent.click(screen.getByText(item.isTrue ? "Verdadero" : "Falso"));
-      fireEvent.click(screen.getByText("Siguiente"));
+      fireEvent.click(screen.getByText(item.isTrue ? "True" : "False"));
+      fireEvent.click(screen.getByText("Next"));
     }
     const results = onFinish.mock.calls[0][0];
     expect(results).toHaveLength(2);
@@ -40,9 +40,9 @@ describe("TrueFalse", () => {
   it("wrong answer fails the word and shows feedback", () => {
     const onFinish = vi.fn();
     render(<TrueFalse words={words.slice(0, 1)} onFinish={onFinish} onExit={vi.fn()} />);
-    fireEvent.click(screen.getByText("Falso"));
-    expect(screen.getByText("No era así")).toBeTruthy();
-    fireEvent.click(screen.getByText("Siguiente"));
+    fireEvent.click(screen.getByText("False"));
+    expect(screen.getByText("Not quite")).toBeTruthy();
+    fireEvent.click(screen.getByText("Next"));
     expect(onFinish).toHaveBeenCalledWith([{ lemma: "déchet", passed: false }]);
   });
 });

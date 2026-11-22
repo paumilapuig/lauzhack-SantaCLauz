@@ -131,8 +131,8 @@ def test_progress_returns_messages_for_the_token_student_only(client_for):
 
     assert response.status_code == 200
     assert response.json() == {"messages": [
-        {"kind": "learned_this_week", "text": "Esta semana has aprendido 1 palabra nueva"},
-        {"kind": "keep_going", "text": "Sigue así: mañana repasamos «noyau»"},
+        {"kind": "learned_this_week", "text": "This week you learned 1 new word"},
+        {"kind": "keep_going", "text": "Keep going: tomorrow we review «noyau»"},
     ]}
 
 
@@ -140,7 +140,7 @@ def test_progress_without_data_only_encourages(client_for):
     response = client_for(empty_db()).get(URL)
 
     assert response.json() == {"messages": [
-        {"kind": "keep_going", "text": "Sigue así, vas muy bien"},
+        {"kind": "keep_going", "text": "Keep going, you're doing great"},
     ]}
 
 

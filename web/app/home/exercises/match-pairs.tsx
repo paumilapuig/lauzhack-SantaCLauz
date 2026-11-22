@@ -80,7 +80,7 @@ export function MatchPairs({ words, onFinish, onExit }: ExerciseProps) {
   );
 
   return (
-    <ExerciseShell title="Parejas" current={matched.length} total={lemmas.length} onExit={onExit} results={results}>
+    <ExerciseShell title="Pairs" current={matched.length} total={lemmas.length} onExit={onExit} results={results}>
       <div className="flex gap-3">
         {column(board.french, "fr", setSelected)}
         {column(board.spanish, "es", pickSpanish)}

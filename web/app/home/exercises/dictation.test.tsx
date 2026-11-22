@@ -27,14 +27,14 @@ describe("Dictation", () => {
     const onFinish = vi.fn()
     render(<Dictation words={words} onFinish={onFinish} onExit={vi.fn()} />)
     expect(speak).toHaveBeenCalledWith("déchet", expect.any(Number))
-    const type = (v: string) => fireEvent.change(screen.getByLabelText("Escribe lo que oyes"), { target: { value: v } })
+    const type = (v: string) => fireEvent.change(screen.getByLabelText("Write what you hear"), { target: { value: v } })
     type("dechet")
-    fireEvent.click(screen.getByText("Comprobar"))
+    fireEvent.click(screen.getByText("Check"))
     expect(screen.getByText("déchet")).toBeTruthy()
-    fireEvent.click(screen.getByText("Siguiente"))
+    fireEvent.click(screen.getByText("Next"))
     type("xx")
-    fireEvent.click(screen.getByText("Comprobar"))
-    fireEvent.click(screen.getByText("Siguiente"))
+    fireEvent.click(screen.getByText("Check"))
+    fireEvent.click(screen.getByText("Next"))
     expect(onFinish).toHaveBeenCalledWith([
       { lemma: "déchet", passed: true },
       { lemma: "tri", passed: false },

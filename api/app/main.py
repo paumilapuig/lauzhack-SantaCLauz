@@ -10,6 +10,7 @@ from .routers import (
     classdata_word_states,
     clips,
     clips_marks,
+    clips_review,
     home,
     practice,
     progress,
@@ -35,6 +36,7 @@ app.include_router(classdata_sessions.router)
 app.include_router(classdata_word_states.router)
 app.include_router(clips.router)
 app.include_router(clips_marks.router)
+app.include_router(clips_review.router)
 app.include_router(home.router)
 app.include_router(concepts_router)
 app.include_router(teacher.router)

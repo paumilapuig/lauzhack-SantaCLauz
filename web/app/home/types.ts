@@ -1,3 +1,4 @@
-import type { WordToPractice } from "@/lib/student-contract";
+import type { PracticeWord } from "./exercises/types";
 
-export type MyWord = WordToPractice;
+/** A word the student marked, ready for the exercises. `glossary_lemma` null = not practicable on the API. */
+export type MyWord = PracticeWord & { glossary_lemma: string | null; clip_id: string | null };

@@ -65,7 +65,7 @@ export function Word({
         {state === "orange" && (
           <>
             <History aria-hidden className="inline size-[0.5em] align-super text-word-orange" />
-            <span className="sr-only">ya la tocaste antes</span>
+            <span className="sr-only">you tapped it before</span>
           </>
         )}
       </span>

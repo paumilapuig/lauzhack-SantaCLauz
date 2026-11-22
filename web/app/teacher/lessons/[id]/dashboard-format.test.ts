@@ -31,9 +31,9 @@ describe("peakBars", () => {
 
 describe("labels and numbers", () => {
   it("labels statuses in French", () => {
-    expect(statusLabelFr("pending")).toBe("à faire");
-    expect(statusLabelFr("review")).toBe("à revoir");
-    expect(statusLabelFr("understood")).toBe("compris");
+    expect(statusLabelFr("pending")).toBe("to do");
+    expect(statusLabelFr("review")).toBe("to review");
+    expect(statusLabelFr("understood")).toBe("understood");
   });
 
   it("formats minutes", () => {

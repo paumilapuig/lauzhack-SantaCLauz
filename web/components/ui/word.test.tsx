@@ -38,7 +38,7 @@ describe("Word", () => {
 
   it("orange has sr-only text and aria-hidden icon", () => {
     const { button } = setup("orange")
-    expect(screen.getByText("ya la tocaste antes").className).toContain("sr-only")
+    expect(screen.getByText("you tapped it before").className).toContain("sr-only")
     expect(button.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true")
   })
 

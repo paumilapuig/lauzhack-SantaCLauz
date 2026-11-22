@@ -5,9 +5,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const LINKS = [
-  { href: "/class", label: "Clase", Icon: Mic },
-  { href: "/home", label: "Repasar", Icon: BookOpen },
-  { href: "/progress", label: "Progreso", Icon: Sprout },
+  { href: "/class", label: "Class", Icon: Mic },
+  { href: "/home", label: "Review", Icon: BookOpen },
+  { href: "/progress", label: "Progress", Icon: Sprout },
 ]
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -29,7 +29,7 @@ export function StudentNav({ variant }: { variant: "topbar" | "tabbar" }) {
   const pathname = usePathname()
   const styles = VARIANTS[variant]
   return (
-    <nav aria-label={variant === "tabbar" ? "Alumna" : "Alumna, superior"} className={styles.nav}>
+    <nav aria-label={variant === "tabbar" ? "Student" : "Student, top"} className={styles.nav}>
       {LINKS.map(({ href, label, Icon }) => (
         <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} className={`group ${styles.link}`}>
           <Icon aria-hidden="true" strokeWidth={1.75} className={styles.icon} />
