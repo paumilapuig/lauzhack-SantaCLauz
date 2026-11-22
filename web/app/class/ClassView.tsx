@@ -13,7 +13,14 @@ import { createClassButtons } from "./classButtons";
 import { chooseLessonId } from "./lessonChoice";
 import { ClassActionButton } from "./ClassActionButton";
 import { LiveSubtitles } from "./LiveSubtitles";
-import { createRecognizer, type SpeechRecognitionCtor } from "./recognizer";
+import { DEMO_SCRIPT } from "./demoScript";
+import { MicIndicator } from "./MicIndicator";
+import { createRecognizer, type RecognizerStatus, type SpeechRecognitionCtor } from "./recognizer";
+import { createScriptPlayer } from "./scriptPlayer";
+import { SpeechStatusBadge } from "./SpeechStatusBadge";
+import { speechStatus } from "./speechStatus";
+import { useMicLevel } from "./useMicLevel";
+import { useOnline } from "./useOnline";
 import { announceResult } from "./savedToast";
 import { createSeenWords, type SeenWords } from "./seenWords";
 import { SubtitleSwitch } from "./SubtitleSwitch";
@@ -21,6 +28,7 @@ import { addResult, EMPTY_SUBTITLES, lineText, type SubtitleLines } from "./subt
 import { createTranscriptBuffer } from "./transcriptBuffer";
 
 const LOST_WINDOW_SEC = 60;
+const PLAN_B_SENTENCE_MS = 4000;
 const DEMO_MODE = classApiMode() === "mock";
 
 function DemoModeBadge() {
@@ -51,6 +59,13 @@ export function ClassView() {
   const [subtitles, setSubtitles] = useState<SubtitleLines>(EMPTY_SUBTITLES);
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [buttons, setButtons] = useState<Buttons>();
+  const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  const [recognizerStatus, setRecognizerStatus] = useState<RecognizerStatus>("listening");
+  const [planBPlaying, setPlanBPlaying] = useState(false);
+  const feedRef = useRef<(text: string) => void>(undefined);
+  const playerRef = useRef<ReturnType<typeof createScriptPlayer>>(undefined);
+  const micLevel = useMicLevel(micStream);
+  const online = useOnline();
   const apiRef = useRef<ClassApi>(undefined);
   const sessionRef = useRef<ClassSession>(undefined);
 
@@ -60,8 +75,15 @@ export function ClassView() {
     return () => session.dispose();
   }, []);
 
+  function stopExtras() {
+    playerRef.current?.stop();
+    setPlanBPlaying(false);
+    setMicStream(null);
+  }
+
   function fail(text: string, loginRequired = false) {
     sessionRef.current?.stop();
+    stopExtras();
     setMessage(text);
     setNeedsLogin(loginRequired);
     setPhase("error");
@@ -98,18 +120,22 @@ export function ClassView() {
         const seen = words!;
         const transcript = createTranscriptBuffer({ keepSec: TRANSCRIPT_KEEP_SEC });
         const recorder = createAudioRingRecorder({ stream, now: nowSec });
+        const onResult = ({ finalText, interimText, at }: { finalText: string; interimText: string; at: number }) => {
+          if (finalText.trim()) {
+            transcript.add(finalText.trim(), at);
+            seen.add(finalText);
+          }
+          transcript.prune(at);
+          setSubtitles((lines) => addResult(lines, { finalText, interimText, at }));
+        };
+        feedRef.current = (text) => onResult({ finalText: text, interimText: "", at: nowSec() });
+        setMicStream(stream);
         const recognizer = createRecognizer({
           Ctor,
           now: nowSec,
-          onResult({ finalText, interimText, at }) {
-            if (finalText.trim()) {
-              transcript.add(finalText.trim(), at);
-              seen.add(finalText);
-            }
-            transcript.prune(at);
-            setSubtitles((lines) => addResult(lines, { finalText, interimText, at }));
-          },
+          onResult,
           onStatus(status, detail) {
+            setRecognizerStatus(status);
             if (status === "error") fail(`Erreur de reconnaissance vocale (${detail}).`);
           },
         });
@@ -133,9 +159,20 @@ export function ClassView() {
     return async () => announceResult(toast, action, await buttons?.[action]());
   }
 
+  function startPlanB() {
+    playerRef.current = createScriptPlayer({
+      sentences: DEMO_SCRIPT,
+      intervalMs: PLAN_B_SENTENCE_MS,
+      onSentence: (sentence) => feedRef.current?.(sentence),
+    });
+    playerRef.current.start();
+    setPlanBPlaying(true);
+  }
+
   async function end() {
     if (!buttons) return;
     sessionRef.current?.stop();
+    stopExtras();
     setPhase("idle");
     announceResult(toast, "onEnd", await buttons.onEnd());
   }
@@ -154,7 +191,11 @@ export function ClassView() {
               </Button>
               {DEMO_MODE && <DemoModeBadge />}
             </div>
-            <SubtitleSwitch checked={showSubtitles} onChange={setShowSubtitles} />
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <SpeechStatusBadge status={speechStatus({ online, recognizer: recognizerStatus })} planBPlaying={planBPlaying} onPlanB={startPlanB} />
+              {micLevel && <MicIndicator level={micLevel} />}
+              <SubtitleSwitch checked={showSubtitles} onChange={setShowSubtitles} />
+            </div>
           </div>
           <LiveSubtitles text={lineText(subtitles)} visible={showSubtitles} />
           <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">

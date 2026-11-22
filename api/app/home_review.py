@@ -109,8 +109,8 @@ def build_words(
             WordToPractice(
                 word=mark["word"],
                 lemma=term["lemma"] if term else None,
-                translation_es=term["translation_es"] if term else None,
-                definition_fr=term["definition_fr"] if term else None,
+                translation_es=term["translation_es"] if term else mark.get("translation_es"),
+                definition_fr=term["definition_fr"] if term else mark.get("definition_fr"),
                 key_phrase=find_key_phrase(clip["transcript"], mark["word"]),
                 level=level,
                 clip_id=clip["id"],

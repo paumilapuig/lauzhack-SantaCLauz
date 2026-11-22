@@ -22,7 +22,20 @@ export type WordToPractice = {
 
 export type MarkResult = { word: string; lemma: string | null; translation_es: string | null; level: number | null };
 
-export type HomeReview = { clips: HomeClip[]; words_to_practice: WordToPractice[] };
+export type ConceptStep = { fr: string; es: string; visual: string };
+export type ConceptQuestion = { question: string; options: string[] };
+export type ConceptGap = {
+  id: string;
+  lesson_title: string;
+  concept: string;
+  lemmas: string[];
+  explanation: ConceptStep[];
+  exercises: ConceptQuestion[];
+  status: "pending" | "review";
+};
+export type ConceptAnswerResult = { correct: boolean[]; status: "understood" | "review" };
+
+export type HomeReview = { clips: HomeClip[]; words_to_practice: WordToPractice[]; concepts_to_learn?: ConceptGap[] };
 
 export type PracticeRequest = { lemma: string; clip_id: string | null; passed: boolean };
 export type PracticeResponse = { lemma: string; level: number; leveled_up: boolean };

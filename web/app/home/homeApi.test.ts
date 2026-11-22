@@ -33,6 +33,13 @@ describe("createHttpHomeApi", () => {
     });
   });
 
+  it("sends the answers of a concept", async () => {
+    const request = fakeRequest({ correct: [true, false], status: "review" });
+    const result = await createHttpHomeApi(request).answerConcept("g1", [0, 2]);
+    expect(result.status).toBe("review");
+    expect(request).toHaveBeenCalledWith("/api/concepts/g1/answers", { method: "POST", body: JSON.stringify({ answers: [0, 2] }) });
+  });
+
   it("loads progress", async () => {
     const request = fakeRequest({ messages: [] });
     await createHttpHomeApi(request).progress();

@@ -21,6 +21,7 @@ def call_openrouter(
         "messages": messages,
         "response_format": {"type": "json_object"},
         "usage": {"include": True},
+        "provider": {"require_parameters": True},
     }
     headers = {"Authorization": f"Bearer {api_key}"}
     if http is not None:

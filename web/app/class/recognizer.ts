@@ -1,4 +1,4 @@
-export type RecognizerStatus = "listening" | "restarting" | "stopped" | "error";
+export type RecognizerStatus = "listening" | "restarting" | "stopped" | "offline" | "error";
 
 interface RecognitionResult {
   readonly isFinal: boolean;
@@ -72,6 +72,7 @@ export function createRecognizer(opts: RecognizerOptions): { start(): void; stop
   recognition.onspeechstart = () => opts.onSpeechStart?.(now());
   recognition.onresult = (event) => opts.onResult({ ...splitResults(event), at: now() });
   recognition.onerror = (event) => {
+    if (event.error === "network") return opts.onStatus("offline"); // Chrome's speech service is unreachable; onend retries
     if (!FATAL_ERRORS.has(event.error)) return;
     failed = true;
     opts.onStatus("error", event.error);

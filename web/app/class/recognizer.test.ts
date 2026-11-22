@@ -115,4 +115,11 @@ describe("createRecognizer", () => {
     fake.onend?.();
     expect(fake.startCalls).toBe(2);
   });
+  it("reports offline when Chrome's speech service has no network, and keeps retrying", () => {
+    const { fake, onStatus } = setup();
+    fake.onerror?.({ error: "network" });
+    expect(onStatus).toHaveBeenCalledWith("offline");
+    fake.onend?.();
+    expect(onStatus).toHaveBeenCalledWith("restarting");
+  });
 });

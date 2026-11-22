@@ -91,15 +91,17 @@ export function createAudioRingRecorder(options: AudioRingRecorderOptions) {
   }
 
   async function clip(): Promise<AudioClip> {
+    const tEnd = now();
     dropExpired();
     const slot = pickSlot();
     if (!slot) throw new Error("Recorder is not running");
-    await flush(slot);
-    const tEnd = now();
-    release(slot);
+    // Claim the slot first so the expiry timer cannot stop it while we wait for its last chunk.
     slots = slots.filter((s) => s !== slot);
+    await flush(slot);
+    release(slot);
     const type = slot.recorder.mimeType || "audio/webm";
-    return { blob: new Blob(slot.chunks, { type }), tStart: slot.startedAt, tEnd };
+    // The press time is the clip end; the reported window never exceeds windowSec (API limit for word clips).
+    return { blob: new Blob(slot.chunks, { type }), tStart: Math.max(slot.startedAt, tEnd - windowSec), tEnd };
   }
 
   return { start, stop, clip };

@@ -2,7 +2,8 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEFAULT_OPENROUTER_MODEL = "google/gemini-2.5-flash-lite"
+# Open-weights model (Llama 3.3 70B) hosted on OpenRouter.
+DEFAULT_OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct"
 
 
 class Settings(BaseSettings):

@@ -32,7 +32,7 @@ async function reachSpeaking() {
   fireEvent.click(screen.getByRole("button", { name: "déchet" }));
   expect(screen.getByText(/____/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "déchets" }));
-  await screen.findByRole("button", { name: /Hablar/ });
+  await screen.findByRole("button", { name: /Speak/ });
 }
 
 describe("PracticeFlow", () => {
@@ -48,7 +48,7 @@ describe("PracticeFlow", () => {
   it("falls back when nothing is heard, still passes, saves once", async () => {
     mockHeard(null);
     await reachSpeaking();
-    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Speak/ }));
     await screen.findByText(/We didn't hear you well/);
     await screen.findByText("déchet levels up");
     expect(savePractice).toHaveBeenCalledTimes(1);
@@ -57,10 +57,22 @@ describe("PracticeFlow", () => {
     expect(onDone).toHaveBeenCalledWith("déchet");
   });
 
+  it("does not save practice for a word outside the glossary, and still lets her go back", async () => {
+    mockHeard("talker");
+    render(<PracticeFlow word={{ ...word, lemma: "talker", glossary_lemma: null, key_phrase: "j'ai huit talker parler" }} onDone={onDone} onExit={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "talker" }));
+    fireEvent.click(await screen.findByRole("button", { name: "talker" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Speak/ }));
+    await screen.findByText("Well done!");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(savePractice).not.toHaveBeenCalled();
+    expect(onDone).toHaveBeenCalledWith("talker");
+  });
+
   it("praises a matching answer", async () => {
     mockHeard("des déchets");
     await reachSpeaking();
-    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Speak/ }));
     await waitFor(() => expect(screen.getByText("Well done!")).toBeTruthy());
   });
 
@@ -68,10 +80,10 @@ describe("PracticeFlow", () => {
     mockHeard(null);
     vi.mocked(savePractice).mockRejectedValueOnce(new Error("down"));
     await reachSpeaking();
-    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Speak/ }));
     await screen.findByText("Could not save. Please try again.");
     expect(screen.queryByText("déchet levels up")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Hablar/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Speak/ }));
     await screen.findByText("déchet levels up");
     expect(screen.queryByText(/No se ha podido guardar/)).toBeNull();
   });
@@ -84,7 +96,7 @@ describe("PracticeFlow", () => {
     const view = render(<PracticeFlow word={word} onDone={onDone} onExit={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "déchet" }));
     fireEvent.click(screen.getByRole("button", { name: "déchets" }));
-    fireEvent.click(await screen.findByRole("button", { name: /Hablar/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Speak/ }));
     view.unmount();
     resolveHeard(null);
     await Promise.resolve();
