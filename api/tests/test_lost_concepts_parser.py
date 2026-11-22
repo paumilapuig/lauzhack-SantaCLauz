@@ -130,3 +130,11 @@ def test_non_dict_items_are_dropped():
 def test_unreadable_reply_raises(content):
     with pytest.raises(LostConceptsParseError):
         parse_concept_gaps(content, T_SEC_BY_N, LEMMAS)
+
+
+def test_byte_token_emojis_in_the_reply_are_decoded():
+    raw = json.dumps({"concepts": [concept()]}, ensure_ascii=False).replace("🔋", "<0xF0><0x9F><0x94><0x8B>")
+
+    gap = parse_concept_gaps(raw, T_SEC_BY_N, LEMMAS).gaps[0]
+
+    assert gap.explanation[0].visual == "🍞 + 💨 → 🔋"

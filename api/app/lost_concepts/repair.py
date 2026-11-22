@@ -5,6 +5,8 @@ Measured on Sun 22 Nov with the demo lesson: about 1 call in 4 lost a whole conc
 Here those details are repaired or dropped one by one, so the concept itself survives.
 """
 
+import re
+
 from pydantic import ValidationError
 
 from app.lost_concepts.schema import (
@@ -14,6 +16,22 @@ from app.lost_concepts.schema import (
     ConceptExercise,
     ConceptStep,
 )
+
+
+BYTE_TOKENS = re.compile(r"(?:<0x[0-9A-Fa-f]{2}>)+")
+
+
+def _decode_run(match: re.Match) -> str:
+    data = bytes(int(token[3:5], 16) for token in re.findall(r"<0x[0-9A-Fa-f]{2}>", match.group(0)))
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        return ""
+
+
+def decode_byte_tokens(text: str) -> str:
+    """Some models write an emoji as its UTF-8 bytes, e.g. `<0xF0><0x9F><0xA7><0xAC>`: turn it back, or drop it."""
+    return BYTE_TOKENS.sub(_decode_run, text)
 
 
 def shorten_visual(visual: str, limit: int = MAX_VISUAL_CHARS) -> str:
