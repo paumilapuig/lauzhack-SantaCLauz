@@ -16,6 +16,12 @@ class LessonSummary(BaseModel):
     lesson_date: date | None
 
 
+class LessonListItem(LessonSummary):
+    """A row of GET /api/lessons: the summary plus the teacher's course (null = not in a course)."""
+
+    course_id: str | None
+
+
 class LessonTerm(BaseModel):
     id: str
     lesson_id: str

@@ -9,7 +9,7 @@ _TERM_COLUMNS = (
 def list_lessons(client: Client) -> list[dict]:
     return (
         client.table("lessons")
-        .select("id, title, subject, lesson_date")
+        .select("id, title, subject, lesson_date, course_id")
         .order("lesson_date", desc=True, nullsfirst=False)
         .order("created_at", desc=True)
         .execute()

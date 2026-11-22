@@ -330,3 +330,50 @@ def test_lessons_with_images_use_the_vision_model(teacher_client, recorder, api_
     _post_file(teacher_client, "page.png", _png(), "image/png")
 
     assert recorder.generate_calls[0][2] == "vision/model"
+
+
+COURSE = "60000000-0000-4000-8000-000000000001"
+
+
+@pytest.fixture
+def courses(monkeypatch):
+    checked: list[tuple[str, str]] = []
+
+    def fake_is_her_course(_db, course_id, teacher_id):
+        checked.append((course_id, teacher_id))
+        return course_id == COURSE
+
+    monkeypatch.setattr(router, "get_supabase", lambda: None)
+    monkeypatch.setattr(router, "is_her_course", fake_is_her_course)
+    return checked
+
+
+def test_json_lesson_in_her_course(teacher_client, recorder, courses):
+    response = teacher_client.post("/api/lessons", json={**JSON_BODY, "course_id": COURSE})
+    assert response.status_code == 200
+    assert courses == [(COURSE, TEACHER.id)]
+    _user, meta, _terms = recorder.create_calls[0]
+    assert str(meta.course_id) == COURSE
+
+
+def test_file_lesson_in_her_course(teacher_client, recorder, courses):
+    response = teacher_client.post(
+        "/api/lessons", data={**FORM_FIELDS, "course_id": COURSE}, files={"file": ("l.txt", b"Les poumons.", "text/plain")}
+    )
+    assert response.status_code == 200
+    _user, meta, _terms = recorder.create_calls[0]
+    assert str(meta.course_id) == COURSE
+
+
+def test_unknown_course_is_rejected_before_the_llm_call(teacher_client, recorder, courses):
+    response = teacher_client.post("/api/lessons", json={**JSON_BODY, "course_id": "60000000-0000-4000-8000-0000000000ff"})
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Unknown course"
+    assert recorder.generate_calls == []
+
+
+def test_no_course_skips_the_check(teacher_client, recorder, courses):
+    assert teacher_client.post("/api/lessons", json=JSON_BODY).status_code == 200
+    assert courses == []
+    _user, meta, _terms = recorder.create_calls[0]
+    assert meta.course_id is None

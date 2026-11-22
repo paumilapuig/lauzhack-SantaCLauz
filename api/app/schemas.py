@@ -2,6 +2,7 @@
 
 from datetime import date
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
@@ -48,6 +49,7 @@ class CreateLessonJson(BaseModel):
     subject: str
     lesson_date: date
     source_text: str
+    course_id: UUID | None = None
 
 
 class CreateLessonJsonRequest(CreateLessonJson):
