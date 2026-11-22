@@ -33,7 +33,7 @@ Errors: `{ "detail": str }` (FastAPI default). Times: ISO 8601 UTC strings. IDs:
 - **Changes** (decided Sat 21 Nov, PLAN › Decisions log): words are marked **at home**, never in class.
   - **Mark at home** (`POST /api/clips/{id}/marks`, glossary word): the **first** mark of a lemma on the clips of one session → `−1` (min 0). More marks of the same lemma in that session (another form, another clip) change nothing.
   - **Undo** (`DELETE /api/clips/{id}/marks/{word}`): when the **last** mark of that lemma in that session goes, the level gets back exactly what was subtracted: `min(3, level − level_delta)` (`level_delta` = `−1`, or `0` if the level was already 0). Stored in `mark_level_changes`.
-  - **3 home activities passed** `+1` · **recognised in F3** `+1` (max 3).
+  - **Home practice passed** (`POST /api/practice` with `passed: true`, i.e. one practice mode finished correctly for that word) `+1` · **recognised in F3** `+1` (max 3). `passed: false` is stored but changes nothing.
   - `mastery.py` (B) gets `revert_mark(level, level_delta) -> int`; the routes only call `mastery`.
 - **Transparency rule**: `transparent = llm_transparent AND similarity(lemma, translation_es) >= 0.7`, where
   `similarity = difflib.SequenceMatcher(None, norm(a), norm(b)).ratio()` and `norm` = lowercase + strip accents (Unicode NFD, drop combining marks).
