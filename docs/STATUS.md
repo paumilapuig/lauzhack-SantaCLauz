@@ -7,6 +7,22 @@
 | Paula (C) — ara tot l'equip | feat/demo-fixes-llm | **Fet (aquesta branca):** clips que no es desaven (durada > 16 s → 422) i clip que es podia penjar; Step by step amb paraules fora del glossari; LLM obert per defecte (Llama 3.3 70B a OpenRouter) per als resums de «J'ai perdu le fil» i per traduir les paraules marcades en prémer Done (columnes `clip_marks.translation_es/definition_fr`, migració aplicada) → tots els jocs funcionen; secció «To understand better» a Review (concept gaps + respostes); indicador de qualitat del micro i d'estat en directe/fora de línia amb pla B (text de la lliçó com a subtítols) a `/class`. **Cal:** posar `OPENROUTER_API_KEY` a `api/.env` (sense clau no hi ha resums ni traduccions) | clau d'OpenRouter | Sun 22 Nov 06:30 |
 | Pau (D) | paumilapuig/docs/design-teal | Fet i fusionat: `/home` amb paraules marcades al clip de casa, 7 modes de pràctica i redisseny (PR #17), contracte `clip_marks` (PR #22), DESIGN.md estil verd petroli (PR #25); abans #4, #7, #11, #15, #20. A mitges: canvi d'estil decidit cap a un de més càlid (fons crema, botons arrodonits) — no començat, DESIGN.md i la UI encara amb l'estil de #25. Següent: aplicar l'estil nou a DESIGN.md + `/home` i `/progress`; protegir /home i /progress al proxy; connectar `data.ts` a l'API; pitch + slides | connectar dades: `clip_marks` + `/marks` (Miquel) i `GET /api/home/review` (Laura) | Sat 21 Nov 22:41 |
 
+## Handover (Sun 22 Nov) — read this first
+Everything is on `main` (PRs #42, #46, #47). Nothing is pending in any branch.
+
+**Run it**
+- API: `cd api && uv run fastapi dev app/main.py` — needs `api/.env` (`SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct`).
+- Web: `cd web && npm run dev` — `web/.env.local` needs the Supabase URL/anon key and `NEXT_PUBLIC_CLASS_API=http` (without it the web runs on in-browser demo data and shows « Mode démo »).
+- Log in at http://localhost:3000 as `lucia-w1@demo.lauzhack` (student) or `prof-demo@demo.lauzhack` (teacher); passwords in the team chat.
+
+**Flow**: `/dashboard` (Today: pick a lesson) → `/class?lesson=<id>` (French: subtitles, « Je n'ai pas compris » = audio clip, « J'ai perdu le fil » = last 60 s of text, « Terminer le cours » = word states + after-class LLM summary) → `/home` Review (tap hard words on pending clips, **Done** = clip processed + LLM translations; practice games; « To understand better » concepts) → `/progress`. Teachers: `/teacher`.
+
+**Still open**
+- No `OPENROUTER_API_KEY` set yet on this machine → no concept summaries and no translations of non-glossary words until it is added.
+- Test data to delete in the Supabase SQL editor (the tool refused): lesson « Smoke LLM », users `qa.santaclauz.skeleton@gmail.com`, `smoke-local@demo.lauzhack` (nothing depends on them).
+- Old test clips of lucia-w1 are already marked Done; record a fresh class before the demo.
+- Plan B (offline) only covers subtitles; saving clips needs internet (Supabase is in the cloud).
+
 ## Detall A (Miquel)
 **Responsable de** (`CLAUDE.md` › Ownership, actualitzat al PR #21; Laura ha confirmat explícitament `clips*.py` i `test_clips*.py`):
 `api/app/routers/classdata*`, `api/app/routers/clips*.py`, `api/app/storage.py`, `api/app/roles.py`, `api/tests/test_classdata*`, `api/tests/test_clips*`, `api/tests/test_storage.py`, `api/tests/fake_storage.py`, `api/tests/fake_supabase.py`, `api/tests/classdata_seed.py`.
