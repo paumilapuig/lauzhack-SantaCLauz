@@ -7,7 +7,7 @@ import { StudentPage } from "@/components/student-page"
 import type { Progress } from "@/lib/student-contract"
 import { getHomeApi } from "@/app/home/getHomeApi"
 import { WeekStrip } from "./week-strip"
-import { WordGarden } from "./word-garden"
+import { WordAquarium } from "./word-aquarium"
 
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 
@@ -39,7 +39,7 @@ export function ProgressView() {
             {hero ? <ProgressHero message={hero} /> : <div />}
             <WeekStrip week={progress.week ?? []} today={isoDay(new Date())} />
           </div>
-          <WordGarden words={progress.words ?? []} />
+          <WordAquarium words={progress.words ?? []} />
           <ul className="flex flex-col divide-y divide-separator rounded-[24px] border border-border bg-card px-5">
             {rest.map((message) => (
               <li key={message.kind}>
