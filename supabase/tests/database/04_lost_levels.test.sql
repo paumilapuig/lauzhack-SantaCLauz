@@ -1,6 +1,6 @@
--- Lost context, clip kinds, clip_marks, mark_level_changes, lesson_lost_summaries (docs/API.md).
+-- Lost context, clip kinds, clip_marks, mark_level_changes, concept_gaps (docs/API.md).
 begin;
-select plan(30);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'teacher@example.com'),
@@ -38,10 +38,10 @@ select throws_ok(
 -- clips: kind + lemma
 select has_column('public', 'clips', 'kind', 'clips.kind exists');
 select has_column('public', 'clips', 'lemma', 'clips.lemma exists');
-select col_default_is('public', 'clips', 'kind', 'concept', 'clips.kind defaults to concept');
+select col_default_is('public', 'clips', 'kind', 'word', 'clips.kind defaults to word');
 select is(
   (select kind from public.clips where id = '00000000-0000-0000-0000-0000000000d1'),
-  'concept', 'an existing clip becomes a concept clip');
+  'word', 'a clip without kind is a word clip');
 select throws_ok(
   $$update public.clips set kind = 'other' where id = '00000000-0000-0000-0000-0000000000d1'$$,
   '23514', null, 'clips rejects unknown kind');
@@ -70,13 +70,20 @@ select throws_ok(
     values ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000c1', 'déchet', 1)$$,
   '23514', null, 'level_delta is -1 or 0');
 
--- lesson_lost_summaries
-select has_table('public', 'lesson_lost_summaries', 'lesson_lost_summaries exists');
-select col_is_pk('public', 'lesson_lost_summaries', 'lesson_id', 'lesson_lost_summaries pk is lesson_id');
+-- concept_gaps
+select has_table('public', 'concept_gaps', 'concept_gaps exists');
+select col_is_pk('public', 'concept_gaps', 'id', 'concept_gaps pk is id');
+select lives_ok(
+  $$insert into public.concept_gaps (session_id, student_id, lesson_id, concept, minutes, lemmas, explanation, exercises)
+    values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000b1', 'La respiration', '{1}', '{}', '[{"fr":"a","es":"a","visual":"x"},{"fr":"b","es":"b","visual":"y"},{"fr":"c","es":"c","visual":"z"}]'::jsonb, '[{"question":"q","options":["a","b"],"answer":0},{"question":"r","options":["a","b"],"answer":1}]'::jsonb)$$,
+  'a concept gap with 3 steps and 2 exercises is stored');
 select throws_ok(
-  $$insert into public.lesson_lost_summaries (lesson_id, lost_count, concepts)
-    values ('00000000-0000-0000-0000-0000000000b1', 1, '{}'::jsonb)$$,
-  '23514', null, 'concepts must be a json array');
+  $$insert into public.concept_gaps (session_id, student_id, lesson_id, concept, explanation, exercises)
+    values ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000b1', 'x', '[{"fr":"a","es":"a","visual":"x"}]'::jsonb, '[{"question":"q","options":["a","b"],"answer":0},{"question":"r","options":["a","b"],"answer":1}]'::jsonb)$$,
+  '23514', null, 'explanation needs 3 to 5 steps');
+select throws_ok(
+  $$update public.concept_gaps set status = 'done'$$,
+  '23514', null, 'concept_gaps rejects unknown status');
 
 -- deleting a session or a clip cleans up
 delete from public.clips where id = '00000000-0000-0000-0000-0000000000d1';
@@ -87,21 +94,21 @@ select ok((select relrowsecurity from pg_class where oid = 'public.clip_marks'::
   'clip_marks has RLS enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.mark_level_changes'::regclass),
   'mark_level_changes has RLS enabled');
-select ok((select relrowsecurity from pg_class where oid = 'public.lesson_lost_summaries'::regclass),
-  'lesson_lost_summaries has RLS enabled');
+select ok((select relrowsecurity from pg_class where oid = 'public.concept_gaps'::regclass),
+  'concept_gaps has RLS enabled');
 select ok(not has_table_privilege('authenticated', 'public.clip_marks', 'INSERT'),
   'authenticated cannot insert clip_marks');
 select ok(not has_table_privilege('authenticated', 'public.mark_level_changes', 'INSERT'),
   'authenticated cannot insert mark_level_changes');
-select ok(not has_table_privilege('authenticated', 'public.lesson_lost_summaries', 'INSERT'),
-  'authenticated cannot insert lesson_lost_summaries');
-select ok(not has_table_privilege('anon', 'public.lesson_lost_summaries', 'SELECT'),
-  'anon cannot read lesson_lost_summaries');
+select ok(not has_table_privilege('authenticated', 'public.concept_gaps', 'INSERT'),
+  'authenticated cannot insert concept_gaps');
+select ok(not has_table_privilege('anon', 'public.concept_gaps', 'SELECT'),
+  'anon cannot read concept_gaps');
 select ok(
   exists (select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'lesson_lost_summaries'
-      and policyname = 'lesson_lost_summaries: lesson teacher reads'),
-  'policy "lesson_lost_summaries: lesson teacher reads" exists');
+    where schemaname = 'public' and tablename = 'concept_gaps'
+      and policyname = 'concept_gaps: lesson teacher reads'),
+  'policy "concept_gaps: lesson teacher reads" exists');
 
 select * from finish();
 rollback;

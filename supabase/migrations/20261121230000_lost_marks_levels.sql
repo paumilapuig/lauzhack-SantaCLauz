@@ -1,5 +1,5 @@
--- Additive (docs/API.md, PLAN › Decisions log Sat 21 23:00):
--- text-only "lost" context, clip kinds, clip_marks, mark_level_changes, lesson_lost_summaries.
+-- Additive (docs/API.md, PLAN › Decisions log Sat 21 23:00 and Sun 22 00:30):
+-- text-only "lost" context, clip kinds, clip_marks, mark_level_changes, concept_gaps.
 -- The browser only reads; every write goes through the API (service_role).
 
 -- class_events: "Me he perdido" saves the last <= 60 s of transcript, no audio.
@@ -12,9 +12,9 @@ alter table public.class_events
   add constraint class_events_context_only_lost
   check (type = 'lost' or (context_t_start is null and context_transcript is null));
 
--- clips: lexical (word) or conceptual (concept) doubt; existing rows become 'concept'.
+-- clips: always a lexical doubt ("No he entendido"); 'concept' stays in the check for old rows only.
 alter table public.clips
-  add column if not exists kind text not null default 'concept'
+  add column if not exists kind text not null default 'word'
     check (kind in ('word', 'concept')),
   add column if not exists lemma text;
 
@@ -42,17 +42,33 @@ create table if not exists public.mark_level_changes (
 
 create index if not exists mark_level_changes_session_id_idx on public.mark_level_changes (session_id);
 
--- lesson_lost_summaries: result of the single after-class LLM call per lesson.
-create table if not exists public.lesson_lost_summaries (
-  lesson_id uuid primary key references public.lessons (id) on delete cascade,
-  lost_count int not null check (lost_count >= 0),
-  concepts jsonb not null default '[]'::jsonb check (jsonb_typeof(concepts) = 'array'),
+-- concept_gaps: what a student did not understand in a session ("Me he perdido"),
+-- written by the single after-class LLM call of that session (app.lost_concepts.process_session).
+create table if not exists public.concept_gaps (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.class_sessions (id) on delete cascade,
+  student_id uuid not null references public.profiles (id) on delete cascade,
+  lesson_id uuid not null references public.lessons (id) on delete cascade,
+  concept text not null check (concept <> '' and char_length(concept) <= 300),
+  minutes int[] not null default '{}',
+  lemmas text[] not null default '{}',
+  explanation jsonb not null
+    check (jsonb_typeof(explanation) = 'array' and jsonb_array_length(explanation) between 3 and 5),
+  exercises jsonb not null
+    check (jsonb_typeof(exercises) = 'array' and jsonb_array_length(exercises) between 2 and 3),
+  status text not null default 'pending' check (status in ('pending', 'review', 'understood')),
+  attempts int not null default 0 check (attempts >= 0),
+  answered_at timestamptz,
   created_at timestamptz not null default now()
 );
 
+create index if not exists concept_gaps_session_id_idx on public.concept_gaps (session_id);
+create index if not exists concept_gaps_student_id_idx on public.concept_gaps (student_id);
+create index if not exists concept_gaps_lesson_id_idx on public.concept_gaps (lesson_id);
+
 alter table public.clip_marks enable row level security;
 alter table public.mark_level_changes enable row level security;
-alter table public.lesson_lost_summaries enable row level security;
+alter table public.concept_gaps enable row level security;
 
 create policy "clip_marks: student reads own"
   on public.clip_marks for select
@@ -72,8 +88,9 @@ create policy "mark_level_changes: student reads own"
   to authenticated
   using (student_id = (select auth.uid()));
 
-create policy "lesson_lost_summaries: lesson teacher reads"
-  on public.lesson_lost_summaries for select
+-- No student read: the rows hold the exercise answers; the API serves them without "answer".
+create policy "concept_gaps: lesson teacher reads"
+  on public.concept_gaps for select
   to authenticated
   using (exists (
     select 1 from public.lessons l
@@ -82,11 +99,11 @@ create policy "lesson_lost_summaries: lesson teacher reads"
 
 -- Grants: start from nothing, because a local stack auto-grants new tables to anon/authenticated.
 revoke all on table
-  public.clip_marks, public.mark_level_changes, public.lesson_lost_summaries
+  public.clip_marks, public.mark_level_changes, public.concept_gaps
   from anon, authenticated;
 grant select on table
-  public.clip_marks, public.mark_level_changes, public.lesson_lost_summaries
+  public.clip_marks, public.mark_level_changes, public.concept_gaps
   to authenticated;
 grant all on table
-  public.clip_marks, public.mark_level_changes, public.lesson_lost_summaries
+  public.clip_marks, public.mark_level_changes, public.concept_gaps
   to service_role;
