@@ -49,4 +49,28 @@ describe("createTranscriptBuffer", () => {
     finals.forEach((text, i) => buffer.add(text, i));
     expect(buffer.textBetween(0, 100)).toBe(finals.at(-1));
   });
+
+  it("a clip taken while the teacher is still talking keeps the sentence being heard (bug Sun 22 Nov 08:32)", () => {
+    const buffer = createTranscriptBuffer({ keepSec: 90 });
+    buffer.add("bonjour à tous", 30);
+    buffer.hear("la mitochondrie transforme", 44);
+    buffer.hear("la mitochondrie transforme le glucose", 52);
+    expect(buffer.textBetween(44, 57)).toBe("la mitochondrie transforme le glucose");
+  });
+
+  it("a sentence that started before the clip and ended inside it belongs to the clip", () => {
+    const buffer = createTranscriptBuffer({ keepSec: 90 });
+    buffer.hear("elle produit", 40);
+    buffer.add("elle produit aussi des déchets", 60);
+    expect(buffer.textBetween(44, 57)).toBe("elle produit aussi des déchets");
+    expect(buffer.textBetween(61, 70)).toBe("");
+  });
+
+  it("a final result clears the sentence being heard", () => {
+    const buffer = createTranscriptBuffer({ keepSec: 90 });
+    buffer.hear("le sang", 10);
+    buffer.add("le sang transporte", 12);
+    buffer.hear("", 12);
+    expect(buffer.textBetween(0, 20)).toBe("le sang transporte");
+  });
 });

@@ -125,6 +125,7 @@ export function ClassView() {
             transcript.add(finalText.trim(), at);
             seen.add(finalText);
           }
+          transcript.hear(interimText, at);
           transcript.prune(at);
           setSubtitles((lines) => addResult(lines, { finalText, interimText, at }));
         };
