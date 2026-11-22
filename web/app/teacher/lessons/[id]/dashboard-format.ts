@@ -18,6 +18,7 @@ const STATUS_LABELS_FR: Record<ConceptGapStatus, string> = {
 };
 
 export function peakBars(peaks: LostPeak[]): PeakBar[] {
+  if (peaks.length === 0) return [];
   const max = Math.max(...peaks.map((peak) => peak.count));
   return [...peaks]
     .sort((a, b) => a.minute - b.minute)

@@ -8,6 +8,10 @@ import {
 } from "./dashboard-format";
 
 describe("peakBars", () => {
+  it("returns an empty list for empty input", () => {
+    expect(peakBars([])).toEqual([]);
+  });
+
   it("sorts by minute and scales widths", () => {
     expect(
       peakBars([

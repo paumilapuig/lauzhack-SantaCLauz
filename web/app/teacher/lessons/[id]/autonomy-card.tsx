@@ -46,7 +46,7 @@ export function AutonomyCard({ student }: { student: StudentAutonomy }) {
         <p className="text-base text-muted-foreground">Autonomie</p>
         <CardTitle className="text-xl">{student.name}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-wrap items-end justify-between gap-4">
+      <CardContent className="flex flex-wrap items-start justify-between gap-4">
         {figure === null ? (
           <p className="text-base text-muted-foreground">
             pas encore de séance terminée

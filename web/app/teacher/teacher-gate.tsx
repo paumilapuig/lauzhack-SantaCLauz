@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { TeacherShell } from "./teacher-shell";
 
 export async function TeacherGate({ children }: { children: React.ReactNode }) {
   await connection();
@@ -17,5 +18,5 @@ export async function TeacherGate({ children }: { children: React.ReactNode }) {
     .single();
   if (profile?.role !== "teacher") redirect("/home");
 
-  return <>{children}</>;
+  return <TeacherShell>{children}</TeacherShell>;
 }
