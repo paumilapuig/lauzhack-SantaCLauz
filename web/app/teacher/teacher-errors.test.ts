@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createLessonErrorFr, loadErrorFr } from "./teacher-errors";
+import { createCourseErrorFr, createLessonErrorFr, loadErrorFr, moveLessonErrorFr } from "./teacher-errors";
 
 describe("createLessonErrorFr", () => {
   it.each([
@@ -27,5 +27,26 @@ describe("loadErrorFr", () => {
     [418, "Unexpected error (code 418)."],
   ])("maps %i", (status, text) => {
     expect(loadErrorFr(status)).toBe(text);
+  });
+});
+
+describe("createCourseErrorFr", () => {
+  it.each([
+    [422, "Give the course a name (up to 80 characters)."],
+    [403, "Teachers only."],
+    [0, "Server unreachable."],
+  ])("maps %i", (status, text) => {
+    expect(createCourseErrorFr(status)).toBe(text);
+  });
+});
+
+describe("moveLessonErrorFr", () => {
+  it.each([
+    [403, "This lesson is not yours."],
+    [404, "Lesson not found"],
+    [422, "This course is not yours."],
+    [418, "Unexpected error (code 418)."],
+  ])("maps %i", (status, text) => {
+    expect(moveLessonErrorFr(status)).toBe(text);
   });
 });

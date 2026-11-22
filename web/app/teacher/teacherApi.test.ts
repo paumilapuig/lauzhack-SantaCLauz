@@ -53,6 +53,39 @@ describe("teacherApi", () => {
     expect(headers.has("Content-Type")).toBe(false);
   });
 
+  it("sends the course of a new lesson, as JSON and as a form field", async () => {
+    const text = setup(jsonResponse({ lesson_id: "x", terms: [] }));
+    await text.api.createLessonFromText({ ...FIELDS, course_id: "c1" }, "Le texte");
+    expect(JSON.parse(text.lastCall().init.body as string).course_id).toBe("c1");
+    const upload = setup(jsonResponse({ lesson_id: "x", terms: [] }));
+    await upload.api.createLessonFromFile({ ...FIELDS, course_id: "c1" }, new File(["abc"], "a.txt"));
+    expect((upload.lastCall().init.body as FormData).get("course_id")).toBe("c1");
+  });
+
+  it("leaves the course out when the lesson has none", async () => {
+    const upload = setup(jsonResponse({ lesson_id: "x", terms: [] }));
+    await upload.api.createLessonFromFile(FIELDS, new File(["abc"], "a.txt"));
+    expect((upload.lastCall().init.body as FormData).has("course_id")).toBe(false);
+  });
+
+  it("lists and creates courses", async () => {
+    const list = setup();
+    await list.api.listCourses();
+    expect(list.lastCall().url).toBe(`${BASE}/api/teacher/courses`);
+    const create = setup(jsonResponse({ id: "c1", name: "Biologie 1re", lesson_count: 0 }));
+    await create.api.createCourse("Biologie 1re");
+    expect(create.lastCall().init.method).toBe("POST");
+    expect(create.lastCall().init.body).toBe(JSON.stringify({ name: "Biologie 1re" }));
+  });
+
+  it("moves a lesson into a course with PATCH", async () => {
+    const { api, lastCall } = setup(jsonResponse({ id: "l1", course_id: "c1" }));
+    await api.moveLesson("l1", "c1");
+    expect(lastCall().url).toBe(`${BASE}/api/teacher/lessons/l1`);
+    expect(lastCall().init.method).toBe("PATCH");
+    expect(lastCall().init.body).toBe(JSON.stringify({ course_id: "c1" }));
+  });
+
   it("gets the dashboard of a lesson", async () => {
     const { api, lastCall } = setup(jsonResponse({}));
     await api.getDashboard("abc");

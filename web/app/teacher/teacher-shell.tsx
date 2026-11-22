@@ -23,7 +23,7 @@ export function TeacherShell({ children, demo = false }: { children: React.React
               className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-[15px] font-medium hover:bg-fill ${FOCUS}`}
             >
               <LayoutList aria-hidden className="size-4 text-label-secondary" strokeWidth={1.75} />
-              <span className="max-sm:sr-only">My lessons</span>
+              <span className="max-sm:sr-only">My courses</span>
             </Link>
             {!demo && (
               <form action="/auth/signout" method="post">

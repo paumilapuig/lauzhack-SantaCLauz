@@ -1,41 +1,17 @@
-"use client";
-
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ApiError } from "@/lib/api";
 import type { LessonSummary } from "./teacher-contract";
-import { teacherApi } from "./teacher-api-client";
-import { loadErrorFr } from "./teacher-errors";
-
-type ListState =
-  | { kind: "loading" }
-  | { kind: "error"; message: string }
-  | { kind: "ready"; lessons: LessonSummary[] };
 
 const formatDate = (isoDate: string): string =>
   new Date(`${isoDate}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 
-export function LessonList() {
-  const [state, setState] = useState<ListState>({ kind: "loading" });
-
-  useEffect(() => {
-    teacherApi
-      .listLessons()
-      .then((lessons) => setState({ kind: "ready", lessons }))
-      .catch((error: unknown) => {
-        const status = error instanceof ApiError ? error.status : 0;
-        setState({ kind: "error", message: loadErrorFr(status) });
-      });
-  }, []);
-
-  if (state.kind === "loading") return <p className="text-[16px] text-label-secondary">Loading…</p>;
-  if (state.kind === "error") return <p role="alert" className="text-[16px] text-destructive">{state.message}</p>;
-  if (state.lessons.length === 0) return <p className="text-[16px] text-label-secondary">No lessons yet. Create your first one.</p>;
+/** Lesson cards, each opening its dashboard. */
+export function LessonList({ lessons, empty }: { lessons: LessonSummary[]; empty: string }) {
+  if (lessons.length === 0) return <p className="text-[16px] text-label-secondary">{empty}</p>;
 
   return (
     <ul className="flex flex-col gap-3">
-      {state.lessons.map((lesson, i) => (
+      {lessons.map((lesson, i) => (
         <li key={lesson.id} style={{ "--i": i } as React.CSSProperties} className="animate-rise">
           <Link
             href={`/teacher/lessons/${lesson.id}`}

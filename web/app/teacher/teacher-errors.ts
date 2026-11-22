@@ -27,3 +27,21 @@ export const createLessonErrorFr = (status: number): string =>
 
 export const loadErrorFr = (status: number): string =>
   LOAD_ERRORS[status] ?? unexpected(status);
+
+const CREATE_COURSE_ERRORS: Record<number, string> = {
+  401: SESSION_EXPIRED,
+  403: "Teachers only.",
+  422: "Give the course a name (up to 80 characters).",
+  0: UNREACHABLE,
+};
+
+const MOVE_LESSON_ERRORS: Record<number, string> = {
+  ...LOAD_ERRORS,
+  422: "This course is not yours.",
+};
+
+export const createCourseErrorFr = (status: number): string =>
+  CREATE_COURSE_ERRORS[status] ?? unexpected(status);
+
+export const moveLessonErrorFr = (status: number): string =>
+  MOVE_LESSON_ERRORS[status] ?? unexpected(status);

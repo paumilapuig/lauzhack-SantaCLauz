@@ -28,16 +28,17 @@ const MODES: { id: SourceMode; label: string }[] = [
   { id: "file", label: "Upload a file" },
 ];
 
-function TextField({ name, label, type = "text" }: { name: string; label: string; type?: string }) {
+function TextField({ name, label, type = "text", defaultValue }: { name: string; label: string; type?: string; defaultValue?: string }) {
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor={name} className="text-[14px] font-bold text-heading">{label}</Label>
-      <Input id={name} name={name} type={type} required defaultValue={type === "date" ? todayIso() : undefined} className="h-12 rounded-[12px] bg-card px-4 text-[16px]" />
+      <Input id={name} name={name} type={type} required defaultValue={type === "date" ? todayIso() : defaultValue} className="h-12 rounded-[12px] bg-card px-4 text-[16px]" />
     </div>
   );
 }
 
-export function CreateLessonForm() {
+/** New lesson inside a course: the subject starts as the course name. */
+export function CreateLessonForm({ courseId, defaultSubject }: { courseId: string; defaultSubject: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<SourceMode>("text");
   const [file, setFile] = useState<File | null>(null);
@@ -58,6 +59,7 @@ export function CreateLessonForm() {
       title: String(data.get("title")),
       subject: String(data.get("subject")),
       lesson_date: String(data.get("lesson_date")),
+      course_id: courseId,
     };
     setSubmitError(null);
     setPending(true);
@@ -79,7 +81,7 @@ export function CreateLessonForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <TextField name="title" label="Title" />
       <div className="grid gap-5 sm:grid-cols-2">
-        <TextField name="subject" label="Subject" />
+        <TextField name="subject" label="Subject" defaultValue={defaultSubject} />
         <TextField name="lesson_date" label="Date" type="date" />
       </div>
 
