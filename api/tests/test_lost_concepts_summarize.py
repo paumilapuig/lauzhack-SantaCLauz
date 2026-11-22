@@ -63,9 +63,43 @@ def test_http_error_raises_openrouter_error():
         summarize_session(MOMENTS, LEMMAS, "m/x", "k", http=make_client([], status=500))
 
 
-def test_unreadable_reply_raises_parse_error():
+def test_unreadable_reply_is_retried_once_then_raises_parse_error():
+    seen: list = []
+
     with pytest.raises(LostConceptsParseError):
-        summarize_session(MOMENTS, LEMMAS, "m/x", "k", http=make_client([], "not json"))
+        summarize_session(MOMENTS, LEMMAS, "m/x", "k", http=make_client(seen, "not json"))
+
+    assert len(seen) == 2
+
+
+def sequence_client(seen: list, contents: list[str]) -> httpx.Client:
+    def handler(request: httpx.Request) -> httpx.Response:
+        content = contents[min(len(seen), len(contents) - 1)]
+        seen.append(request)
+        return httpx.Response(200, json={"choices": [{"message": {"content": content}}], "usage": USAGE})
+
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+@pytest.mark.parametrize("first", ["not json", json.dumps({"concepts": [{"concept": "x"}]})])
+def test_a_useless_first_reply_gets_one_retry(first):
+    seen: list = []
+
+    gaps, metrics = summarize_session(MOMENTS, LEMMAS, "m/x", "k", http=sequence_client(seen, [first, valid_content()]))
+
+    assert len(seen) == 2
+    assert len(gaps) == 1
+    assert metrics.prompt_tokens == 240
+
+
+def test_a_reply_with_no_valid_concept_twice_returns_no_gaps():
+    seen: list = []
+    empty = json.dumps({"concepts": []})
+
+    gaps, _ = summarize_session(MOMENTS, LEMMAS, "m/x", "k", http=sequence_client(seen, [empty, empty]))
+
+    assert len(seen) == 2
+    assert gaps == []
 
 
 def test_the_api_key_is_never_logged(caplog):

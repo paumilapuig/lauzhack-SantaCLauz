@@ -88,7 +88,7 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | POST | /api/lessons/{id}/preview/results | student | `{ "recognized": [lemma] }` | `{ "message": "Mañana entenderás buena parte de la clase" }` (+1 per recognised lemma) (F3) | B |
 
 `POST /api/lessons` details (owner B):
-- PDF with ≥ 200 chars of text → sent as text; otherwise the first 5 pages are rendered and sent as images (vision model). Photos are sent as images. Exactly one LLM call per lesson.
+- PDF with ≥ 200 chars of text → sent as text; otherwise the first 5 pages are rendered and sent as images (vision model). Photos are sent as images. Exactly one LLM call per lesson. A call with images always uses `OPENROUTER_VISION_MODEL` (default `google/gemini-2.5-flash-lite`), so a text-only `OPENROUTER_MODEL` never breaks photo or scanned-PDF lessons.
 - Invalid terms from the LLM are dropped; the 5–8 key phrases the LLM returns are **not stored** (no table; F3 only).
 - Errors: `401` no/invalid token · `403` not a teacher · `400` invalid Content-Length · `413` file > 10 MB · `415` unsupported file or content type · `422` missing fields / empty text / unreadable file · `502` LLM error or no valid term · `503` LLM not configured · `500` save failed.
 
@@ -164,10 +164,10 @@ Two separate learning paths: **words** (clip + marks + 3 activities + levels 0�
 **Processing — `app.lost_concepts.process_session(session_id)` (B), once per session, after class**
 - Triggered in the background by `POST /api/sessions/{id}/word-states` (end of class). Never during class.
 - Input: the session's `lost` events with a non-empty `context_transcript` (max 20, most recent; each transcript max 1500 chars, keeping its end), each with a number `n`, plus the lesson's glossary lemmas.
-- **Frugal:** no such event → no call. `concept_gaps` rows already exist for the session → no call (idempotent). Otherwise **exactly 1 LLM call** for the whole session. Calls per student: 0 in class, at most 1 per session after class.
+- **Frugal:** no such event → no call. `concept_gaps` rows already exist for the session → no call (idempotent). Otherwise **1 LLM call** for the whole session, plus **one retry only if the first reply is unreadable or has no usable concept**. Calls per student: 0 in class, 1 (at most 2) per session after class.
 - The LLM returns `{ "concepts": [{ "concept": str, "moments": [n], "lemmas": [str], "explanation": [ConceptStep], "exercises": [ConceptExercise] }] }`, max 3 concepts, French at A1–A2 level, Spanish glosses.
-- The API validates and drops invalid concepts (unknown `n`, empty `concept`, not 3–5 steps, not 2–3 exercises, not 2–4 options, `answer` out of range); keeps only glossary lemmas; **computes** `minutes` from the moments itself. Each valid concept → one `concept_gaps` row (`status = 'pending'`).
-- LLM error, no valid concept or no `OPENROUTER_API_KEY` → logged, nothing stored, no retry. The class flow is never affected.
+- The API first **repairs** each concept (`app/lost_concepts/repair.py`): unknown moment numbers are dropped (none left → the concept is linked to every moment of the session); a `visual` over 40 chars is shortened at a space; invalid steps and exercises are dropped one by one; extra steps/exercises are trimmed to 5/3. Then it drops concepts that are still invalid (empty `concept`, fewer than 2 steps — the prompt asks for 3–5 —, fewer than 2 valid exercises); keeps only glossary lemmas; **computes** `minutes` from the moments itself. Each valid concept → one `concept_gaps` row (`status = 'pending'`). Measured Sun 22 Nov (demo lesson, Gemini 2.5 Flash Lite): 8/8 sessions with ≥ 1 concept, ~2–3 s, ~$0.0005 per session.
+- LLM error, no valid concept after the retry, or no `OPENROUTER_API_KEY` → logged, nothing stored. The class flow is never affected.
 
 `ConceptStep` = `{ "fr": "La cellule reçoit du sucre et de l'oxygène.", "es": "La célula recibe azúcar y oxígeno.", "visual": "🍞 + 💨 → 🔋" }` — `fr` ≤ 200 chars, `es` ≤ 300 chars, `visual` ≤ 40 chars: a tiny emoji/arrow diagram the client animates one step at a time (no images are generated).
 `ConceptExercise` (stored) = `{ "question": "Que fabrique la mitochondrie ?", "options": ["de l'énergie", "du sucre", "de l'eau"], "answer": 0 }` — 2–4 options.
@@ -214,7 +214,7 @@ Two separate learning paths: **words** (clip + marks + 3 activities + levels 0�
 - `lucia-w4`: 2 `concept_gaps` from an earlier session (one `understood`, one `review` with `attempts = 1`), so the teacher Dashboard shows concepts before the live demo. `lucia-w1` gets hers from the real after-class call during the demo.
 
 ## Env vars (new; names only — values in the private chat)
-- `api/.env`: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (default `meta-llama/llama-3.3-70b-instruct`, open weights; only JSON-capable providers are used), `ELEVENLABS_API_KEY` (F3 only). Owner B adds them to `api/.env.example`.
+- `api/.env`: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (default `google/gemini-2.5-flash-lite`; any JSON-capable OpenRouter model works for text, e.g. `meta-llama/llama-3.3-70b-instruct` if open weights are wanted), `OPENROUTER_VISION_MODEL` (default `google/gemini-2.5-flash-lite`; used whenever a call carries images), only JSON-capable providers are used, `ELEVENLABS_API_KEY` (F3 only). Owner B adds them to `api/.env.example`.
 
 ## Generated / mirrored types
 - TS: `web/lib/database.types.ts` (generated, don't edit by hand) + `web/lib/contract.ts` (hand-written types of this file, owner C).

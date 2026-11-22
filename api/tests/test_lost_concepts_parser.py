@@ -54,27 +54,62 @@ def test_json_inside_markdown_fences_is_accepted():
 @pytest.mark.parametrize(
     "overrides",
     [
-        {"moments": [9]},
-        {"moments": []},
         {"concept": "  "},
-        {"explanation": [step(), step()]},
-        {"explanation": [step()] * 6},
+        {"explanation": [step()]},
+        {"explanation": "not a list"},
         {"exercises": [exercise()]},
-        {"exercises": [exercise()] * 4},
         {"exercises": [exercise(options=["a"]), exercise()]},
         {"exercises": [exercise(options=["a", "b", "c", "d", "e"]), exercise()]},
         {"exercises": [exercise(answer=3), exercise()]},
         {"exercises": [exercise(answer=-1), exercise()]},
-        {"explanation": [{"fr": "a", "es": "a", "visual": "x" * 41}, step(), step()]},
-        {"explanation": [{"fr": "a" * 201, "es": "a", "visual": "x"}, step(), step()]},
-        {"explanation": [{"fr": "a", "es": "a" * 301, "visual": "x"}, step(), step()]},
+        {"explanation": [{"fr": "a" * 201, "es": "a", "visual": "x"}, step(), {"fr": "a", "es": "a" * 301, "visual": "x"}]},
     ],
 )
-def test_invalid_concepts_are_dropped(overrides):
+def test_concepts_that_cannot_be_repaired_are_dropped(overrides):
     parsed = parse([concept(**overrides)])
 
     assert parsed.gaps == []
     assert parsed.dropped == 1
+
+
+@pytest.mark.parametrize("moments", [[9], [], [0, 9], "1"])
+def test_unknown_moment_numbers_link_the_concept_to_every_moment(moments):
+    gap = parse([concept(moments=moments)]).gaps[0]
+
+    assert gap.minutes == [1, 2]
+
+
+def test_unknown_moment_numbers_are_dropped_and_known_ones_kept():
+    assert parse([concept(moments=[3, 9])]).gaps[0].minutes == [2]
+
+
+def test_a_long_visual_is_shortened_instead_of_dropping_the_concept():
+    long_visual = "🍞 + 💨 → 🔋 → 🏃 → 🔥 → 💧 → 🌬️ → ⚡ → 🧠 → 💪 → 🫁 → 🩸"
+    gap = parse([concept(explanation=[{"fr": "a", "es": "a", "visual": long_visual}, step(), step()])]).gaps[0]
+
+    assert len(gap.explanation[0].visual) <= 40
+    assert gap.explanation[0].visual.startswith("🍞 + 💨 → 🔋")
+
+
+def test_two_steps_are_accepted():
+    assert len(parse([concept(explanation=[step(), step()])]).gaps[0].explanation) == 2
+
+
+def test_extra_steps_and_exercises_are_trimmed():
+    gap = parse([concept(explanation=[step()] * 6, exercises=[exercise()] * 4)]).gaps[0]
+
+    assert (len(gap.explanation), len(gap.exercises)) == (5, 3)
+
+
+def test_one_invalid_exercise_is_dropped_when_two_valid_ones_remain():
+    gap = parse([concept(exercises=[exercise(answer=7), exercise(0), exercise(1)])]).gaps[0]
+
+    assert [e.answer for e in gap.exercises] == [0, 1]
+
+
+def test_one_invalid_step_is_dropped_when_two_valid_ones_remain():
+    bad = {"fr": "a" * 201, "es": "a", "visual": "x"}
+    assert len(parse([concept(explanation=[bad, step(), step()])]).gaps[0].explanation) == 2
 
 
 def test_only_the_first_three_valid_concepts_are_kept():

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pydantic import ValidationError
 
 from app.lost_concepts.errors import LostConceptsParseError
+from app.lost_concepts.repair import repair_concept
 from app.lost_concepts.schema import MAX_CONCEPTS, ConceptGap, LlmConcept
 
 FENCE_PATTERN = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL)
@@ -49,10 +50,8 @@ def _to_gap(raw: object, t_sec_by_n: dict[int, float], glossary_lemmas: list[str
     if not isinstance(raw, dict):
         return None
     try:
-        concept = LlmConcept.model_validate(raw)
+        concept = LlmConcept.model_validate(repair_concept(raw, set(t_sec_by_n)))
     except ValidationError:
-        return None
-    if any(n not in t_sec_by_n for n in concept.moments):
         return None
     minutes = sorted({int(t_sec_by_n[n] // SECONDS_PER_MINUTE) for n in concept.moments})
     return ConceptGap(

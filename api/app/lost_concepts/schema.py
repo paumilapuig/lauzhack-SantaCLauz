@@ -5,7 +5,8 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 MAX_CONCEPTS = 3
-MIN_STEPS = 3
+MIN_STEPS = 2  # accepted; the prompt asks for PROMPT_MIN_STEPS
+PROMPT_MIN_STEPS = 3
 MAX_STEPS = 5
 MIN_EXERCISES = 2
 MAX_EXERCISES = 3

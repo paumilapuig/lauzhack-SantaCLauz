@@ -100,7 +100,7 @@ async def post_lesson(
     try:
         result, _metrics = await run_in_threadpool(
             generate_glossary,
-            meta.source_text, images, settings.resolved_model(), settings.openrouter_api_key,
+            meta.source_text, images, settings.model_for(has_images=bool(images)), settings.openrouter_api_key,
         )
     except GlossaryParseError as error:
         raise _error(status.HTTP_502_BAD_GATEWAY, "Could not parse the glossary") from error

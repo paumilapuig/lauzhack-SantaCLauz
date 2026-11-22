@@ -310,3 +310,23 @@ def test_invalid_content_length_header_is_400(header):
 
 def test_missing_content_length_header_counts_as_zero():
     assert router._declared_size(None) == 0
+
+
+def test_text_lessons_use_the_text_model(teacher_client, recorder, api_settings):
+    api_settings["value"] = _settings().model_copy(
+        update={"openrouter_model": "text/only", "openrouter_vision_model": "vision/model"}
+    )
+
+    teacher_client.post("/api/lessons", json=JSON_BODY)
+
+    assert recorder.generate_calls[0][2] == "text/only"
+
+
+def test_lessons_with_images_use_the_vision_model(teacher_client, recorder, api_settings):
+    api_settings["value"] = _settings().model_copy(
+        update={"openrouter_model": "text/only", "openrouter_vision_model": "vision/model"}
+    )
+
+    _post_file(teacher_client, "page.png", _png(), "image/png")
+
+    assert recorder.generate_calls[0][2] == "vision/model"

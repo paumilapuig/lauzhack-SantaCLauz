@@ -8,11 +8,11 @@ from app.lost_concepts.schema import (
     MAX_VISUAL_CHARS,
     MIN_EXERCISES,
     MIN_OPTIONS,
-    MIN_STEPS,
+    PROMPT_MIN_STEPS,
     LostMoment,
 )
 
-PROMPT_VERSION = "v2"
+PROMPT_VERSION = "v3"
 MAX_CONTEXTS = 20
 MAX_TRANSCRIPT_CHARS = 1500
 
@@ -31,9 +31,10 @@ Rules:
 - concept: a short French label for the teacher, e.g. "Comment la cellule fabrique de l'énergie".
 - moments: the numbers of the fragments this concept comes from.
 - lemmas: only lemmas from the glossary below that are key to this concept (may be empty).
-- explanation: {MIN_STEPS} to {MAX_STEPS} steps that build the idea little by little. fr is one short
+- explanation: {PROMPT_MIN_STEPS} to {MAX_STEPS} steps that build the idea little by little. fr is one short
   sentence in very simple French (A1-A2); es is the same sentence in simple Spanish; visual is a
   tiny diagram of emojis and arrows, at most {MAX_VISUAL_CHARS} characters, e.g. "🍞 + 💨 → 🔋".
+- moments must be numbers of the fragments listed below (1 to the last fragment number), nothing else.
 - exercises: {MIN_EXERCISES} to {MAX_EXERCISES} multiple-choice questions in simple French that check
   she understood the idea (not vocabulary). {MIN_OPTIONS} to {MAX_OPTIONS} short options each; answer
   is the 0-based index of the right option. Do not always put the right option first.
