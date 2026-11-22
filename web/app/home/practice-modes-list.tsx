@@ -18,7 +18,7 @@ type Props = {
 
 export function PracticeModesList({ modes, wordCount, onOpen }: Props) {
   return (
-    <ul className="grid gap-x-4 sm:grid-cols-2">
+    <ul className="flex flex-col gap-1">
       {modes.map((mode) => {
         const { id, name, description, icon: Icon, minWords } = mode
         const disabled = (typeof wordCount === "function" ? wordCount(mode) : wordCount) < minWords
@@ -30,12 +30,14 @@ export function PracticeModesList({ modes, wordCount, onOpen }: Props) {
               aria-disabled={disabled}
               title={disabled ? reason : undefined}
               onClick={() => !disabled && onOpen(id)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-fill ${disabled ? "opacity-40" : ""}`}
+              className={`flex w-full items-center gap-3 rounded-full px-3 py-3 text-left transition-colors hover:bg-fill ${disabled ? "opacity-40" : ""}`}
             >
-              <Icon className="size-[18px] shrink-0 text-label-secondary" strokeWidth={1.5} aria-hidden />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-card border border-border">
+                <Icon className="size-4 text-label" strokeWidth={1.75} aria-hidden />
+              </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[17px] leading-[24px] font-medium">{name}</span>
-                <span className="block text-[15px] leading-[20px] text-label-secondary">{disabled ? reason : description}</span>
+                <span className="block text-[15px] leading-5 font-bold tracking-[-0.01em]">{name}</span>
+                <span className="block text-[13px] leading-4 text-label-secondary">{disabled ? reason : description}</span>
               </span>
             </button>
           </li>

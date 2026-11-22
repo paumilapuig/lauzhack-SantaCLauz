@@ -67,17 +67,23 @@ const FAKE_REVIEW: HomeReview = {
 const levels = new Map(FAKE_REVIEW.words_to_practice.map((w) => [w.lemma, w.level]));
 
 const DICTIONARY: Record<string, string> = {
+  // content
   mitochondries: "mitocondrias", utilisent: "usan", oxygène: "oxígeno", transformer: "transformar",
   glucose: "glucosa", réaction: "reacción", libérer: "liberar", énergie: "energía", muscles: "músculos",
   produit: "produce", aussi: "también", déchets: "desechos", eau: "agua", dioxyde: "dióxido",
   carbone: "carbono", sang: "sangre", transporte: "transporta", poumons: "pulmones",
   rejetons: "expulsamos", expire: "espira", partie: "parte", dégage: "se desprende", forme: "forma",
   chaleur: "calor", chaud: "calor", court: "corre",
+  // function / glue words — every surface form in the demo clips is tappable
+  les: "los", le: "el", la: "la", l: "el", de: "de", des: "unos", du: "del", et: "y",
+  pour: "para", nos: "nuestros", nous: "nosotros", cette: "esta", ces: "estos", elle: "ella",
+  va: "va", se: "se", c: "esto", est: "es", qu: "que", on: "uno", a: "tiene", quand: "cuando",
+  jusqu: "hasta", aux: "a los", une: "una", un: "un", ça: "eso", sous: "bajo",
 };
 
-// shortcut: static dictionary for the 2 fake clips, swap for a translation endpoint
-export function translate(word: string): string | null {
-  return DICTIONARY[word.toLowerCase()] ?? null;
+/** Spanish gloss for a surface form. Always returns a string so every word is tappable. */
+export function translate(word: string): string {
+  return DICTIONARY[word.toLowerCase()] ?? "…";
 }
 
 // demo seed: words marked at home earlier, keyed by the surface form that appears in the transcripts
@@ -96,9 +102,10 @@ export async function saveMark(word: string, clipId: string): Promise<void> {
   const lemma = word.toLowerCase();
   const clip = FAKE_REVIEW.clips.find((c) => c.id === clipId);
   if (!clip || marks.some((m) => m.lemma === lemma)) return;
+  const gloss = translate(lemma);
   marks.push({
     lemma,
-    translation_es: translate(lemma) ?? "",
+    translation_es: gloss === "…" ? "" : gloss,
     definition_fr: "",
     key_phrase: sentenceWith(clip.transcript, lemma),
     level: 0,

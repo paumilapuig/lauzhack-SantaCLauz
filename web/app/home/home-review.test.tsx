@@ -5,7 +5,7 @@ import { HomeReview } from "./home-review"
 import { savePractice } from "./data"
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/home" }))
-vi.mock("next/font/google", () => ({ Inter: () => ({ variable: "" }) }))
+vi.mock("next/font/google", () => ({ Plus_Jakarta_Sans: () => ({ variable: "" }) }))
 vi.mock("./speech", () => ({ speak: vi.fn() }))
 vi.mock("./data", async (importActual) => ({
   ...(await importActual<typeof import("./data")>()),
@@ -15,11 +15,12 @@ vi.mock("./data", async (importActual) => ({
 afterEach(cleanup)
 
 describe("HomeReview", () => {
-  it("a tapped clip word appears in Tus palabras", async () => {
-    render(<HomeReview />)
+  it("tapping a clip word marks it yellow (saved, no word list UI)", async () => {
+    const { container } = render(<HomeReview />)
     const word = await screen.findByRole("button", { name: /mitochondries/i })
     fireEvent.click(word)
-    await waitFor(() => expect(screen.getAllByLabelText("Quitar mitochondries").length).toBeGreaterThan(0))
+    await waitFor(() => expect(container.querySelector('[data-state="yellow"]')).not.toBeNull())
+    expect(screen.queryByText("Tus palabras")).toBeNull()
   })
 
   it("opens a mode in a dialog over the page and Cerrar closes it without saving", async () => {

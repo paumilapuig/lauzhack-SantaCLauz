@@ -32,7 +32,7 @@ function EndScreen({ results, onExit }: { results: ExerciseResult[]; onExit: () 
   const failed = lemmasWhere(results, false);
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-[28px] font-semibold tracking-tight text-label">Hecho</h2>
+      <h2 className="text-[28px] font-bold tracking-[-0.03em] text-label">Hecho</h2>
       {passed && <p className="text-[17px] text-label">Sube de nivel: {passed}</p>}
       {failed && <p className="text-[17px] text-label-secondary">Para repasar otra vez: {failed}</p>}
       <button

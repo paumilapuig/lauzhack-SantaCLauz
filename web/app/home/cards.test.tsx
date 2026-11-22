@@ -24,8 +24,15 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-const translate = (w: string) => (w === "déchets" ? "desechos" : null)
-const props = { clip, saved: new Set<string>(), translate, onToggle: vi.fn() }
+const DICT: Record<string, string> = {
+  elle: "ella",
+  produit: "produce",
+  aussi: "también",
+  des: "unos",
+  déchets: "desechos",
+}
+const translate = (w: string) => DICT[w] ?? "…"
+const props = { clip, index: 0, saved: new Set<string>(), translate, onToggle: vi.fn() }
 
 describe("cards", () => {
   it("ClipCard pre-marks no word", () => {
@@ -37,6 +44,12 @@ describe("cards", () => {
     render(<ClipCard {...props} />)
     fireEvent.click(screen.getByRole("button", { name: /déchets/ }))
     expect(props.onToggle).toHaveBeenCalledWith("déchets", "desechos")
+  })
+
+  it("function words like elle are tappable", () => {
+    render(<ClipCard {...props} />)
+    fireEvent.click(screen.getByRole("button", { name: /^elle$/i }))
+    expect(props.onToggle).toHaveBeenCalledWith("elle", "ella")
   })
 
   it("a saved word renders yellow", () => {

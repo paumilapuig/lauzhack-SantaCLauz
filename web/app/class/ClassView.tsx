@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BigButton } from "@/components/ui/big-button";
+import { toast } from "sonner";
+import { PageTitle } from "@/components/page-title";
+import { StudentShell } from "@/components/student-shell";
 import { Button } from "@/components/ui/button";
 import { createAudioRingRecorder } from "@/lib/audioRingRecorder";
-import { getClassApi, type ClassApi, type MockClassApi, type SavedItem } from "./classApi";
+import { getClassApi, type ClassApi } from "./classApi";
 import { createClassSession, type ClassSession } from "./classSession";
-import { createClassButtons, type ButtonResult } from "./classButtons";
+import { createClassButtons } from "./classButtons";
+import { ClassActionButton } from "./ClassActionButton";
 import { LiveSubtitles } from "./LiveSubtitles";
-import { MockSavedList } from "./MockSavedList";
 import { createRecognizer, type SpeechRecognitionCtor } from "./recognizer";
-import { addResult, EMPTY_SUBTITLES, type SubtitleLines } from "./subtitleLines";
+import { announceResult } from "./savedToast";
+import { SubtitleSwitch } from "./SubtitleSwitch";
+import { addResult, EMPTY_SUBTITLES, lineText, type SubtitleLines } from "./subtitleLines";
 import { createTranscriptBuffer } from "./transcriptBuffer";
 
 const LESSON_ID = "demo-lesson";
@@ -19,10 +23,6 @@ const TRANSCRIPT_KEEP_SEC = 90;
 
 type Phase = "idle" | "running" | "error";
 type Buttons = ReturnType<typeof createClassButtons>;
-
-function isMock(api: ClassApi): api is MockClassApi {
-  return "list" in api;
-}
 
 function findRecognitionCtor(): SpeechRecognitionCtor | undefined {
   const w = window as unknown as {
@@ -35,10 +35,10 @@ function findRecognitionCtor(): SpeechRecognitionCtor | undefined {
 export function ClassView() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
+  const [starting, setStarting] = useState(false);
   const [subtitles, setSubtitles] = useState<SubtitleLines>(EMPTY_SUBTITLES);
-  const [saveFailed, setSaveFailed] = useState(false);
+  const [showSubtitles, setShowSubtitles] = useState(true);
   const [buttons, setButtons] = useState<Buttons>();
-  const [saved, setSaved] = useState<SavedItem[]>([]);
   const apiRef = useRef<ClassApi>(undefined);
   const sessionRef = useRef<ClassSession>(undefined);
 
@@ -56,7 +56,16 @@ export function ClassView() {
 
   async function start() {
     const session = sessionRef.current;
-    if (!session) return;
+    if (!session || starting) return;
+    setStarting(true);
+    try {
+      await startSession(session);
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  async function startSession(session: ClassSession) {
     const Ctor = findRecognitionCtor();
     if (!Ctor) return fail("Este navegador no admite reconocimiento de voz. Usa Chrome.");
     const api = (apiRef.current ??= getClassApi());
@@ -75,7 +84,7 @@ export function ClassView() {
           onResult({ finalText, interimText, at }) {
             if (finalText.trim()) transcript.add(finalText.trim(), at);
             transcript.prune(at);
-            setSubtitles((lines) => addResult(lines, { finalText, interimText }));
+            setSubtitles((lines) => addResult(lines, { finalText, interimText, at }));
           },
           onStatus(status, detail) {
             if (status === "error") fail(`Error de reconocimiento de voz (${detail}).`);
@@ -88,39 +97,58 @@ export function ClassView() {
 
     if (result.status === "started") {
       setButtons(result.value);
+      setSubtitles(EMPTY_SUBTITLES);
       setPhase("running");
     } else if (result.status === "stream-failed") {
-      fail("No se pudo acceder al micrófono. Permite el acceso y vuelve a intentarlo.");
+      fail("No se pudo acceder al micrófono. Permite el acceso en el navegador y vuelve a intentarlo.");
     } else if (result.status === "session-failed") {
       fail("No se pudo iniciar la clase.");
     }
   }
 
   function press(action: keyof Buttons) {
-    return async () => {
-      const result: ButtonResult | undefined = await buttons?.[action]();
-      if (result === "failed") setSaveFailed(true);
-      else if (result === "saved") setSaveFailed(false);
-      if (result === "saved" && apiRef.current && isMock(apiRef.current)) setSaved(apiRef.current.list());
-    };
+    return async () => announceResult(toast, action, await buttons?.[action]());
   }
 
+  const running = phase === "running";
+
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <h1 className="text-2xl font-bold">Clase</h1>
-      {phase !== "running" && <Button onClick={start}>Empezar clase</Button>}
-      {phase === "error" && <p role="alert">{message}</p>}
-      {phase === "running" && (
-        <>
-          <LiveSubtitles lines={subtitles} />
-          <div className="flex gap-4">
-            <BigButton variant="unclear" onPress={press("onUnclear")} />
-            <BigButton variant="lost" onPress={press("onLost")} />
+    <StudentShell hideTabbar={running}>
+      {running ? (
+        <main className="relative mx-auto flex h-[calc(100dvh-4rem)] w-full max-w-[1200px] flex-col gap-4 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pb-8">
+          <h1 className="sr-only">Clase</h1>
+          <div className="flex justify-end">
+            <SubtitleSwitch checked={showSubtitles} onChange={setShowSubtitles} />
           </div>
-          {saveFailed && <p role="alert">No se ha podido guardar</p>}
-        </>
+          <LiveSubtitles text={lineText(subtitles)} visible={showSubtitles} />
+          <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
+            <ClassActionButton action="unclear" onPress={press("onUnclear")} />
+            <ClassActionButton action="lost" onPress={press("onLost")} />
+          </div>
+        </main>
+      ) : (
+        <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 pt-8 pb-28 lg:px-8 lg:pt-10">
+          <header className="flex flex-col gap-2">
+            <PageTitle title="Clase" />
+            <p className="max-w-[36em] text-[16px] leading-6 text-label-secondary">
+              Subtítulos en directo. Puedes ocultarlos; el micrófono sigue. Pulsa si no entiendes o te pierdes.
+            </p>
+          </header>
+          <div className="flex flex-col items-start gap-4 rounded-[24px] border border-border bg-card p-6 md:p-8">
+            <p className="text-[15px] text-muted-foreground">
+              Necesitas Chrome y permiso de micrófono. Luego verás los subtítulos y los dos botones grandes.
+            </p>
+            <Button onClick={start} disabled={starting}>
+              {starting ? "Pidiendo micrófono…" : "Empezar clase"}
+            </Button>
+            {phase === "error" && (
+              <p role="alert" className="text-base font-medium text-word-orange">
+                {message}
+              </p>
+            )}
+          </div>
+        </main>
       )}
-      <MockSavedList items={saved} />
-    </main>
+    </StudentShell>
   );
 }

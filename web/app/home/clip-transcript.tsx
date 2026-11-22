@@ -11,7 +11,7 @@ const style = (active: boolean, ahead: boolean) =>
 type Props = {
   transcript: string
   saved: Set<string>
-  translate: (word: string) => string | null
+  translate: (word: string) => string
   onToggle: (word: string, translation: string) => void
   char: number | null
 }
@@ -50,19 +50,15 @@ export function ClipTranscript({ transcript, saved, translate, onToggle, char }:
           key={token.start}
           className={style(active !== null && active >= token.start && active < token.end, active !== null && token.start > active)}
         >
-          {translation ? (
-            // key changes on save/unsave so an un-saved word drops the translation it revealed
-            <Word
-              key={saved.has(word) ? "saved" : "plain"}
-              compact
-              text={text}
-              translation={translation}
-              state={saved.has(word) ? "yellow" : "green"}
-              onTap={() => onToggle(word, translation)}
-            />
-          ) : (
-            text
-          )}
+          {/* every letter-token is tappable (articles, pronouns, content words) */}
+          <Word
+            key={saved.has(word) ? "saved" : "plain"}
+            compact
+            text={text}
+            translation={translation}
+            state={saved.has(word) ? "yellow" : "green"}
+            onTap={() => onToggle(word, translation)}
+          />
         </span>,
       )
     }

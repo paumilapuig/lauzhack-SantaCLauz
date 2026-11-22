@@ -13,11 +13,11 @@ export async function UserPanel() {
   return (
     <>
       <p>
-        Signed in as <span data-testid="user-email" className="font-medium">{data.user.email}</span>
+        Sesión: <span data-testid="user-email" className="font-medium">{data.user.email}</span>
       </p>
       <ApiStatus />
       <form action="/auth/signout" method="post">
-        <Button type="submit" variant="outline">Sign out</Button>
+        <Button type="submit" variant="secondary">Salir</Button>
       </form>
     </>
   );

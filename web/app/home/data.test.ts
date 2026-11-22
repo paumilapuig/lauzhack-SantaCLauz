@@ -1,20 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { getHomeReview, getMyWords, getProgress, removeMark, savePractice, saveMark, translate } from "./data";
 
-const FUNCTION_WORDS = new Set(
-  "les le la l de des du et pour nos nous cette ces elle va se c est qu on a quand jusqu aux une un ça sous".split(" "),
-);
-
 describe("dictionary and marks", () => {
-  it("translate is case-insensitive and null for function words", () => {
+  it("translate is case-insensitive and covers function words", () => {
     expect(translate("Mitochondries")).toBe("mitocondrias");
-    expect(translate("les")).toBeNull();
+    expect(translate("Cette")).toBe("esta");
+    expect(translate("les")).toBe("los");
   });
 
-  it("every content word of both transcripts has an entry", async () => {
+  it("every word of both transcripts has a real gloss (not the … fallback)", async () => {
     const { clips } = await getHomeReview();
     const words = clips.flatMap((c) => c.transcript.split(/[^\p{L}]+/u)).map((w) => w.toLowerCase());
-    const missing = words.filter((w) => w && !FUNCTION_WORDS.has(w) && translate(w) === null);
+    const missing = words.filter((w) => w && translate(w) === "…");
     expect(missing).toEqual([]);
   });
 
