@@ -130,6 +130,7 @@ Enunciats oficials dels sponsors (diumenge al matí). Un deck i un guió per rep
   glossari del concepte si té l'entrada exacta. Chrome baixa el model la primera vegada (~30 s): comença en obrir
   la pestanya Context.
 - Sense `OPENROUTER_API_KEY` a la màquina de l'API no hi ha resums ni traduccions (no hi ha cap error visible).
+- Mode demo (`NEXT_PUBLIC_CLASS_API` ≠ `http`): les pàgines de l'alumna **i del profe** s'obren sense login amb dades de demo del navegador (cap dada real); amb l'API real, `/teacher` continua demanant un compte de profe.
 - Cal Chrome a classe (Web Speech API) i xarxa per desar clips. Traduir a Context també necessita Chrome (138+);
   en un altre navegador surt «No translation yet» i la resta funciona.
 

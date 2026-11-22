@@ -2,38 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   formatAutonomy,
   formatMinutes,
-  peakBars,
   sparklinePoints,
-  statusLabelFr,
+  statusLabel,
 } from "./dashboard-format";
-
-describe("peakBars", () => {
-  it("returns an empty list for empty input", () => {
-    expect(peakBars([])).toEqual([]);
-  });
-
-  it("sorts by minute and scales widths", () => {
-    expect(
-      peakBars([
-        { minute: 12, count: 5 },
-        { minute: 3, count: 2 },
-      ]),
-    ).toEqual([
-      { minute: 3, count: 2, widthPct: 40, isMax: false },
-      { minute: 12, count: 5, widthPct: 100, isMax: true },
-    ]);
-  });
-
-  it("returns [] for no peaks", () => {
-    expect(peakBars([])).toEqual([]);
-  });
-});
 
 describe("labels and numbers", () => {
   it("labels statuses in French", () => {
-    expect(statusLabelFr("pending")).toBe("to do");
-    expect(statusLabelFr("review")).toBe("to review");
-    expect(statusLabelFr("understood")).toBe("understood");
+    expect(statusLabel("pending")).toBe("not studied yet");
+    expect(statusLabel("review")).toBe("still confused");
+    expect(statusLabel("understood")).toBe("understood");
   });
 
   it("formats minutes", () => {
@@ -42,8 +19,8 @@ describe("labels and numbers", () => {
   });
 
   it("formats autonomy", () => {
-    expect(formatAutonomy(0.8)).toBe("80 %");
-    expect(formatAutonomy(0.534)).toBe("53 %");
+    expect(formatAutonomy(0.8)).toBe("80%");
+    expect(formatAutonomy(0.534)).toBe("53%");
     expect(formatAutonomy(null)).toBeNull();
   });
 });

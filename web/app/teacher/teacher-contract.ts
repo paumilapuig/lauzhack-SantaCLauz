@@ -60,6 +60,8 @@ export interface StudentAutonomy {
 export interface TeacherDashboard {
   lesson: { id: string; title: string };
   lost_peaks: LostPeak[];
+  /** «Je n'ai pas compris» clips per minute of the lesson, most first */
+  unclear_peaks: LostPeak[];
   concept_gaps: ConceptGapRow[];
   top_words: TopWord[];
   students: StudentAutonomy[];

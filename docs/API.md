@@ -202,6 +202,7 @@ The client draws it (no image is generated, colours and shapes come from `kind`)
 {
   "lesson": { "id": "8c1e…", "title": "La respiration cellulaire" },
   "lost_peaks": [ { "minute": 12, "count": 5 }, { "minute": 3, "count": 2 } ],
+  "unclear_peaks": [ { "minute": 12, "count": 3 }, { "minute": 4, "count": 1 } ],
   "concept_gaps": [
     { "student": "Lucía (semaine 1)", "concept": "Comment la cellule fabrique de l'énergie", "minutes": [12], "lemmas": ["mitochondrie"], "status": "review", "attempts": 1 }
   ],
@@ -214,7 +215,7 @@ The client draws it (no image is generated, colours and shapes come from `kind`)
   ]
 }
 ```
-`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[]`: every student with a session of the lesson, sorted by name; `autonomy` = latest session that has `word_states_log` rows (`null` if none yet), `weekly` from those sessions. Only the lesson's teacher (`403 Not your lesson`); unknown lesson `404`. `concept_gaps`: the `concept_gaps` rows of all sessions of the lesson, sorted by first minute; `student` = `profiles.display_name`. The dashboard never calls the LLM.
+`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `unclear_peaks`: «Je n'ai pas compris» `clips` of all sessions of the lesson, bucketed by `floor(t_start / 60)` (the moment she heard), sorted by count desc — the teacher timeline shows them next to `lost_peaks`. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[]`: every student with a session of the lesson, sorted by name; `autonomy` = latest session that has `word_states_log` rows (`null` if none yet), `weekly` from those sessions. Only the lesson's teacher (`403 Not your lesson`); unknown lesson `404`. `concept_gaps`: the `concept_gaps` rows of all sessions of the lesson, sorted by first minute; `student` = `profiles.display_name`. The dashboard never calls the LLM.
 
 ## Demo seed (owner A, `supabase/seed.sql` or a script; nothing secret in git)
 - Users: `prof-demo` (teacher), `lucia-w1`, `lucia-w4` (students). Emails `<name>@demo.lauzhack`, password in the private chat.

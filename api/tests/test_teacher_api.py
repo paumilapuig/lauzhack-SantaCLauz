@@ -54,6 +54,7 @@ def test_dashboard_aggregates_the_lesson(db, monkeypatch):
     assert response.json() == {
         "lesson": {"id": L1, "title": "La chaleur"},
         "lost_peaks": [{"minute": 12, "count": 1}],
+        "unclear_peaks": [{"minute": 0, "count": 1}],
         "concept_gaps": [{"student": "Lucía (semaine 4)", "concept": "La chaleur", "minutes": [12],
                           "lemmas": ["chaleur"], "status": "review", "attempts": 1}],
         "top_words": [{"lemma": "chaleur", "taps": 1}],
@@ -64,7 +65,7 @@ def test_dashboard_aggregates_the_lesson(db, monkeypatch):
 
 def test_lesson_without_sessions_is_empty(db, monkeypatch):
     body = get(client_as(db, monkeypatch), EMPTY_LESSON).json()
-    assert (body["lost_peaks"], body["top_words"], body["students"]) == ([], [], [])
+    assert (body["lost_peaks"], body["unclear_peaks"], body["top_words"], body["students"]) == ([], [], [], [])
     assert [g["concept"] for g in body["concept_gaps"]] == ["Autre leçon"]
 
 

@@ -1,37 +1,16 @@
 import type {
   ConceptGapStatus,
-  LostPeak,
   WeeklyAutonomy,
 } from "../../teacher-contract";
 
-export interface PeakBar {
-  minute: number;
-  count: number;
-  widthPct: number;
-  isMax: boolean;
-}
-
-const STATUS_LABELS_FR: Record<ConceptGapStatus, string> = {
-  pending: "to do",
-  review: "to review",
+const STATUS_LABELS: Record<ConceptGapStatus, string> = {
+  pending: "not studied yet",
+  review: "still confused",
   understood: "understood",
 };
 
-export function peakBars(peaks: LostPeak[]): PeakBar[] {
-  if (peaks.length === 0) return [];
-  const max = Math.max(...peaks.map((peak) => peak.count));
-  return [...peaks]
-    .sort((a, b) => a.minute - b.minute)
-    .map(({ minute, count }) => ({
-      minute,
-      count,
-      widthPct: (count / max) * 100,
-      isMax: count === max,
-    }));
-}
-
-export function statusLabelFr(status: ConceptGapStatus): string {
-  return STATUS_LABELS_FR[status];
+export function statusLabel(status: ConceptGapStatus): string {
+  return STATUS_LABELS[status];
 }
 
 export function formatMinutes(minutes: number[]): string {
@@ -39,7 +18,7 @@ export function formatMinutes(minutes: number[]): string {
 }
 
 export function formatAutonomy(autonomy: number | null): string | null {
-  return autonomy === null ? null : `${Math.round(autonomy * 100)} %`;
+  return autonomy === null ? null : `${Math.round(autonomy * 100)}%`;
 }
 
 export function sparklinePoints(

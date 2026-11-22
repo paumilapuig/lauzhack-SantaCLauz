@@ -11,6 +11,7 @@ const student = (name: string, values: number[]): StudentAutonomy => ({
 const base: TeacherDashboard = {
   lesson: { id: "l1", title: "Cellule" },
   lost_peaks: [],
+  unclear_peaks: [],
   concept_gaps: [],
   top_words: [],
   students: [],
@@ -28,7 +29,7 @@ describe("insights", () => {
       top_words: [{ lemma: "mitochondrie", taps: 4 }],
     };
     expect(insights(data)).toEqual([
-      "Lucía: autonomy 50 % → 80 % over 2 weeks.",
+      "Lucía: autonomy 50% → 80% over 2 weeks.",
       'Minute 12: 5 "I lost the thread" reports.',
       '"mitochondrie" was marked 4 times.',
     ]);
