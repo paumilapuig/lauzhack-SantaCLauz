@@ -7,7 +7,7 @@ import { PageTitle } from "@/components/page-title";
 import { StudentShell } from "@/components/student-shell";
 import { Button } from "@/components/ui/button";
 import { createAudioRingRecorder } from "@/lib/audioRingRecorder";
-import { getClassApi, type ClassApi } from "./classApi";
+import { classApiMode, getClassApi, type ClassApi } from "./classApi";
 import { createClassSession, type ClassSession } from "./classSession";
 import { createClassButtons } from "./classButtons";
 import { chooseLessonId } from "./lessonChoice";
@@ -21,6 +21,15 @@ import { addResult, EMPTY_SUBTITLES, lineText, type SubtitleLines } from "./subt
 import { createTranscriptBuffer } from "./transcriptBuffer";
 
 const LOST_WINDOW_SEC = 60;
+const DEMO_MODE = classApiMode() === "mock";
+
+function DemoModeBadge() {
+  return (
+    <p className="rounded-full bg-sunbeam px-3 py-1 text-sm font-medium text-charcoal">
+      Mode démo · rien n&apos;est enregistré
+    </p>
+  );
+}
 const TRANSCRIPT_KEEP_SEC = 90;
 
 type Phase = "idle" | "running" | "error";
@@ -139,9 +148,12 @@ export function ClassView() {
         <main className="relative mx-auto flex h-[calc(100dvh-4rem)] w-full max-w-[1200px] flex-col gap-4 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pb-8">
           <h1 className="sr-only">Clase</h1>
           <div className="flex items-center justify-between gap-4">
-            <Button variant="outline" size="sm" onClick={end}>
-              Terminer le cours
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={end}>
+                Terminer le cours
+              </Button>
+              {DEMO_MODE && <DemoModeBadge />}
+            </div>
             <SubtitleSwitch checked={showSubtitles} onChange={setShowSubtitles} />
           </div>
           <LiveSubtitles text={lineText(subtitles)} visible={showSubtitles} />
@@ -162,6 +174,7 @@ export function ClassView() {
             <p className="text-[15px] text-muted-foreground">
               Necesitas Chrome y permiso de micrófono. Luego verás los subtítulos y los dos botones grandes.
             </p>
+            {DEMO_MODE && <DemoModeBadge />}
             <Button onClick={start} disabled={starting}>
               {starting ? "Pidiendo micrófono…" : "Empezar clase"}
             </Button>

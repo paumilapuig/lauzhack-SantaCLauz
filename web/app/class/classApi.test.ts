@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createHttpClassApi, createMockClassApi } from "./classApi";
+import { classApiMode, createHttpClassApi, createMockClassApi } from "./classApi";
 
 const blob = new Blob(["x"], { type: "audio/webm" });
 const clip = { sessionId: "s1", blob, tStart: 3, tEnd: 13, transcript: "bonjour" };
@@ -102,5 +102,13 @@ describe("createMockClassApi", () => {
       { kind: "clip", audioUrl: "blob:fake", tStart: 3, tEnd: 13, transcript: "bonjour" },
       { kind: "lost", tStart: 40, tEnd: 100, transcript: "salut" },
     ]);
+  });
+});
+
+describe("classApiMode", () => {
+  it("is http only when NEXT_PUBLIC_CLASS_API is http", () => {
+    expect(classApiMode("http")).toBe("http");
+    expect(classApiMode(undefined)).toBe("mock");
+    expect(classApiMode("mock")).toBe("mock");
   });
 });

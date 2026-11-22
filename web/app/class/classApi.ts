@@ -127,8 +127,12 @@ async function getAccessToken(): Promise<string | null> {
   return data.session?.access_token ?? null;
 }
 
+export function classApiMode(setting = process.env.NEXT_PUBLIC_CLASS_API): "http" | "mock" {
+  return setting === "http" ? "http" : "mock";
+}
+
 export function getClassApi(): ClassApi {
-  if (process.env.NEXT_PUBLIC_CLASS_API === "http") {
+  if (classApiMode() === "http") {
     return createHttpClassApi(
       process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
       getAccessToken,

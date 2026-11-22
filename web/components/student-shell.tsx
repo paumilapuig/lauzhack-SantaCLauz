@@ -1,3 +1,4 @@
+import Link from "next/link"
 import type { ReactNode } from "react"
 import { StudentNav } from "./student-nav"
 
@@ -16,10 +17,13 @@ export function StudentShell({
     <div className="student min-h-dvh w-full bg-background text-label antialiased">
       <header className="sticky top-0 z-20 border-b border-separator bg-card/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-5 lg:px-8">
-          <p className="flex items-center gap-2 text-[17px] font-bold tracking-[-0.02em]">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 rounded-full text-[17px] font-bold tracking-[-0.02em] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
             <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-brand-orange" />
             Loop&apos;d
-          </p>
+          </Link>
           <StudentNav variant="topbar" />
         </div>
       </header>

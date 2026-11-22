@@ -9,6 +9,11 @@ function isProtected(pathname: string): boolean {
 }
 
 export async function updateSession(request: NextRequest) {
+  if (request.nextUrl.pathname === "/") {
+    const dashboardUrl = request.nextUrl.clone();
+    dashboardUrl.pathname = "/dashboard";
+    return NextResponse.redirect(dashboardUrl);
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {

@@ -34,4 +34,12 @@ describe("createTranscriptBuffer", () => {
     buffer.prune(100);
     expect(buffer.textBetween(0, 200)).toBe("edge new");
   });
+  it("replaces the last entry when Chrome sends a revised version of the same sentence", () => {
+    const buffer = createTranscriptBuffer({ keepSec: 90 });
+    buffer.add("aujourd hui je suis très Jol", 10);
+    buffer.add("aujourd hui je suis très jolie de la", 12);
+    buffer.add("cette réaction libère", 15);
+    expect(buffer.textBetween(0, 20)).toBe("aujourd hui je suis très jolie de la cette réaction libère");
+    expect(buffer.textBetween(0, 11)).toBe("aujourd hui je suis très jolie de la");
+  });
 });
