@@ -9,6 +9,11 @@ let api: HomeApi
 vi.mock("next/navigation", () => ({ usePathname: () => "/home" }))
 vi.mock("./speech", () => ({ speak: vi.fn() }))
 vi.mock("./getHomeApi", () => ({ getHomeApi: () => api }))
+const translateFrToEs = vi.fn<(text: string) => Promise<string | null>>(async () => null)
+vi.mock("./translate/browser-translator", () => ({
+  translateFrToEs: (text: string) => translateFrToEs(text),
+  prepareTranslator: vi.fn(),
+}))
 
 beforeEach(() => {
   api = createFakeHomeApi()
@@ -24,6 +29,15 @@ describe("HomeReview", () => {
     fireEvent.click((await screen.findAllByRole("button", { name: /mitochondries/i }))[0])
     await waitFor(() => expect(container.querySelector('[data-state="yellow"]')).not.toBeNull())
     expect(mark).toHaveBeenCalledWith(expect.any(String), "mitochondries")
+  })
+
+  it("a marked word shows its Spanish right away: the glossary's, else the browser's", async () => {
+    vi.spyOn(api, "mark").mockResolvedValue({ word: "mitochondries", lemma: null, translation_es: null, level: null })
+    translateFrToEs.mockResolvedValueOnce("mitocondrias")
+    render(<HomeReview />)
+    fireEvent.click((await screen.findAllByRole("button", { name: /mitochondries/i }))[0])
+    expect(await screen.findByText("mitocondrias")).toBeTruthy()
+    expect(translateFrToEs).toHaveBeenCalledWith("mitochondries")
   })
 
   it("Done removes a clip; with no clip left the practice modes fill the page as big blocks", async () => {

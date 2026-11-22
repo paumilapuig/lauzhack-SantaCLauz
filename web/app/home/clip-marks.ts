@@ -20,3 +20,10 @@ export function withoutMark(marks: ClipMarks, clipId: string, word: string): Cli
   delete rest[word.toLowerCase()];
   return { ...marks, [clipId]: rest };
 }
+
+/** Put the translation on a word that is still marked (she may have unmarked it while it was being translated). */
+export function withTranslation(marks: ClipMarks, clipId: string, word: string, translation: string): ClipMarks {
+  const key = word.toLowerCase();
+  if (marks[clipId]?.[key] === undefined) return marks;
+  return withMark(marks, clipId, key, translation);
+}
