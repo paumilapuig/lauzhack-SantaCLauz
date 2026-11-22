@@ -3,112 +3,95 @@ import json
 import pytest
 
 from app.lost_concepts.errors import LostConceptsParseError
-from app.lost_concepts.parser import parse_lost_concepts
+from app.lost_concepts.parser import parse_concept_gaps
 
-EVENT_IDS = {"e1", "e2", "e3"}
-GLOSSARY_LEMMAS = ["cellule", "énergie", "respiration"]
+T_SEC_BY_N = {1: 65.0, 2: 130.0, 3: 140.0}
+LEMMAS = ["mitochondrie", "oxygène"]
 
 
-def make_item(**overrides) -> dict:
-    item = {
-        "event_id": "e1",
-        "concept_fr": "Les cellules ont besoin d'énergie.",
-        "explanation_es": "La profesora explicaba que las células necesitan energía.",
-        "lemmas": ["cellule"],
+def step(text: str = "La cellule respire.") -> dict:
+    return {"fr": text, "es": "La célula respira.", "visual": "🍞 + 💨 → 🔋"}
+
+
+def exercise(answer: int = 0, options: list[str] | None = None) -> dict:
+    return {"question": "Que fabrique la mitochondrie ?", "options": options or ["énergie", "sucre", "eau"], "answer": answer}
+
+
+def concept(**overrides) -> dict:
+    base = {
+        "concept": "Comment la cellule fabrique de l'énergie",
+        "moments": [2, 1, 2],
+        "lemmas": ["Mitochondrie", "oxygène", "soleil", "mitochondrie"],
+        "explanation": [step(), step("Elle utilise l'oxygène."), step("Elle produit de l'énergie.")],
+        "exercises": [exercise(0), exercise(2)],
     }
-    return {**item, **overrides}
+    base.update(overrides)
+    return base
 
 
-def make_reply(items: list) -> str:
-    return json.dumps({"concepts": items})
+def parse(concepts: list[dict]):
+    return parse_concept_gaps(json.dumps({"concepts": concepts}), T_SEC_BY_N, LEMMAS)
 
 
-def parse(content: str):
-    return parse_lost_concepts(content, EVENT_IDS, GLOSSARY_LEMMAS)
+def test_valid_concept_becomes_a_gap_with_computed_minutes_and_glossary_lemmas():
+    parsed = parse([concept()])
 
-
-def test_valid_reply_is_parsed_with_zero_dropped():
-    parsed = parse(make_reply([make_item(), make_item(event_id="e2")]))
-
-    assert [c.event_id for c in parsed.concepts] == ["e1", "e2"]
-    assert parsed.concepts[0].concept_fr == "Les cellules ont besoin d'énergie."
-    assert parsed.concepts[0].lemmas == ["cellule"]
     assert parsed.dropped == 0
+    gap = parsed.gaps[0]
+    assert gap.concept == "Comment la cellule fabrique de l'énergie"
+    assert gap.minutes == [1, 2]
+    assert gap.lemmas == ["mitochondrie", "oxygène"]
+    assert len(gap.explanation) == 3 and gap.explanation[0].visual == "🍞 + 💨 → 🔋"
+    assert [e.answer for e in gap.exercises] == [0, 2]
 
 
-def test_fenced_json_is_accepted():
-    parsed = parse("```json" + chr(10) + make_reply([make_item()]) + chr(10) + "```")
+def test_json_inside_markdown_fences_is_accepted():
+    content = "```json\n" + json.dumps({"concepts": [concept()]}) + "\n```"
 
-    assert len(parsed.concepts) == 1
-
-
-def test_unknown_event_id_is_dropped_and_counted():
-    parsed = parse(make_reply([make_item(), make_item(event_id="zzz")]))
-
-    assert [c.event_id for c in parsed.concepts] == ["e1"]
-    assert parsed.dropped == 1
-
-
-def test_empty_concept_fr_is_dropped_and_counted():
-    parsed = parse(make_reply([make_item(concept_fr="  "), make_item(event_id="e2")]))
-
-    assert [c.event_id for c in parsed.concepts] == ["e2"]
-    assert parsed.dropped == 1
-
-
-def test_repeated_event_id_keeps_first_and_counts_the_rest_dropped():
-    first = make_item(concept_fr="Première.")
-    second = make_item(concept_fr="Seconde.")
-
-    parsed = parse(make_reply([first, second]))
-
-    assert [c.concept_fr for c in parsed.concepts] == ["Première."]
-    assert parsed.dropped == 1
-
-
-def test_non_dict_items_are_dropped_and_counted():
-    parsed = parse(make_reply([make_item(), "not a dict", 3]))
-
-    assert len(parsed.concepts) == 1
-    assert parsed.dropped == 2
-
-
-def test_lemmas_outside_glossary_are_filtered():
-    parsed = parse(make_reply([make_item(lemmas=["cellule", "inconnu", "respiration"])]))
-
-    assert parsed.concepts[0].lemmas == ["cellule", "respiration"]
-
-
-def test_lemmas_match_case_insensitively_and_return_canonical_spelling():
-    parsed = parse(make_reply([make_item(lemmas=["  ÉNERGIE ", "Cellule"])]))
-
-    assert parsed.concepts[0].lemmas == ["énergie", "cellule"]
-
-
-def test_repeated_lemmas_are_deduped_keeping_order():
-    parsed = parse(make_reply([make_item(lemmas=["respiration", "cellule", "Respiration", "cellule"])]))
-
-    assert parsed.concepts[0].lemmas == ["respiration", "cellule"]
-
-
-def test_missing_lemmas_become_empty_list():
-    item = make_item()
-    del item["lemmas"]
-
-    assert parse(make_reply([item])).concepts[0].lemmas == []
-
-
-def test_empty_concepts_list_is_valid():
-    parsed = parse(make_reply([]))
-
-    assert parsed.concepts == []
-    assert parsed.dropped == 0
+    assert len(parse_concept_gaps(content, T_SEC_BY_N, LEMMAS).gaps) == 1
 
 
 @pytest.mark.parametrize(
-    "content",
-    ["not json", "[]", '"text"', '{"other": []}', '{"concepts": "x"}'],
+    "overrides",
+    [
+        {"moments": [9]},
+        {"moments": []},
+        {"concept": "  "},
+        {"explanation": [step(), step()]},
+        {"explanation": [step()] * 6},
+        {"exercises": [exercise()]},
+        {"exercises": [exercise()] * 4},
+        {"exercises": [exercise(options=["a"]), exercise()]},
+        {"exercises": [exercise(options=["a", "b", "c", "d", "e"]), exercise()]},
+        {"exercises": [exercise(answer=3), exercise()]},
+        {"exercises": [exercise(answer=-1), exercise()]},
+        {"explanation": [{"fr": "a", "es": "a", "visual": "x" * 41}, step(), step()]},
+        {"explanation": [{"fr": "a" * 201, "es": "a", "visual": "x"}, step(), step()]},
+        {"explanation": [{"fr": "a", "es": "a" * 301, "visual": "x"}, step(), step()]},
+    ],
 )
-def test_fatal_replies_raise_parse_error(content):
+def test_invalid_concepts_are_dropped(overrides):
+    parsed = parse([concept(**overrides)])
+
+    assert parsed.gaps == []
+    assert parsed.dropped == 1
+
+
+def test_only_the_first_three_valid_concepts_are_kept():
+    parsed = parse([concept(concept=f"Concept {i}") for i in range(5)])
+
+    assert [g.concept for g in parsed.gaps] == ["Concept 0", "Concept 1", "Concept 2"]
+    assert parsed.dropped == 2
+
+
+def test_non_dict_items_are_dropped():
+    parsed = parse(["oops", concept()])
+
+    assert len(parsed.gaps) == 1
+    assert parsed.dropped == 1
+
+
+@pytest.mark.parametrize("content", ["not json", "[]", '{"other": []}', '{"concepts": {}}'])
+def test_unreadable_reply_raises(content):
     with pytest.raises(LostConceptsParseError):
-        parse(content)
+        parse_concept_gaps(content, T_SEC_BY_N, LEMMAS)

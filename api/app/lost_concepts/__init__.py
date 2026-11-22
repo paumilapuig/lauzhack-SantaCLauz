@@ -1,7 +1,16 @@
-"""Turn "Me he perdido" transcript fragments into short concept summaries."""
+"""Concept path: turn a session's "Me he perdido" moments into concept gaps (docs/API.md › Concept gaps)."""
 
 from app.lost_concepts.errors import LostConceptsParseError
-from app.lost_concepts.schema import LostConcept, LostContext
-from app.lost_concepts.summarize import summarize_lost_contexts
+from app.lost_concepts.schema import ConceptExercise, ConceptGap, ConceptStep, LostMoment
+from app.lost_concepts.service import process_session
+from app.lost_concepts.summarize import summarize_session
 
-__all__ = ["summarize_lost_contexts", "LostContext", "LostConcept", "LostConceptsParseError"]
+__all__ = [
+    "process_session",
+    "summarize_session",
+    "ConceptGap",
+    "ConceptStep",
+    "ConceptExercise",
+    "LostMoment",
+    "LostConceptsParseError",
+]

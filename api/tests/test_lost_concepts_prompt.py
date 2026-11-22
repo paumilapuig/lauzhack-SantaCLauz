@@ -1,77 +1,60 @@
-from app.glossary.schema import GlossaryTerm
 from app.lost_concepts.prompt import (
     MAX_CONTEXTS,
     MAX_TRANSCRIPT_CHARS,
+    SYSTEM_PROMPT,
     build_messages,
-    select_contexts,
+    select_moments,
 )
-from app.lost_concepts.schema import LostContext
+from app.lost_concepts.schema import LostMoment
 
-GLOSSARY = [
-    GlossaryTerm(
-        lemma="respirer",
-        forms=["respire"],
-        translation_es="respirar",
-        definition_fr="Prendre de l'air.",
-        transparent=True,
-        key_phrase="Nous respirons.",
-    ),
-    GlossaryTerm(
-        lemma="poumon",
-        forms=["poumons"],
-        translation_es="pulmón",
-        definition_fr="Organe de la respiration.",
-        transparent=False,
-        key_phrase="Les poumons se remplissent.",
-    ),
-]
+LEMMAS = ["mitochondrie", "dioxyde de carbone"]
 
 
-def _contexts(count: int) -> list[LostContext]:
-    return [
-        LostContext(event_id=f"evt-{i}", t_sec=i, transcript=f"texte {i}") for i in range(count)
-    ]
+def moment(n: int, t_sec: float, transcript: str) -> LostMoment:
+    return LostMoment(n=n, t_sec=t_sec, transcript=transcript)
 
 
-def _user_text(messages: list[dict]) -> str:
+def user_text(messages: list[dict]) -> str:
     return messages[1]["content"]
 
 
-def test_messages_contain_event_ids_transcripts_and_glossary():
-    messages = build_messages(_contexts(3), GLOSSARY)
+def test_messages_contain_every_moment_number_transcript_and_lemma():
+    moments = [moment(1, 60, "Les mitochondries."), moment(2, 120, "Le dioxyde de carbone sort.")]
 
-    assert [m["role"] for m in messages] == ["system", "user"]
-    user = _user_text(messages)
-    for i in range(3):
-        assert f"evt-{i}" in user
-        assert f"texte {i}" in user
-    assert "respirer — respirar" in user
-    assert "poumon — pulmón" in user
+    messages = build_messages(moments, LEMMAS)
 
-
-def test_only_the_most_recent_contexts_are_kept():
-    messages = build_messages(_contexts(25), GLOSSARY)
-
-    user = _user_text(messages)
-    present = [i for i in range(25) if f"[evt-{i}]" in user]
-    assert present == list(range(5, 25))
-    assert len(present) == MAX_CONTEXTS
+    assert messages[0] == {"role": "system", "content": SYSTEM_PROMPT}
+    text = user_text(messages)
+    for expected in ("[1]", "Les mitochondries.", "[2]", "Le dioxyde de carbone sort.", *LEMMAS):
+        assert expected in text
 
 
-def test_select_contexts_returns_ascending_by_time():
-    shuffled = list(reversed(_contexts(25)))
-
-    selected = select_contexts(shuffled)
-
-    assert [c.t_sec for c in selected] == list(range(5, 25))
+def test_system_prompt_asks_for_the_concept_gap_shape():
+    for expected in ('"concepts"', '"moments"', '"explanation"', '"visual"', '"exercises"', '"answer"'):
+        assert expected in SYSTEM_PROMPT
 
 
-def test_long_transcript_keeps_only_its_end():
-    long_text = "START" + "x" * 2990 + "END!!"
-    context = LostContext(event_id="evt-long", t_sec=1, transcript=long_text)
+def test_select_keeps_the_most_recent_moments_and_renumbers_them():
+    moments = [moment(i + 1, float(i), f"fragment-{i}") for i in range(25)]
 
-    [selected] = select_contexts([context])
+    selected = select_moments(moments)
 
-    assert len(selected.transcript) == MAX_TRANSCRIPT_CHARS
-    assert selected.transcript.endswith("END!!")
-    assert "START" not in selected.transcript
+    assert len(selected) == MAX_CONTEXTS == 20
+    assert [m.n for m in selected] == list(range(1, 21))
+    assert [m.t_sec for m in selected] == [float(i) for i in range(5, 25)]
+
+
+def test_select_sorts_by_time_whatever_the_input_order():
+    selected = select_moments([moment(1, 200, "b"), moment(2, 100, "a")])
+
+    assert [(m.n, m.t_sec, m.transcript) for m in selected] == [(1, 100, "a"), (2, 200, "b")]
+
+
+def test_select_keeps_the_end_of_a_long_transcript():
+    transcript = "START" + "x" * 3000 + "END"
+
+    selected = select_moments([moment(1, 10, transcript)])
+
+    assert len(selected[0].transcript) == MAX_TRANSCRIPT_CHARS
+    assert selected[0].transcript.endswith("END")
+    assert "START" not in selected[0].transcript
