@@ -7,8 +7,10 @@ import { createAudioRingRecorder } from "@/lib/audioRingRecorder";
 import { getClassApi, type ClassApi, type MockClassApi, type SavedItem } from "./classApi";
 import { createClassSession, type ClassSession } from "./classSession";
 import { createClassButtons, type ButtonResult } from "./classButtons";
+import { LiveSubtitles } from "./LiveSubtitles";
 import { MockSavedList } from "./MockSavedList";
 import { createRecognizer, type SpeechRecognitionCtor } from "./recognizer";
+import { addResult, EMPTY_SUBTITLES, type SubtitleLines } from "./subtitleLines";
 import { createTranscriptBuffer } from "./transcriptBuffer";
 
 const LESSON_ID = "demo-lesson";
@@ -33,7 +35,7 @@ function findRecognitionCtor(): SpeechRecognitionCtor | undefined {
 export function ClassView() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
-  const [liveLine, setLiveLine] = useState("");
+  const [subtitles, setSubtitles] = useState<SubtitleLines>(EMPTY_SUBTITLES);
   const [saveFailed, setSaveFailed] = useState(false);
   const [buttons, setButtons] = useState<Buttons>();
   const [saved, setSaved] = useState<SavedItem[]>([]);
@@ -73,7 +75,7 @@ export function ClassView() {
           onResult({ finalText, interimText, at }) {
             if (finalText.trim()) transcript.add(finalText.trim(), at);
             transcript.prune(at);
-            setLiveLine(finalText || interimText);
+            setSubtitles((lines) => addResult(lines, { finalText, interimText }));
           },
           onStatus(status, detail) {
             if (status === "error") fail(`Error de reconocimiento de voz (${detail}).`);
@@ -110,9 +112,7 @@ export function ClassView() {
       {phase === "error" && <p role="alert">{message}</p>}
       {phase === "running" && (
         <>
-          <p aria-live="polite" className="min-h-8 text-lg">
-            {liveLine}
-          </p>
+          <LiveSubtitles lines={subtitles} />
           <div className="flex gap-4">
             <BigButton variant="unclear" onPress={press("onUnclear")} />
             <BigButton variant="lost" onPress={press("onLost")} />
