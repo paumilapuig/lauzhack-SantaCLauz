@@ -22,3 +22,26 @@ export type LostEventRequest = {
 };
 
 export type StartSessionResponse = { session_id: string };
+export type WordState = "green" | "yellow" | "orange";
+
+export type LessonSummary = { id: string; title: string; subject: string | null; lesson_date: string | null };
+
+export type ClassPackTerm = {
+  id: string;
+  lesson_id: string;
+  lemma: string;
+  forms: string[];
+  translation_es: string | null;
+  definition_fr: string | null;
+  transparent: boolean;
+  key_phrase: string | null;
+};
+
+export type ClassPack = {
+  lesson: LessonSummary;
+  terms: ClassPackTerm[];
+  mastery: Record<string, number>;
+  previously_tapped: string[];
+};
+
+export type WordStatesRequest = { states: { lemma: string; state: WordState }[] };

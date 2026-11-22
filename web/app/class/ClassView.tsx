@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageTitle } from "@/components/page-title";
@@ -9,15 +10,16 @@ import { createAudioRingRecorder } from "@/lib/audioRingRecorder";
 import { getClassApi, type ClassApi } from "./classApi";
 import { createClassSession, type ClassSession } from "./classSession";
 import { createClassButtons } from "./classButtons";
+import { chooseLessonId } from "./lessonChoice";
 import { ClassActionButton } from "./ClassActionButton";
 import { LiveSubtitles } from "./LiveSubtitles";
 import { createRecognizer, type SpeechRecognitionCtor } from "./recognizer";
 import { announceResult } from "./savedToast";
+import { createSeenWords, type SeenWords } from "./seenWords";
 import { SubtitleSwitch } from "./SubtitleSwitch";
 import { addResult, EMPTY_SUBTITLES, lineText, type SubtitleLines } from "./subtitleLines";
 import { createTranscriptBuffer } from "./transcriptBuffer";
 
-const LESSON_ID = "demo-lesson";
 const LOST_WINDOW_SEC = 60;
 const TRANSCRIPT_KEEP_SEC = 90;
 
@@ -35,6 +37,7 @@ function findRecognitionCtor(): SpeechRecognitionCtor | undefined {
 export function ClassView() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
   const [starting, setStarting] = useState(false);
   const [subtitles, setSubtitles] = useState<SubtitleLines>(EMPTY_SUBTITLES);
   const [showSubtitles, setShowSubtitles] = useState(true);
@@ -48,9 +51,10 @@ export function ClassView() {
     return () => session.dispose();
   }, []);
 
-  function fail(text: string) {
+  function fail(text: string, loginRequired = false) {
     sessionRef.current?.stop();
     setMessage(text);
+    setNeedsLogin(loginRequired);
     setPhase("error");
   }
 
@@ -69,20 +73,30 @@ export function ClassView() {
     const Ctor = findRecognitionCtor();
     if (!Ctor) return fail("Este navegador no admite reconocimiento de voz. Usa Chrome.");
     const api = (apiRef.current ??= getClassApi());
+    if (!(await api.isSignedIn())) return fail("Inicia sesión como alumna para empezar la clase.", true);
+    let words: SeenWords | undefined;
     const t0 = performance.now();
     const nowSec = () => (performance.now() - t0) / 1000;
 
     const result = await session.start({
       openStream: () => navigator.mediaDevices.getUserMedia({ audio: true }),
-      openSession: () => api.startSession(LESSON_ID),
+      async openSession() {
+        const lessonId = await chooseLessonId(window.location.search, () => api.latestLessonId());
+        words = createSeenWords(await api.classPack(lessonId));
+        return api.startSession(lessonId);
+      },
       assemble(stream, sessionId) {
+        const seen = words!;
         const transcript = createTranscriptBuffer({ keepSec: TRANSCRIPT_KEEP_SEC });
         const recorder = createAudioRingRecorder({ stream, now: nowSec });
         const recognizer = createRecognizer({
           Ctor,
           now: nowSec,
           onResult({ finalText, interimText, at }) {
-            if (finalText.trim()) transcript.add(finalText.trim(), at);
+            if (finalText.trim()) {
+              transcript.add(finalText.trim(), at);
+              seen.add(finalText);
+            }
             transcript.prune(at);
             setSubtitles((lines) => addResult(lines, { finalText, interimText, at }));
           },
@@ -90,7 +104,7 @@ export function ClassView() {
             if (status === "error") fail(`Error de reconocimiento de voz (${detail}).`);
           },
         });
-        const value = createClassButtons({ api, recorder, transcript, sessionId, nowSec, lostWindowSec: LOST_WINDOW_SEC });
+        const value = createClassButtons({ api, recorder, transcript, seen, sessionId, nowSec, lostWindowSec: LOST_WINDOW_SEC });
         return { recorder, recognizer, value };
       },
     });
@@ -106,8 +120,15 @@ export function ClassView() {
     }
   }
 
-  function press(action: keyof Buttons) {
+  function press(action: "onUnclear" | "onLost") {
     return async () => announceResult(toast, action, await buttons?.[action]());
+  }
+
+  async function end() {
+    if (!buttons) return;
+    sessionRef.current?.stop();
+    setPhase("idle");
+    announceResult(toast, "onEnd", await buttons.onEnd());
   }
 
   const running = phase === "running";
@@ -117,7 +138,10 @@ export function ClassView() {
       {running ? (
         <main className="relative mx-auto flex h-[calc(100dvh-4rem)] w-full max-w-[1200px] flex-col gap-4 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pb-8">
           <h1 className="sr-only">Clase</h1>
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between gap-4">
+            <Button variant="outline" size="sm" onClick={end}>
+              Terminer le cours
+            </Button>
             <SubtitleSwitch checked={showSubtitles} onChange={setShowSubtitles} />
           </div>
           <LiveSubtitles text={lineText(subtitles)} visible={showSubtitles} />
@@ -144,6 +168,14 @@ export function ClassView() {
             {phase === "error" && (
               <p role="alert" className="text-base font-medium text-word-orange">
                 {message}
+                {needsLogin && (
+                  <>
+                    {" "}
+                    <Link href="/login" className="underline underline-offset-4">
+                      Iniciar sesión
+                    </Link>
+                  </>
+                )}
               </p>
             )}
           </div>

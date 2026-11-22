@@ -47,6 +47,44 @@ describe("createHttpClassApi", () => {
     expect(await api.startSession("lesson")).toBe("s9");
   });
 
+  it("picks the newest lesson from GET /api/lessons", async () => {
+    const fetchImpl = fakeFetch(200, [{ id: "new" }, { id: "old" }]);
+    const api = createHttpClassApi("http://api", async () => "tok", fetchImpl);
+    expect(await api.latestLessonId()).toBe("new");
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("http://api/api/lessons");
+    expect(init.method).toBe("GET");
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer tok");
+  });
+
+  it("fails when there is no lesson yet", async () => {
+    const api = createHttpClassApi("http://api", async () => "tok", fakeFetch(200, []));
+    await expect(api.latestLessonId()).rejects.toThrow();
+  });
+
+  it("loads the class pack of a lesson", async () => {
+    const pack = { lesson: { id: "l1" }, terms: [], mastery: {}, previously_tapped: [] };
+    const fetchImpl = fakeFetch(200, pack);
+    const api = createHttpClassApi("http://api", async () => "tok", fetchImpl);
+    expect(await api.classPack("l1")).toEqual(pack);
+    const [url] = fetchImpl.mock.calls[0] as unknown as [string];
+    expect(url).toBe("http://api/api/lessons/l1/class-pack");
+  });
+
+  it("ends the class by posting the word states", async () => {
+    const fetchImpl = fakeFetch(200, { ok: true, autonomy: 0.5 });
+    const api = createHttpClassApi("http://api", async () => "tok", fetchImpl);
+    await api.endClass("s1", [{ lemma: "déchet", state: "yellow" }]);
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("http://api/api/sessions/s1/word-states");
+    expect(JSON.parse(init.body as string)).toEqual({ states: [{ lemma: "déchet", state: "yellow" }] });
+  });
+
+  it("knows whether the student is signed in", async () => {
+    expect(await createHttpClassApi("http://api", async () => "tok", fakeFetch()).isSignedIn()).toBe(true);
+    expect(await createHttpClassApi("http://api", async () => null, fakeFetch()).isSignedIn()).toBe(false);
+  });
+
   it("throws on a non-2xx response", async () => {
     const api = createHttpClassApi("http://api", async () => "tok", fakeFetch(500));
     await expect(api.uploadClip(clip)).rejects.toThrow();
