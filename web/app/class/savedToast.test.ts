@@ -18,6 +18,12 @@ describe("announceResult", () => {
     expect(toast.success).toHaveBeenCalledWith("Moment enregistré", expect.any(Object));
   });
 
+  it("pops a French message when the class is ended", () => {
+    const toast = fakeToast();
+    announceResult(toast, "onEnd", "saved");
+    expect(toast.success).toHaveBeenCalledWith("Cours terminé", expect.any(Object));
+  });
+
   it("pops an error when saving failed", () => {
     const toast = fakeToast();
     announceResult(toast, "onLost", "failed");

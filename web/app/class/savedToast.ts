@@ -5,7 +5,7 @@ type Toaster = {
   error(message: string, options: object): void;
 };
 
-const SAVED_MESSAGE = { onUnclear: "Extrait enregistré", onLost: "Moment enregistré" };
+const SAVED_MESSAGE = { onUnclear: "Extrait enregistré", onLost: "Moment enregistré", onEnd: "Cours terminé" };
 const OPTIONS = { position: "top-left", duration: 2500 } as const;
 
 /** Short side pop-up after a class button press; silent for ignored double presses. */

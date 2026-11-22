@@ -1,20 +1,22 @@
 import type { AudioClip } from "@/lib/audioRingRecorder";
 import type { ClassApi } from "./classApi";
+import type { SeenWords } from "./seenWords";
 import type { TranscriptBuffer } from "./transcriptBuffer";
 
 export type ButtonResult = "saved" | "failed" | "ignored";
 
 interface ClassButtonsOptions {
-  api: Pick<ClassApi, "uploadClip" | "postLost">;
+  api: Pick<ClassApi, "uploadClip" | "postLost" | "endClass">;
   recorder: { clip(): Promise<AudioClip> };
   transcript: Pick<TranscriptBuffer, "textBetween">;
+  seen: Pick<SeenWords, "states">;
   sessionId: string;
   nowSec: () => number;
   lostWindowSec: number;
 }
 
 export function createClassButtons(options: ClassButtonsOptions) {
-  const { api, recorder, transcript, sessionId, nowSec, lostWindowSec } = options;
+  const { api, recorder, transcript, seen, sessionId, nowSec, lostWindowSec } = options;
 
   function guarded(action: () => Promise<void>): () => Promise<ButtonResult> {
     let inFlight = false;
@@ -43,5 +45,7 @@ export function createClassButtons(options: ClassButtonsOptions) {
     await api.postLost({ sessionId, tSec, tStart, transcript: transcript.textBetween(tStart, tSec) });
   });
 
-  return { onUnclear, onLost };
+  const onEnd = guarded(() => api.endClass(sessionId, seen.states()));
+
+  return { onUnclear, onLost, onEnd };
 }

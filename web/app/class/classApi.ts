@@ -1,11 +1,30 @@
-import type { ClipUpload, LostEventRequest, LostMoment, StartSessionResponse } from "@/lib/contract";
+import type {
+  ClassPack,
+  ClipUpload,
+  LessonSummary,
+  LostEventRequest,
+  LostMoment,
+  StartSessionResponse,
+  WordStatesRequest,
+} from "@/lib/contract";
 import { ApiError, type TokenProvider } from "@/lib/api";
 
 export interface ClassApi {
+  isSignedIn(): Promise<boolean>;
+  latestLessonId(): Promise<string>;
+  classPack(lessonId: string): Promise<ClassPack>;
   startSession(lessonId: string): Promise<string>;
   uploadClip(clip: ClipUpload): Promise<void>;
   postLost(moment: LostMoment): Promise<void>;
+  endClass(sessionId: string, states: WordStatesRequest["states"]): Promise<void>;
 }
+
+const MOCK_LESSON: ClassPack = {
+  lesson: { id: "demo-lesson", title: "Demo", subject: null, lesson_date: null },
+  terms: [],
+  mastery: {},
+  previously_tapped: [],
+};
 
 export type SavedItem =
   | { kind: "clip"; audioUrl: string; tStart: number; tEnd: number; transcript: string }
@@ -18,9 +37,19 @@ export function createMockClassApi(
 ): MockClassApi {
   const items: SavedItem[] = [];
   return {
+    async isSignedIn() {
+      return true;
+    },
+    async latestLessonId() {
+      return MOCK_LESSON.lesson.id;
+    },
+    async classPack() {
+      return MOCK_LESSON;
+    },
     async startSession() {
       return "mock-session";
     },
+    async endClass() {},
     async uploadClip({ blob, tStart, tEnd, transcript }) {
       items.push({ kind: "clip", audioUrl: toObjectUrl(blob), tStart, tEnd, transcript });
     },
@@ -36,20 +65,37 @@ export function createHttpClassApi(
   getToken: TokenProvider,
   fetchImpl: typeof fetch = fetch,
 ): ClassApi {
-  async function send(path: string, body: BodyInit, contentType?: string): Promise<Response> {
+  async function request(method: "GET" | "POST", path: string, body?: BodyInit, contentType?: string) {
     const headers = new Headers();
     const token = await getToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
     if (contentType) headers.set("Content-Type", contentType);
-    const response = await fetchImpl(`${baseUrl}${path}`, { method: "POST", headers, body });
-    if (!response.ok) throw new ApiError(response.status, `POST ${path} failed with ${response.status}`);
+    const response = await fetchImpl(`${baseUrl}${path}`, { method, headers, body });
+    if (!response.ok) throw new ApiError(response.status, `${method} ${path} failed with ${response.status}`);
     return response;
   }
 
+  const send = (path: string, body: BodyInit) => request("POST", path, body);
   const sendJson = (path: string, payload: unknown) =>
-    send(path, JSON.stringify(payload), "application/json");
+    request("POST", path, JSON.stringify(payload), "application/json");
+  const getJson = async <T,>(path: string) => (await request("GET", path)).json() as Promise<T>;
 
   return {
+    async isSignedIn() {
+      return (await getToken()) !== null;
+    },
+    async latestLessonId() {
+      const [newest] = await getJson<LessonSummary[]>("/api/lessons");
+      if (!newest) throw new Error("No lesson yet");
+      return newest.id;
+    },
+    classPack(lessonId) {
+      return getJson<ClassPack>(`/api/lessons/${lessonId}/class-pack`);
+    },
+    async endClass(sessionId, states) {
+      const body: WordStatesRequest = { states };
+      await sendJson(`/api/sessions/${sessionId}/word-states`, body);
+    },
     async startSession(lessonId) {
       const response = await sendJson("/api/sessions", { lesson_id: lessonId });
       return ((await response.json()) as StartSessionResponse).session_id;
