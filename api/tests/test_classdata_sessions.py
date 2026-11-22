@@ -44,17 +44,14 @@ def anonymous(db):
     return TestClient(app)
 
 
-def _mastery(db, lemma):
-    return [r for r in db.tables["word_mastery"] if r["lemma"] == lemma and r["student_id"] == STUDENT]
-
-
 def _l1_session(client):
     return client.post("/api/sessions", json={"lesson_id": L1}).json()["session_id"]
 
 
-def _tap(client, lemma, session=None):
+def _lost(client, session=None, t_sec=100.0, transcript="Elle produit des déchets."):
     session = session or _l1_session(client)
-    return client.post(f"/api/sessions/{session}/events", json={"t_sec": 3, "type": "word", "lemma": lemma})
+    body = {"t_sec": t_sec, "type": "lost", "lemma": None, "context": {"t_start": 40.0, "transcript": transcript}}
+    return client.post(f"/api/sessions/{session}/events", json=body)
 
 
 def test_create_session_stores_row(client, db):
@@ -82,26 +79,18 @@ def test_create_session_bad_uuid_422(client):
     assert client.post("/api/sessions", json={"lesson_id": "nope"}).status_code == 422
 
 
-def test_tap_existing_row_lowers_level_and_counts(client, db):
-    response = _tap(client, "déchet")
-    assert (response.status_code, response.json()) == (200, {"ok": True, "level": 0})
-    assert _mastery(db, "déchet")[0]["times_tapped"] == 3
-    assert db.tables["class_events"][-1]["lemma"] == "déchet"
+def test_lost_event_stores_text_only_context(client, db):
+    response = _lost(client)
+    assert (response.status_code, response.json()) == (200, {"ok": True})
+    stored = db.tables["class_events"][-1]
+    assert (stored["type"], stored["lemma"], stored["t_sec"]) == ("lost", None, 100.0)
+    assert (stored["context_t_start"], stored["context_transcript"]) == (40.0, "Elle produit des déchets.")
 
 
-def test_tap_without_row_uses_initial_level(client, db):
-    response = _tap(client, "mitochondrie")
-    assert response.json() == {"ok": True, "level": 2}
-    assert _mastery(db, "mitochondrie")[0]["times_tapped"] == 1
-
-
-def test_lost_event_stores_null_lemma(client, db):
-    response = client.post(
-        f"/api/sessions/{STUDENT_SESSION}/events", json={"t_sec": 9, "type": "lost", "lemma": "déchet"}
-    )
-    assert response.json() == {"ok": True, "level": None}
-    assert db.tables["class_events"][-1]["lemma"] is None
-    assert len(_mastery(db, "déchet")) == 1
+def test_lost_event_never_touches_mastery(client, db):
+    before = list(db.tables["word_mastery"])
+    _lost(client)
+    assert db.tables["word_mastery"] == before
 
 
 def test_events_require_token(anonymous):
@@ -112,27 +101,24 @@ def test_events_require_token(anonymous):
 def test_events_teacher_forbidden(client, role):
     session = _l1_session(client)
     role["role"] = "teacher"
-    assert _tap(client, "déchet", session).status_code == 403
+    assert _lost(client, session).status_code == 403
 
 
 @pytest.mark.parametrize("session", [OTHER_SESSION, LESSON_SESSION])
 def test_events_foreign_or_unknown_session_404_without_writes(client, db, session):
-    before = (len(db.tables["class_events"]), list(db.tables["word_mastery"]))
-    response = _tap(client, "déchet", session)
+    before = len(db.tables["class_events"])
+    response = _lost(client, session)
     assert (response.status_code, response.json()["detail"]) == (404, "Session not found")
+    assert len(db.tables["class_events"]) == before
+
+
+@pytest.mark.parametrize("body", [
+    {"t_sec": 3, "type": "word", "lemma": "déchet"},
+    {"t_sec": 1, "type": "unclear"},
+    {"t_sec": 1, "type": "lost"},
+], ids=["word", "unclear", "lost-without-context"])
+def test_rejected_event_422_without_writes(client, db, body):
+    session = _l1_session(client)
+    before = (len(db.tables["class_events"]), list(db.tables["word_mastery"]))
+    assert client.post(f"/api/sessions/{session}/events", json=body).status_code == 422
     assert (len(db.tables["class_events"]), db.tables["word_mastery"]) == before
-
-
-def test_unknown_lemma_422(client):
-    response = _tap(client, "inconnu")
-    assert (response.status_code, response.json()["detail"]) == (422, "Unknown lemma for this lesson")
-
-
-def test_word_without_lemma_422(client):
-    body = {"t_sec": 1, "type": "word"}
-    assert client.post(f"/api/sessions/{STUDENT_SESSION}/events", json=body).status_code == 422
-
-
-def test_unclear_type_422(client):
-    body = {"t_sec": 1, "type": "unclear"}
-    assert client.post(f"/api/sessions/{STUDENT_SESSION}/events", json=body).status_code == 422

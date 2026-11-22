@@ -31,6 +31,14 @@ def test_insert_event_stores_student_id():
     assert (stored["type"], stored["lemma"]) == ("word", "chaleur")
 
 
+def test_insert_lost_event_stores_context():
+    db = seeded_fake()
+    repo.insert_lost_event(db, STUDENT_SESSION, STUDENT, 100.0, 40.0, "Elle produit des déchets.")
+    stored = db.tables["class_events"][-1]
+    assert (stored["type"], stored["lemma"], stored["t_sec"]) == ("lost", None, 100.0)
+    assert (stored["context_t_start"], stored["context_transcript"]) == (40.0, "Elle produit des déchets.")
+
+
 def test_insert_event_allows_null_lemma():
     db = seeded_fake()
     repo.insert_event(db, STUDENT_SESSION, STUDENT, 1.0, "lost", None)

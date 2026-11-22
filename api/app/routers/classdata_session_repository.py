@@ -32,6 +32,20 @@ def insert_event(
     }).execute()
 
 
+def insert_lost_event(
+    db: Client, session_id: str, student_id: str, t_sec: float, context_t_start: float, transcript: str
+) -> None:
+    db.table("class_events").insert({
+        "session_id": session_id,
+        "student_id": student_id,
+        "t_sec": t_sec,
+        "type": "lost",
+        "lemma": None,
+        "context_t_start": context_t_start,
+        "context_transcript": transcript,
+    }).execute()
+
+
 def upsert_word_states(db: Client, session_id: str, student_id: str, entries: list[tuple[str, str]]) -> None:
     if not entries:
         return

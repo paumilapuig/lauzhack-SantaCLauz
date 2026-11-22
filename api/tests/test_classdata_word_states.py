@@ -6,6 +6,7 @@ from app import roles
 from app.auth import get_current_user
 from app.db import get_supabase
 from app.routers import classdata_session_repository as session_repo
+from app.routers import classdata_word_states
 from app.routers.classdata_word_states import router
 from app.schemas import CurrentUser, Profile
 from tests.classdata_seed import L1, OTHER_SESSION, STUDENT, seeded_fake
@@ -22,7 +23,14 @@ def session_id(db):
 
 
 @pytest.fixture
-def client(db, monkeypatch):
+def processed(monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(classdata_word_states, "process_session", calls.append)
+    return calls
+
+
+@pytest.fixture
+def client(db, monkeypatch, processed):
     monkeypatch.setattr(roles, "fetch_profile", lambda user_id: Profile(display_name=None, role="student"))
     app = FastAPI()
     app.include_router(router)
@@ -87,3 +95,14 @@ def test_without_token_is_401(db):
 def test_teacher_is_403(client, session_id, monkeypatch):
     monkeypatch.setattr(roles, "fetch_profile", lambda user_id: Profile(display_name=None, role="teacher"))
     assert post(client, session_id, THREE).status_code == 403
+
+
+def test_end_of_class_schedules_concept_processing_once(client, session_id, processed):
+    assert post(client, session_id, THREE).status_code == 200
+    assert processed == [session_id]
+
+
+def test_rejected_end_of_class_schedules_nothing(client, session_id, processed):
+    assert post(client, session_id, [entry("zzz", "green")]).status_code == 422
+    assert post(client, OTHER_SESSION, THREE).status_code == 404
+    assert processed == []

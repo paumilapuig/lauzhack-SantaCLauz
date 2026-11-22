@@ -47,23 +47,35 @@ class ClipCreated(BaseModel):
     audio_path: str
 
 
+LOST_WINDOW_TOLERANCE_SEC = 70
+MAX_TRANSCRIPT_CHARS = 5000
+
+
+class LostContext(BaseModel):
+    """Text-only context of a "Me he perdido" moment: the last <= 60 s of transcript."""
+
+    t_start: float = Field(ge=0, allow_inf_nan=False)
+    transcript: str = Field(max_length=MAX_TRANSCRIPT_CHARS)
+
+
 class ClassEventCreate(BaseModel):
-    t_sec: float = Field(ge=0)
-    type: Literal["word", "lost"]
-    lemma: str | None = None
+    """Only `lost` events come from the client; words are marked at home (clip_marks)."""
+
+    t_sec: float = Field(ge=0, allow_inf_nan=False)
+    type: Literal["lost"]
+    lemma: None = None
+    context: LostContext
 
     @model_validator(mode="after")
-    def check_lemma_matches_type(self) -> "ClassEventCreate":
-        if self.type == "word" and not self.lemma:
-            raise ValueError("lemma is required for a word event")
-        if self.type == "lost":
-            self.lemma = None
+    def check_context_window(self) -> "ClassEventCreate":
+        window = self.t_sec - self.context.t_start
+        if window < 0 or window > LOST_WINDOW_TOLERANCE_SEC:
+            raise ValueError(f"context.t_start must be within {LOST_WINDOW_TOLERANCE_SEC} s before t_sec")
         return self
 
 
 class ClassEventResult(BaseModel):
     ok: bool
-    level: int | None
 
 
 class WordStateEntry(BaseModel):
