@@ -12,8 +12,22 @@ export type TranscriptBuffer = {
   prune(nowSec: number): void;
 };
 
+// Each word remembers when it was first heard: between `from` (the previous update) and `to` (the update that brought it).
+// Chrome may keep one long unpunctuated sentence for a whole minute, so a clip keeps only the words heard during it.
+type Word = { text: string; from: number; to: number };
 // start = when the sentence was first heard, end = when it was last updated
-type Entry = { text: string; start: number; end: number };
+type Entry = { words: Word[]; start: number; end: number };
+
+const textOf = (words: Word[]) => words.map((word) => word.text).join(" ");
+
+/** The sentence's new wording; words it already had keep their time, new ones were heard in (since, tSec]. */
+function grow(words: Word[], text: string, tSec: number, since: number): Word[] {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((piece, i) => (words[i] ? { ...words[i], text: piece } : { text: piece, from: since, to: tSec }));
+}
 
 export function createTranscriptBuffer({ keepSec }: TranscriptBufferOptions): TranscriptBuffer {
   let entries: Entry[] = [];
@@ -21,22 +35,22 @@ export function createTranscriptBuffer({ keepSec }: TranscriptBufferOptions): Tr
 
   return {
     add(text, tSec) {
-      const start = heard?.start ?? tSec;
-      heard = null;
       const last = entries.at(-1);
-      if (last && isRevisionOf(last.text, text)) {
-        last.text = text;
+      if (last && isRevisionOf(textOf(last.words), text)) {
+        last.words = grow(last.words, text, tSec, last.end);
         last.end = tSec;
-      } else entries.push({ text, start, end: tSec });
+      } else entries.push({ words: grow(heard?.words ?? [], text, tSec, heard?.end ?? tSec), start: heard?.start ?? tSec, end: tSec });
+      heard = null;
     },
     hear(text, tSec) {
       if (!text.trim()) heard = null;
-      else heard = { text: text.trim(), start: heard?.start ?? tSec, end: tSec };
+      else heard = { words: grow(heard?.words ?? [], text, tSec, heard?.end ?? tSec), start: heard?.start ?? tSec, end: tSec };
     },
     textBetween(tStart, tEnd) {
-      const overlapping = entries.filter((entry) => entry.end >= tStart && entry.start <= tEnd).map((entry) => entry.text);
-      if (heard && heard.start <= tEnd) overlapping.push(heard.text);
-      return overlapping.join(" ");
+      return [...entries, ...(heard ? [heard] : [])]
+        .map((entry) => textOf(entry.words.filter((word) => word.to >= tStart && word.from <= tEnd)))
+        .filter(Boolean)
+        .join(" ");
     },
     prune(nowSec) {
       entries = entries.filter((entry) => entry.end >= nowSec - keepSec);

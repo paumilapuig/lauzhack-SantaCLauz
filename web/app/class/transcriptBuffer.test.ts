@@ -58,12 +58,21 @@ describe("createTranscriptBuffer", () => {
     expect(buffer.textBetween(44, 57)).toBe("la mitochondrie transforme le glucose");
   });
 
-  it("a sentence that started before the clip and ended inside it belongs to the clip", () => {
+  it("of a sentence that started before the clip, the clip keeps the words heard during it", () => {
     const buffer = createTranscriptBuffer({ keepSec: 90 });
     buffer.hear("elle produit", 40);
     buffer.add("elle produit aussi des déchets", 60);
-    expect(buffer.textBetween(44, 57)).toBe("elle produit aussi des déchets");
+    expect(buffer.textBetween(44, 57)).toBe("aussi des déchets");
     expect(buffer.textBetween(61, 70)).toBe("");
+  });
+
+  it("a short clip in a long unpunctuated speech keeps only its own words (bug Sun 22 Nov 11:48)", () => {
+    const buffer = createTranscriptBuffer({ keepSec: 90 });
+    const words = "j'aimerais devenir une championne de gymnastique je possède de l'expérience depuis que j'ai quatre ans".split(" ");
+    words.forEach((_, i) => buffer.hear(words.slice(0, i + 1).join(" "), 3 + i * 1.5));
+    // 15 words heard at 3, 4.5, … 24; a 2 s clip at the end must not carry the whole speech
+    expect(buffer.textBetween(22, 24)).toBe("quatre ans");
+    expect(buffer.textBetween(3, 24)).toBe(words.join(" "));
   });
 
   it("a final result clears the sentence being heard", () => {
