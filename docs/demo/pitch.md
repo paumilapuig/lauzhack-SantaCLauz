@@ -1,108 +1,125 @@
 # Pitch + demo — Loop'd (owner: Pau · revised Sun 22 Nov by Laura)
 
-**Deck (15 slides, speaker notes in each):** https://claude.ai/artifact/5Fp6M6rjLW17YSGHVyzC9U
-Private until someone shares it from the deck's Share menu; export to PDF/PPTX from there as a backup.
+**One deck per challenge** (speaker notes in every slide; private until shared from each deck's Share menu; export
+to PDF/PPTX there as a backup):
+
+| Challenge | Deck | Slides |
+|---|---|---|
+| IMC · IMCHANGE Tech for Good | https://claude.ai/artifact/TakwcTcD82FEfPS5m4kxnv | 8 |
+| Scholé AI | https://claude.ai/artifact/HNZqboMNsA7H47XjKdfNQK | 8 |
+| AXA · Frugal use of Multimodal AI | https://claude.ai/artifact/SHfgeioCRYoi6WDx7dkUyB | 7 |
+| Overall jury (full story) | https://claude.ai/artifact/5Fp6M6rjLW17YSGHVyzC9U | 15 |
+
 Old deck (Pau, "Fondu"): https://claude.ai/artifact/JM33EGe3dHLivmwLg63NX5 — the app says **Loop'd**, so the pitch does too.
+Language: English. The app: `/class` in French, everything else in English. LauzHack rule 30: say what is new.
 
-Language: English (international jury). The app: `/class` in French, everything else in English.
-LauzHack rule 30: say out loud what is new (slide "What we built this weekend").
+## Setup (10 min before any pitch)
+- Laptop running the API with `OPENROUTER_API_KEY` in `api/.env` (no visible error if it is missing!) and the web with
+  `NEXT_PUBLIC_CLASS_API=http`. Chrome, microphone allowed, a French voice installed (Windows: Settings › Time &
+  language › Speech › Add voices › Français).
+- Window 1 (normal): `lucia-w1` → tab A `/class?lesson=de100000-0000-4000-8000-000000000001`, tab B `/home`.
+- Window 2 (**incognito**): `prof-demo` → `/teacher` › « La respiration cellulaire ».
+- AXA only: a photo of a textbook page on the laptop (any biology page in French).
+- Rehearsal clips are already Done (or **Discard**ed), so Review starts empty: what appears is what we record live.
 
-## The one live demo (same for every jury, ~90 s)
+## The core live demo (~90 s, every jury)
+1. **Class (tab A).** « Commencer le cours ». Read `docs/demo/lesson-respiration.md` calmly. Right after « … des
+   **déchets** » press **« Je n'ai pas compris »** (« Extrait enregistré »). After the paragraph on **chaleur** press
+   **« J'ai perdu le fil »** (« Moment enregistré »). **« Terminer le cours »** (« Cours terminé ») → word states saved,
+   after-class summary starts in the background (~3 s).
+2. **Home (tab B, reload).** The new clip in the teacher's voice. Tap **déchets** → « desecho ». **Done** (or
+   **Discard** to drop a clip). *Practice* › **Step by step** on *déchet*: listen, fill the gap in the teacher's
+   sentence, say it → « déchet levels up » (a 2nd game → « You no longer need help with déchet »). *To understand
+   better*: the concept written from « J'ai perdu le fil » → steps FR + ES + emoji → questions → understood / review.
+3. **Teacher (window 2, reload).** Difficult moments (minute 12), Concepts to review (Lucía week 1's new concept),
+   Most marked words, Autonomy (week-4 profile 53 → 60 → 73 → 80 %).
+   Say: « w1 and w4 are prepared profiles; what you saw recorded is live. »
 
-**Before** (10 min earlier)
-- Laptop with the API running and `OPENROUTER_API_KEY` in `api/.env` (check `http://localhost:8000/health` and create
-  nothing new). `web/.env.local` has `NEXT_PUBLIC_CLASS_API=http`. Chrome, microphone allowed, a French voice
-  installed (Windows: Settings › Time & language › Speech › Add voices › Français).
-- Window 1 (normal): logged in as `lucia-w1` → tab A `/class?lesson=de100000-0000-4000-8000-000000000001`, tab B `/home`.
-- Window 2 (**incognito**, so the login does not mix): `prof-demo` → `/teacher`, open « La respiration cellulaire ».
-- Rehearsal clips of lucia-w1 are already Done, so Review starts empty: what appears is what we record live.
+**Plan B:** no speech/network → « Lire le texte de la leçon » plays the lesson as captions (buttons need network to
+save). No new concept after 10 s → show lucia-w4's two prepared concepts on the teacher dashboard. API down → remove
+`NEXT_PUBLIC_CLASS_API`, restart web: « Mode démo » with in-browser data.
 
-**Run**
-1. **Class (tab A, 30 s).** « Commencer le cours ». Pau reads `docs/demo/lesson-respiration.md` calmly; subtitles run
-   in French. Right after « … des **déchets** » press **« Je n'ai pas compris »** (toast « Extrait enregistré »).
-   After the paragraph on **chaleur** press **« J'ai perdu le fil »** (« Moment enregistré »). Then **« Terminer le
-   cours »** (« Cours terminé »): this sends the word states and starts the after-class summary (~3 s, in the background).
-2. **Home (tab B, reload, 40 s).** *Clips to review*: the new clip in the teacher's voice, words light up with the audio.
-   Tap **déchets** → « desecho » appears under it. **Done**. *Practice* → **Step by step** on *déchet*: listen and choose,
-   fill the gap in the teacher's sentence, say it out loud → « déchet levels up ». (A second game, e.g. Pairs, makes it
-   « You no longer need help with déchet »: level 0 → 2.) *To understand better*: the concept the LLM just wrote from
-   « J'ai perdu le fil » — steps in French + Spanish + emoji diagram, then 2–3 questions → « understood ».
-3. **Progress (10 s).** Positive sentences, never a percentage.
-4. **Teacher (window 2, reload, 20 s).** *Difficult moments* (minute 12), *Concepts to review* with Lucía week 1's new
-   concept, *Most marked words*, *Autonomy*: week-1 profile 53 %, week-4 profile 53 → 80 % over four weeks.
-   Say: « w1 and w4 are simulated profiles with prepared history; what you just saw recorded is live. »
+---
 
-**Plan B**
-- No speech recognition / no network: « Texte de la leçon (plan B) » next to « Son : bon » plays the demo lesson as
-  subtitles; the buttons still work when the network is back (clips need Supabase).
-- No new concept after 10 s: lucia-w4 has 2 prepared concepts (one understood, one to review) → show them in the
-  teacher dashboard and say the call is asynchronous.
-- API down: the student pages run in « Mode démo » with in-browser data (remove `NEXT_PUBLIC_CLASS_API`, restart web).
+## A. IMC — IMCHANGE: Tech for Good (Learning · Inclusion)
+**Their brief:** “Your code. Someone else's better day. Real problem · real charity · real demo.” Idea starter for
+Inclusion: *live lecture captions*. **Judged 1–10 each on:** Technical solution (does it work?), Impact (who it helps,
+and how much), Presentation (live demo). Prize goes to a charity we pick: registered non-profit, apolitical, youth /
+education / inclusion.
+**Deck:** cover · lucia · starter · demo · impact · works · charity · close — 3 min.
 
-## Deck map (slide → id)
-1 cover · 2 lucia · 3 problem · 4 idea · 5 demo · 6 class · 7 home · 8 concepts · 9 teacher · 10 model ·
-11 frugal · 12 impact · 13 novelty · 14 next · 15 close
+| Time | Slide | Say |
+|---|---|---|
+| 0:00 | cover, lucia | Lucía, 14: failing biology because of French; a failed year can decide her school track. |
+| 0:25 | starter | « You suggested live lecture captions. We built them — in French — and made them teach. » |
+| 0:40 | demo | Core live demo. Insist: real app, real database, recorded now. |
+| 2:10 | impact | Who: newcomer pupils. How much: autonomy per pupil per week (prepared profile 53 → 80 %). Cost: Chrome + < 2 cents per lesson. |
+| 2:30 | works | Does it work? You just saw it end to end; plan B offline; 460 + 244 tests. |
+| 2:45 | charity | The prize goes to **Open Cultural Center** (openculturalcenter.org). |
+| 2:55 | close | « Help that disappears, word by word. » |
 
-## Script per challenge (3 min each; skip slides not listed)
+**Charity: Open Cultural Center (OCC)** — registered non-profit active in Spain (Barcelona) and Greece (Polykastro);
+mission (their words): “build bridges between communities, promoting the social and labour inclusion of migrants and
+refugees.” Youth is one of their pillars; Language Lab gives free language classes to refugees and migrants; classes
+for refugee children in Greece; CREATE builds language materials for migrant teenagers and unaccompanied minors.
+✅ registered non-profit, ✅ youth / education / inclusion. ⚠️ Their site has no explicit political-neutrality
+statement: **confirm "apolitical" with the IMC booth before presenting.** Say "the prize would go to", not "our
+partner" — they have not been contacted.
+**Q&A:** *Privacy of minors?* Clips live in a private bucket; only the pupil and her teacher see them; next step:
+transcription on the device. *Other languages?* The glossary prompt is per language pair; Spanish → French first, OCC's
+Arabic/English → Catalan classes would be a natural next pair. *How does a school start?* The teacher uploads the
+lesson (text, PDF or a photo); pupils open the class page in Chrome.
 
-### A. Scholé AI — education ("not a chat", "how do you know they learned?")
-**What they want to hear:** creative, adaptive, usable, no chatbot, and *evidence of learning*.
-**Slides:** 1 · 2 · 3 · 4 · 5 (demo) · 10 · 8 · 9 · 13 · 15
-- Hook (20 s): « A translator helps Lucía today. It teaches her nothing, and there is no translator in the exam. »
-- Demo (90 s) as above, slowing down on *Step by step* and on the concept questions.
-- Model (30 s, slide 10): knowledge tracing she can explain to a parent: a level 0–3 per word and student;
-  Spanish cognates start mastered; marking a word at home −1; a game passed +1; ≥ 2 = no help. Two separate paths:
-  words (lexical) and concepts (« J'ai perdu le fil »), never mixed.
-- Evidence (20 s, slide 9): autonomy = glossary words she followed without help ÷ words that came up; weekly curve;
-  concepts move pending → to review → understood. The student never sees a number.
-- Close: « Not a chat. A teacher's voice, the student's own gaps, and help that disappears. »
-- Q&A ready: *Why not a chatbot?* A 14-year-old A1 learner can't ask good questions in French; we ask the class
-  instead. *Can she game it?* Games need the right answer; the honest limit (2 games → green) is on slide 14.
+## B. Scholé AI — a memorable learning experience, no chatbots
+**Their brief:** pick a topic, build the most effective, creative and adaptive way to teach it — **no chatbots**; keep
+a picture of the learner (background, choices, answers) and let it change what comes next. **Judged on:** Creativity,
+Adaptability, Usability (someone can try it without you explaining). Their four daily questions: 01 12-year-old vs
+surgeon, 02 what changes when wrong, 03 shape the lesson without a prompt, 04 learned vs just enjoyed.
+**Deck:** cover · learner · demo · wrong · questions · tracing · nochat · close — 3 min.
 
-### B. IMC Tech for Good — charity / inclusion ("does it work, who does it help?")
-**What they want to hear:** a real problem, real people, it works live, measurable impact, an NGO that could run it.
-**Slides:** 1 · 2 · 3 · 12 · 4 · 5 (demo) · 9 · 14 · 13 · 15
-- Hook (30 s, slides 2–3): Lucía's story. Newcomer teenagers who fail a subject *because of the language* risk being
-  oriented to a less demanding school track — a decision that follows them for life.
-- Impact (20 s, slide 12): who (*élèves allophones* in Swiss public schools), what changes (she follows the class
-  herself), how we measure it (weekly autonomy per student, concepts understood), what it costs (≈ 1–2 cents per
-  lesson for a class of 25, runs on a school laptop with Chrome).
-- Demo (90 s), insisting that it is the real app with the real database, recorded live.
-- Teacher (20 s, slide 9): the teacher sees *where* the class lost her and *what* to re-explain tomorrow.
-- NGO: integration / schooling of migrant youth in Vaud — **[NGO name from the IMC stand]**; free for schools.
-- Q&A ready: *Privacy of minors?* Audio clips stay in a private bucket, only the student and her teacher can see
-  them; next step is local transcription (Whisper). *Other languages?* The glossary prompt is per language pair; Spanish
-  is the first.
+| Time | Slide | Say |
+|---|---|---|
+| 0:00 | cover, learner | The context is the class she sits in. Background: Spanish L1, A1–A2; goal: follow biology alone. |
+| 0:20 | demo | Core demo; slow down at home. If possible hand the laptop to a judge for the tap-the-words step (usability). |
+| 1:50 | wrong | Adaptability: each action changes what comes next (table). |
+| 2:10 | questions | Answer 01–04 in their numbering. 04: graded by code, and the next real class checks again. |
+| 2:35 | tracing | Their own knowledge-tracing slide, our version: cognate placement, every graded activity is evidence, weak words become targets. |
+| 2:50 | nochat, close | AI behind the scenes, never a chat. « The best lesson is the one you needed, right after class. » |
 
-### C. AXA — Frugal use of Multimodal AI ("real app, own architecture, frugal, no slop")
-**What they want to hear:** multimodal input, AI only where it adds value, measured cost/latency, a real web app.
-**Slides:** 1 · 3 · 4 · 11 · 5 (demo) · 6 · 8 · 13 · 15
-- Hook (15 s): « The obvious build is live translation with an LLM on every sentence. We call the LLM zero times in
-  class. »
-- Frugal (40 s, slide 11), measured on the demo lesson with Gemini 2.5 Flash Lite via OpenRouter:
-  - lesson glossary from text, PDF or a **photo of the textbook**: 1 call, 3.5 s, $0.0008;
-  - in class: speech-to-text in the browser, word tracking in the browser, audio clips from a browser ring buffer,
-    **0 LLM calls**, 0 requests per sentence;
-  - after class: 1 call per student *only if she pressed « J'ai perdu le fil »*, 2–3 s, $0.0005 (one retry only if the
-    reply is unusable);
-  - at home: 1 tiny call per reviewed clip *only if* she marked words outside the glossary, 0.5 s, $0.00005; games and
-    answers graded without LLM.
-  - ⇒ a class of 25: **under 2 cents per lesson**, worst case.
-- Multimodal: voice (Web Speech API), audio (clips in the teacher's voice), text, PDF, photos/scans (vision model only
-  when there are images; text model is swappable, e.g. Llama 3.3 open weights).
-- No slop: every LLM output is validated and repaired by code (transparency rule = LLM proposal AND string similarity
-  ≥ 0.7; concepts: unknown references dropped, emoji byte artefacts decoded, 8/8 sessions with a usable concept).
-- Q&A ready: *Why not Whisper on a server?* Browser recognition is free and private enough for a demo; Whisper locally is
-  the privacy next step. *Vendor lock-in?* One env var per model; OpenRouter JSON mode.
+**Q&A:** *Uncertainty, like our Beta mastery?* Today a deterministic 0–3 level per word; a Beta posterior per word is
+the natural upgrade. *Can she game it?* Games need the right answer; honest limit: two passed games make a word green.
+*Same lesson for a surgeon?* Same class, different words: the lesson comes from the learner's L1 and levels.
 
-### D. Overall jury (best hack) — full deck, 4 min
-All 15 slides; demo at slide 5; land on « help that disappears, word by word ».
+## C. AXA — Frugal use of Multimodal AI
+**Their brief:** a hack, not slides (slides score 0, web app 1, polished app 2); multimodal = text + something else,
+images preferred; turning a modality into text first counts. **Judged on:** real app, anti-slop (own taste), problem,
+technical challenge (not a cloned repo), **frugality**, team work, presentation (no clichéd AI phrasing).
+**Deck:** cover · demo · modal · frugal · engineering · team · close — 3 min, **app first**.
 
-## Before presenting (checklist)
-- [ ] `api/.env` on the demo laptop has `OPENROUTER_API_KEY` (no visible error if missing!).
-- [ ] `/class?lesson=de100000-0000-4000-8000-000000000001` loads the lesson; « Mode démo » badge NOT visible.
-- [ ] Teacher window in incognito.
-- [ ] French voice installed (karaoke + « say it » step).
-- [ ] [NGO] filled on slide 12 and in script B.
-- [ ] Deck shared with the team and exported to PDF.
-- [ ] Three timed rehearsals.
+| Time | Slide | Do / say |
+|---|---|---|
+| 0:00 | cover | One sentence, then switch to the app. |
+| 0:10 | demo | **Open with Text + Image:** `/teacher` › New lesson › upload the textbook photo → glossary in ~4 s (« one call »). Then the core demo on the prepared lesson (`/class?lesson=…`, NOT the new one): « zero calls in class », « one call after class ». |
+| 1:50 | modal | Each modality to text the cheapest way: speech in the browser, image → vision model once, classroom audio kept as audio. |
+| 2:10 | frugal | Measured: lesson $0.0008 · class 0 · after class $0.0005 per pupil · extra words $0.00005 ⇒ < 2 cents per lesson for 25 pupils. |
+| 2:30 | engineering | Built ourselves: browser audio ring buffer, live word matcher, AI output checked by code (cognate rule, concept repair, retries). |
+| 2:45 | team | Who built what; 50 merged PRs (refresh the count). |
+| 2:55 | close | « The cheapest AI call is the one you don't make. » |
+
+**Q&A:** *Why not Whisper on a server?* Browser recognition costs nothing and nothing leaves the laptop during class;
+local Whisper is the privacy next step. *Lock-in?* One env var per model (`OPENROUTER_MODEL`, `OPENROUTER_VISION_MODEL`);
+open-weights Llama 3.3 works for the text calls. *Offline?* Captions plan B works offline; saving needs network.
+*Slop?* Every number on the slides was measured; the AI proposes, code validates.
+Note: the photo lesson created live stays in the database; it is harmless because `/class` always gets `?lesson=`.
+
+## D. Overall jury (best hack) — full deck, 4 min
+All 15 slides of the overall deck; demo at slide 5; land on « help that disappears, word by word ».
+
+## Checklist
+- [ ] `api/.env` on the demo laptop has `OPENROUTER_API_KEY`.
+- [ ] `/class?lesson=de100000-0000-4000-8000-000000000001` loads; « Mode démo » badge NOT visible.
+- [ ] Teacher window in incognito. Textbook photo on the laptop (AXA).
+- [ ] French voice installed.
+- [ ] OCC "apolitical" confirmed at the IMC booth.
+- [ ] The four decks shared with the team and exported to PDF.
+- [ ] One timed rehearsal per challenge.
