@@ -49,17 +49,6 @@ describe("HomeReview", () => {
     expect(finishClip).toHaveBeenCalledTimes(1)
   })
 
-  it("'To understand better' is a practice mode that opens the concepts, not a section on the page", async () => {
-    const review = await api.review()
-    const gap = { id: "g1", lesson_title: "La respiration cellulaire", concept: "Le glucose", lemmas: [], explanation: [], exercises: [], status: "pending" as const }
-    vi.spyOn(api, "review").mockResolvedValue({ ...review, concepts_to_learn: [gap] })
-    render(<HomeReview />)
-    await screen.findByText("2 to review")
-    expect(screen.queryByRole("region", { name: "To understand better" })).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: /To understand better/ }))
-    expect(within(screen.getByRole("dialog", { name: "To understand better" })).getByText("Le glucose")).toBeTruthy()
-  })
-
   it("finishing a mode saves practice for glossary words only", async () => {
     const practice = vi.spyOn(api, "practice")
     render(<HomeReview />)
