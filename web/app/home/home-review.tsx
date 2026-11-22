@@ -9,9 +9,10 @@ import { PracticeDialog } from "./practice-dialog"
 import { PRACTICE_MODES } from "./practice-modes"
 import { PracticeModesGrid } from "./practice-modes-grid"
 import { PracticeModesList, type PracticeModeItem } from "./practice-modes-list"
-import { buildStudyPlan } from "./study-plan"
+import { buildStudyPlan, type PlanStep } from "./study-plan"
 import { StudyPlan } from "./study-plan-view"
 import { usableWords } from "./usable-words"
+import { useCompletedSteps } from "./use-completed-steps"
 import { useHomeReview } from "./use-home-review"
 
 const SECTION_TITLE = "text-[13px] font-bold tracking-[0.06em] text-subtle uppercase"
@@ -25,6 +26,7 @@ export function HomeReview() {
   const home = useHomeReview()
   const { review, marks, words, concepts, failed } = home
   const [openMode, setOpenMode] = useState<string | null>(null)
+  const { completed, markDone } = useCompletedSteps()
   const today = useTodayLabel()
 
   const mode = PRACTICE_MODES.find((m) => m.id === openMode)
@@ -35,12 +37,31 @@ export function HomeReview() {
   }
 
   const pending = review?.clips ?? []
-  const plan = review ? buildStudyPlan({ clips: pending, concepts, words: review.words_to_practice, isAvailable }) : []
-  const suggested = plan.find((step) => step.kind === "practice")?.modeId
+  const plan = review ? buildStudyPlan({ clips: pending, concepts, words: review.words_to_practice, isAvailable, completed }) : []
+  const suggested = plan.find((step) => step.kind === "practice" && !step.done)?.modeId
+  const planned = (kind: PlanStep["kind"], match: (step: PlanStep) => boolean = () => true) =>
+    plan.find((step) => step.kind === kind && !step.done && match(step))
 
   function closeMode(practised: boolean) {
+    if (practised && openMode) {
+      const step = planned("practice", (s) => s.kind === "practice" && s.modeId === openMode)
+      markDone(step ?? { kind: "practice", modeId: openMode, words: [], minutes: 2 })
+    }
     setOpenMode(null)
     if (practised) home.refresh().catch((error) => console.error(error))
+  }
+
+  // the clips step is done when the last pending clip is closed (Done or Discard)
+  const closeClip = (action: (clipId: string) => Promise<void>) => async (clipId: string) => {
+    const clipsStep = planned("clips")
+    await action(clipId)
+    if (pending.length === 1 && clipsStep) markDone(clipsStep)
+  }
+
+  function conceptUnderstood(conceptId: string) {
+    const step = planned("concept", (s) => s.kind === "concept" && s.id === conceptId)
+    if (step) markDone(step)
+    home.conceptUnderstood(conceptId)
   }
 
   return (
@@ -78,8 +99,8 @@ export function HomeReview() {
                     index={index}
                     marks={marks[clip.id] ?? {}}
                     onToggle={(word) => home.toggle(clip.id, word)}
-                    onDone={home.finishClip}
-                    onDiscard={home.discardClip}
+                    onDone={closeClip(home.finishClip)}
+                    onDiscard={closeClip(home.discardClip)}
                   />
                 ))}
               </section>
@@ -93,7 +114,7 @@ export function HomeReview() {
             </div>
           )}
 
-          <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={home.conceptUnderstood} onTapWord={home.tapConceptWord} />
+          <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={conceptUnderstood} onTapWord={home.tapConceptWord} />
 
           {pending.length === 0 && (
             <section aria-label="Practice" className="flex flex-col gap-4">

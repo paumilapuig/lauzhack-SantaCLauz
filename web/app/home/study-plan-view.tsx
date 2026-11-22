@@ -5,10 +5,10 @@ import { StepChip } from "@/components/ui/step-chip"
 import { cn } from "@/lib/utils"
 import { PRESS } from "./exercises/controls"
 import type { PracticeModeItem } from "./practice-modes-list"
-import { planMinutes, type PlanStep } from "./study-plan"
+import { planMinutes, type PlanEntry, type PlanStep } from "./study-plan"
 
 type Props = {
-  steps: PlanStep[]
+  steps: PlanEntry[]
   modes: PracticeModeItem[]
   onClips: () => void
   onConcept: (id: string) => void
@@ -71,25 +71,28 @@ function AllDone() {
 /** Loop'd tells the student what to study next, in order, with a short time estimate. */
 export function StudyPlan(props: Props) {
   const { steps } = props
-  if (steps.length === 0) return <AllDone />
+  const todo = steps.filter((s) => !s.done).length
+  if (todo === 0 && steps.length === 0) return <AllDone />
   return (
     <section aria-labelledby="plan-title" className="flex flex-col gap-5 rounded-[24px] border border-border bg-card p-5 md:p-7">
       <header className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[12px] font-bold tracking-[0.06em] text-subtle uppercase">Today&apos;s plan</p>
           <h2 id="plan-title" className="text-[22px] leading-tight font-bold tracking-[-0.01em] text-heading">
-            Your next {plural(steps.length, "step")}
+            {todo === 0 ? "All done for today" : `Your next ${plural(todo, "step")}`}
           </h2>
         </div>
-        <p className="flex shrink-0 items-center gap-1.5 text-[14px] font-medium text-label-secondary tabular-nums">
-          <Clock aria-hidden className="size-4" />
-          About {planMinutes(steps)} min
-        </p>
+        {todo > 0 && (
+          <p className="flex shrink-0 items-center gap-1.5 text-[14px] font-medium text-label-secondary tabular-nums">
+            <Clock aria-hidden className="size-4" />
+            About {planMinutes(steps)} min
+          </p>
+        )}
       </header>
       <ol className="flex flex-col gap-2">
         {steps.map((step, index) => {
           const row = rowFor(step, props)
-          const next = index === 0
+          const next = !step.done && index === steps.length - todo
           return (
             <li key={`${step.kind}-${index}`} style={{ "--i": index } as React.CSSProperties} className="animate-rise">
               <button
@@ -98,25 +101,35 @@ export function StudyPlan(props: Props) {
                 className={cn(
                   "group flex w-full items-center gap-4 rounded-[16px] border-2 p-4 text-left",
                   PRESS,
-                  next ? "border-heading bg-card" : "border-transparent bg-fill hover:border-input",
+                  next && "border-heading bg-card",
+                  !next && !step.done && "border-transparent bg-fill hover:border-input",
+                  step.done && "border-transparent bg-card hover:bg-fill",
                 )}
               >
-                <StepChip number={index + 1} />
+                <StepChip number={index + 1} done={step.done} />
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-[17px] leading-snug font-bold text-heading">{row.title}</span>
-                  <span className="text-[15px] text-label-secondary">{row.why}</span>
+                  <span className={cn("text-[17px] leading-snug font-bold", step.done ? "text-subtle line-through decoration-2" : "text-heading")}>
+                    {row.title}
+                  </span>
+                  {!step.done && <span className="text-[15px] text-label-secondary">{row.why}</span>}
                 </span>
-                <span className="hidden shrink-0 text-[13px] font-medium text-subtle tabular-nums sm:inline">{row.minutes} min</span>
+                {step.done ? (
+                  <span className="shrink-0 rounded-full bg-primary-soft px-3 py-1 text-[13px] font-bold text-primary">Done</span>
+                ) : (
+                  <span className="hidden shrink-0 text-[13px] font-medium text-subtle tabular-nums sm:inline">{row.minutes} min</span>
+                )}
                 {next && (
                   <span className="hidden h-11 shrink-0 items-center gap-1.5 rounded-full bg-heading px-5 text-[15px] font-bold text-primary-foreground sm:inline-flex">
                     Start
                     <ArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5" />
                   </span>
                 )}
-                <ArrowRight
-                  aria-hidden
-                  className={cn("size-5 shrink-0 transition-transform group-hover:translate-x-0.5", next ? "text-heading sm:hidden" : "text-subtle")}
-                />
+                {!step.done && (
+                  <ArrowRight
+                    aria-hidden
+                    className={cn("size-5 shrink-0 transition-transform group-hover:translate-x-0.5", next ? "text-heading sm:hidden" : "text-subtle")}
+                  />
+                )}
               </button>
             </li>
           )

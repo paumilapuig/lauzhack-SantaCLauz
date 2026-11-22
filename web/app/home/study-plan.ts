@@ -7,11 +7,16 @@ export type PlanStep =
   | { kind: "concept"; id: string; concept: string; questions: number; minutes: number }
   | { kind: "practice"; modeId: string; words: PlanWord[]; minutes: number }
 
+/** A step in today's plan; `done` steps stay visible with a check so the student sees her progress. */
+export type PlanEntry = PlanStep & { done: boolean }
+
 type PlanInput = {
   clips: HomeClip[]
   concepts: ConceptGap[]
   words: WordToPractice[]
   isAvailable: (modeId: string) => boolean
+  /** steps finished today, oldest first */
+  completed: PlanStep[]
 }
 
 const MAX_CONCEPTS = 2
@@ -40,6 +45,13 @@ export function focusWords(words: WordToPractice[]): WordToPractice[] {
     .map(({ w }) => w)
 }
 
+/** Identifies a step across reloads: the same clips, idea or game is never offered twice in a day. */
+export function stepKey(step: PlanStep): string {
+  if (step.kind === "concept") return `concept:${step.id}`
+  if (step.kind === "practice") return `practice:${step.modeId}`
+  return "clips"
+}
+
 function practiceStep(words: WordToPractice[], isAvailable: (modeId: string) => boolean): PlanStep | null {
   const focus = focusWords(words)
   if (focus.length === 0) return null
@@ -50,16 +62,23 @@ function practiceStep(words: WordToPractice[], isAvailable: (modeId: string) => 
   return { kind: "practice", modeId, words: planWords, minutes: MINUTES.practice }
 }
 
-/** What to study today, in order: clips feed the word games, ideas come next, then practice the weakest words. */
-export function buildStudyPlan({ clips, concepts, words, isAvailable }: PlanInput): PlanStep[] {
-  const steps: PlanStep[] = []
-  if (clips.length > 0) steps.push({ kind: "clips", count: clips.length, minutes: clips.length * MINUTES.clip })
-  for (const gap of concepts.slice(0, MAX_CONCEPTS)) {
-    steps.push({ kind: "concept", id: gap.id, concept: gap.concept, questions: gap.exercises.length, minutes: MINUTES.concept })
+/**
+ * What to study today, in order: clips feed the word games, ideas come next, then practise the weakest words.
+ * Finished steps come first, checked; a finished game makes the plan suggest the next one.
+ */
+export function buildStudyPlan({ clips, concepts, words, isAvailable, completed }: PlanInput): PlanEntry[] {
+  const finished = new Set(completed.map(stepKey))
+  const todo: PlanStep[] = []
+  if (clips.length > 0) todo.push({ kind: "clips", count: clips.length, minutes: clips.length * MINUTES.clip })
+  for (const gap of concepts.filter((g) => !finished.has(`concept:${g.id}`)).slice(0, MAX_CONCEPTS)) {
+    todo.push({ kind: "concept", id: gap.id, concept: gap.concept, questions: gap.exercises.length, minutes: MINUTES.concept })
   }
-  const practice = practiceStep(words, isAvailable)
-  if (practice) steps.push(practice)
-  return steps
+  const practice = practiceStep(words, (id) => !finished.has(`practice:${id}`) && isAvailable(id))
+  if (practice) todo.push(practice)
+  const pending = new Set(todo.map(stepKey))
+  const done = completed.filter((step) => !pending.has(stepKey(step)))
+  return [...done.map((step) => ({ ...step, done: true })), ...todo.map((step) => ({ ...step, done: false }))]
 }
 
-export const planMinutes = (steps: PlanStep[]) => steps.reduce((total, step) => total + step.minutes, 0)
+/** Time left: finished steps do not count. */
+export const planMinutes = (steps: PlanEntry[]) => steps.filter((s) => !s.done).reduce((total, step) => total + step.minutes, 0)

@@ -12,6 +12,7 @@ vi.mock("./getHomeApi", () => ({ getHomeApi: () => api }))
 
 beforeEach(() => {
   api = createFakeHomeApi()
+  localStorage.clear()
 })
 afterEach(cleanup)
 
@@ -78,5 +79,21 @@ describe("HomeReview", () => {
     render(<HomeReview />)
     await screen.findByText("2 to review")
     expect(screen.getAllByText("A word you missed")).toHaveLength(2)
+  })
+
+  it("a finished game is checked off the plan and the next game is suggested", async () => {
+    render(<HomeReview />)
+    const plan = await screen.findByRole("region", { name: /Your next 3 steps/ })
+    fireEvent.click(within(plan).getByRole("button", { name: /Practise with Flashcards/ }))
+    while (screen.queryByText("Tap to see")) {
+      fireEvent.click(screen.getByText("Tap to see"))
+      fireEvent.click(screen.getByText("I knew it"))
+    }
+    fireEvent.click(await screen.findByRole("button", { name: "Back" }))
+    const updated = () => screen.getByRole("region", { name: /Your next 3 steps/ })
+    await waitFor(() => expect(within(updated()).getByRole("button", { name: /Practise with Pairs/ })).toBeTruthy())
+    const steps = within(updated()).getAllByRole("listitem")
+    expect(steps[0].textContent).toMatch(/Practise with Flashcards.*Done/)
+    expect(steps).toHaveLength(4)
   })
 })
