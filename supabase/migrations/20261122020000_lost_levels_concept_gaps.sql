@@ -1,5 +1,6 @@
 -- Additive (docs/API.md, PLAN › Decisions log Sat 21 23:00 and Sun 22 00:30):
--- text-only "lost" context, clip kinds, clip_marks, mark_level_changes, concept_gaps.
+-- text-only "lost" context, clip kinds, clip_marks word check, mark_level_changes, concept_gaps.
+-- clip_marks itself is created by 20261122010000_clip_marks.sql.
 -- The browser only reads; every write goes through the API (service_role).
 
 -- class_events: "Me he perdido" saves the last <= 60 s of transcript, no audio.
@@ -18,17 +19,9 @@ alter table public.clips
     check (kind in ('word', 'concept')),
   add column if not exists lemma text;
 
--- clip_marks: words the student marks at home on a clip.
-create table if not exists public.clip_marks (
-  student_id uuid not null references public.profiles (id) on delete cascade,
-  clip_id uuid not null references public.clips (id) on delete cascade,
-  word text not null check (word <> '' and word = lower(word)),
-  lemma text,
-  created_at timestamptz not null default now(),
-  primary key (student_id, clip_id, word)
-);
-
-create index if not exists clip_marks_clip_id_idx on public.clip_marks (clip_id);
+-- clip_marks.word is the lowercase surface form as tapped (docs/API.md).
+alter table public.clip_marks
+  add constraint clip_marks_word_lowercase check (word <> '' and word = lower(word));
 
 -- mark_level_changes: the -1 applied by the first mark of a lemma in a session, so an undo reverts it exactly.
 create table if not exists public.mark_level_changes (
@@ -66,22 +59,8 @@ create index if not exists concept_gaps_session_id_idx on public.concept_gaps (s
 create index if not exists concept_gaps_student_id_idx on public.concept_gaps (student_id);
 create index if not exists concept_gaps_lesson_id_idx on public.concept_gaps (lesson_id);
 
-alter table public.clip_marks enable row level security;
 alter table public.mark_level_changes enable row level security;
 alter table public.concept_gaps enable row level security;
-
-create policy "clip_marks: student reads own"
-  on public.clip_marks for select
-  to authenticated
-  using (student_id = (select auth.uid()));
-
-create policy "clip_marks: lesson teacher reads"
-  on public.clip_marks for select
-  to authenticated
-  using (exists (
-    select 1 from public.clips c
-    where c.id = clip_id and (select public.is_session_teacher(c.session_id))
-  ));
 
 create policy "mark_level_changes: student reads own"
   on public.mark_level_changes for select
@@ -99,11 +78,11 @@ create policy "concept_gaps: lesson teacher reads"
 
 -- Grants: start from nothing, because a local stack auto-grants new tables to anon/authenticated.
 revoke all on table
-  public.clip_marks, public.mark_level_changes, public.concept_gaps
+  public.mark_level_changes, public.concept_gaps
   from anon, authenticated;
 grant select on table
-  public.clip_marks, public.mark_level_changes, public.concept_gaps
+  public.mark_level_changes, public.concept_gaps
   to authenticated;
 grant all on table
-  public.clip_marks, public.mark_level_changes, public.concept_gaps
+  public.mark_level_changes, public.concept_gaps
   to service_role;
