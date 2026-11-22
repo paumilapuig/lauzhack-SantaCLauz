@@ -88,13 +88,13 @@ def test_fetch_level_returns_row_level_or_none():
     assert fetch_level(db, OTHER_STUDENT, "cellule") is None
 
 
-def test_insert_practice_result_stores_row_without_created_at():
+def test_insert_practice_result_stores_row_with_its_time():
     db = seed()
-    insert_practice_result(db, STUDENT, "cellule", CLIP, True)
+    insert_practice_result(db, STUDENT, "cellule", CLIP, True, NOW)
     (row,) = db.tables["practice_results"]
     assert (row["student_id"], row["lemma"], row["clip_id"], row["passed"]) == (
         STUDENT, "cellule", CLIP, True)
-    assert "created_at" not in row
+    assert row["created_at"] == NOW.isoformat()
 
 
 def test_upsert_level_creates_then_overwrites_with_last_seen():
@@ -190,3 +190,36 @@ def test_main_app_exposes_practice_and_keeps_me():
     paths = main.app.openapi()["paths"]
     assert "post" in paths["/api/practice"]
     assert "get" in paths["/api/me"]
+
+
+def test_a_second_pass_the_same_day_is_stored_but_does_not_level_up(role):
+    db = seed()
+    client = make_client(db)
+    first = submit(client, "mitochondrie", True).json()
+    second = submit(client, "mitochondrie", True).json()
+    assert first == {"lemma": "mitochondrie", "level": 1, "leveled_up": True}
+    assert second == {"lemma": "mitochondrie", "level": 1, "leveled_up": False}
+    assert [r["passed"] for r in db.tables["practice_results"]] == [True, True]
+    assert db.tables["word_mastery"][0]["level"] == 1
+
+
+def test_a_pass_on_an_earlier_day_does_not_block_today(role):
+    yesterday = {"student_id": STUDENT, "lemma": "mitochondrie", "clip_id": CLIP, "passed": True,
+                 "created_at": "2026-11-20T10:00:00+00:00"}
+    mastery = [{"student_id": STUDENT, "lemma": "mitochondrie", "level": 1}]
+    response = submit(make_client(seed(mastery=mastery, results=[yesterday])), "mitochondrie", True)
+    assert response.json() == {"lemma": "mitochondrie", "level": 2, "leveled_up": True}
+
+
+def test_another_students_pass_today_does_not_count(role):
+    other = {"student_id": OTHER_STUDENT, "lemma": "mitochondrie", "clip_id": None, "passed": True,
+             "created_at": datetime.now(UTC).isoformat()}
+    response = submit(make_client(seed(results=[other])), "mitochondrie", True)
+    assert response.json()["leveled_up"] is True
+
+
+def test_a_failed_try_today_does_not_block_a_pass():
+    from app import mastery
+    assert mastery.apply_practice(0, True, raised_today=False) == 1
+    assert mastery.apply_practice(0, True, raised_today=True) == 0
+    assert mastery.apply_practice(2, False, raised_today=False) == 2

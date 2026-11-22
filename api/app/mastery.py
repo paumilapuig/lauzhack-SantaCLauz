@@ -24,9 +24,9 @@ def apply_tap(level: int) -> int:
     return max(0, level - 1)
 
 
-def apply_practice(level: int, passed: bool) -> int:
-    """Passing a practice activity raises the level by 1, max 3."""
-    return min(MAX_LEVEL, level + 1) if passed else level
+def apply_practice(level: int, passed: bool, raised_today: bool = False) -> int:
+    """Passing a practice activity raises the level by 1 (max 3), at most once per word and day."""
+    return min(MAX_LEVEL, level + 1) if passed and not raised_today else level
 
 
 def apply_preview(level: int) -> int:

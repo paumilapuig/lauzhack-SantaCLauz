@@ -33,10 +33,12 @@ def submit_practice(body: PracticeIn, user: StudentUser, db: Db) -> PracticeOut:
     transparent = repo.find_term_transparent(db, body.lemma, lesson_id)
     if transparent is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Unknown lemma")
-    repo.insert_practice_result(db, user.id, body.lemma, clip_id, body.passed)
+    now = datetime.now(UTC)
+    raised_today = repo.passed_on_day(db, user.id, body.lemma, now)
+    repo.insert_practice_result(db, user.id, body.lemma, clip_id, body.passed, now)
     stored = repo.fetch_level(db, user.id, body.lemma)
     current = mastery.initial_level(transparent) if stored is None else stored
-    new_level = mastery.apply_practice(current, body.passed)
-    if body.passed:
-        repo.upsert_level(db, user.id, body.lemma, new_level, datetime.now(UTC))
+    new_level = mastery.apply_practice(current, body.passed, raised_today)
+    if new_level != current:
+        repo.upsert_level(db, user.id, body.lemma, new_level, now)
     return PracticeOut(lemma=body.lemma, level=new_level, leveled_up=new_level > current)
