@@ -182,3 +182,11 @@ def test_teacher_is_forbidden(role):
 
 def test_missing_token_is_401():
     assert submit(make_client(seed(), authenticated=False), "mitochondrie", True).status_code == 401
+
+
+def test_main_app_exposes_practice_and_keeps_me():
+    import app.main as main
+
+    paths = main.app.openapi()["paths"]
+    assert "post" in paths["/api/practice"]
+    assert "get" in paths["/api/me"]

@@ -152,3 +152,11 @@ def test_progress_teacher_is_forbidden(client_for, role):
 
 def test_progress_without_token_is_unauthorized(client_for):
     assert client_for(empty_db(), authenticated=False).get(URL).status_code == 401
+
+
+def test_main_app_exposes_progress_next_to_me():
+    import app.main as main
+
+    paths = main.app.openapi()["paths"]
+    assert "get" in paths["/api/me/progress"]
+    assert "get" in paths["/api/me"]
