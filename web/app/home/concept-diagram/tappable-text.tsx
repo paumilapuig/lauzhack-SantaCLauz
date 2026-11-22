@@ -15,10 +15,19 @@ export function TappableText({ text, saved, onTap, className }: Props) {
     <span lang="fr" className={className}>
       {splitWords(text).map((piece, index) =>
         piece.word ? (
-          <button
+          // a span, not a <button>: Chrome cannot start a text selection inside a button, and she may select a sentence
+          <span
             key={index}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={(event) => {
+              if (!globalThis.getSelection?.()?.isCollapsed) return // she is selecting a sentence
+              event.stopPropagation()
+              onTap(piece.word!, text)
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return
+              event.preventDefault()
               event.stopPropagation()
               onTap(piece.word!, text)
             }}
@@ -27,7 +36,7 @@ export function TappableText({ text, saved, onTap, className }: Props) {
             }`}
           >
             {piece.text}
-          </button>
+          </span>
         ) : (
           <span key={index}>{piece.text}</span>
         ),

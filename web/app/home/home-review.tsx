@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
+import type { ConceptGap } from "@/lib/student-contract"
 import { CheckBadge } from "@/components/ui/check-badge"
 import { useTodayLabel } from "@/components/page-title"
 import { StudentPage } from "@/components/student-page"
@@ -14,6 +16,8 @@ import { panelId, ReviewSwitch, tabId, type ReviewView } from "./review-switch"
 import { StudyPlan } from "./study-plan-view"
 import { buildStudyPlan, conceptStep, gamesPlayed, practiceDone } from "./study-plan"
 import { suggestedGame } from "./suggested-game"
+import { prepareTranslator } from "./translate/browser-translator"
+import { Translatable } from "./translate/translatable"
 import { usableWords } from "./usable-words"
 import { useHomeReview } from "./use-home-review"
 import { useCompletedSteps } from "./use-completed-steps"
@@ -27,6 +31,10 @@ const HINT: Record<ReviewView, (clipsLeft: number) => string> = {
     clipsLeft > 0 ? "Listen to the class again. Tap every word you didn't understand, then press Done." : "Your clips are done. Time to play with your words.",
   context: () => "Ideas from class, explained step by step. Then two quick questions.",
 }
+
+/** Spanish from the concept's own glossary, only for an exact entry ("respiration" is not "respiration cellulaire"). */
+const exactGloss = (text: string, concepts: ConceptGap[]) =>
+  concepts.flatMap((c) => c.explanation.flatMap((step) => step.words ?? [])).find((w) => w.fr.toLocaleLowerCase("fr") === text)?.es ?? null
 
 const scrollToSwitch = () => document.getElementById("review-switch")?.scrollIntoView({ behavior: "smooth", block: "start" })
 
@@ -66,8 +74,23 @@ export function HomeReview() {
     ? buildStudyPlan({ clips: pending, concepts, words: review.words_to_practice, isAvailable, completed })
     : []
 
-  function show(next: ReviewView) {
+  // the moment the last step of the day is checked off (not when she opens a finished day)
+  const todoLeft = plan.filter((step) => !step.done).length
+  const lastTodo = useRef<number | null>(null)
+  useEffect(() => {
+    if (!review) return
+    if (lastTodo.current !== null && lastTodo.current > 0 && todoLeft === 0) toast.success("Well done! Today's work is finished.")
+    lastTodo.current = todoLeft
+  }, [review, todoLeft])
+
+  // opening Context is a click: Chrome may download its French model now, before she taps a word
+  function changeView(next: ReviewView) {
+    if (next === "context") prepareTranslator()
     setView(next)
+  }
+
+  function show(next: ReviewView) {
+    changeView(next)
     scrollToSwitch()
   }
 
@@ -101,14 +124,16 @@ export function HomeReview() {
           <StudyPlan steps={plan} modes={PRACTICE_MODES} onClips={() => show("vocab")} onConcept={() => show("context")} onPractice={setOpenMode} />
 
           <div id="review-switch" className="flex scroll-mt-24 flex-col gap-4">
-            <ReviewSwitch value={view} counts={{ vocab: pending.length, context: concepts.length }} onChange={setView} />
+            <ReviewSwitch value={view} counts={{ vocab: pending.length, context: concepts.length }} onChange={changeView} />
             <p className="text-[16px] text-label-secondary">{HINT[view](pending.length)}</p>
           </div>
 
           <div role="tabpanel" id={panelId(view)} aria-labelledby={tabId(view)} key={view} className="animate-rise">
             {view === "context" ? (
               concepts.length > 0 ? (
-                <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={understood} onTapWord={home.tapConceptWord} />
+                <Translatable known={(text) => exactGloss(text, concepts)}>
+                  <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={understood} onTapWord={home.tapConceptWord} />
+                </Translatable>
               ) : (
                 <EmptyContext />
               )

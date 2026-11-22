@@ -68,6 +68,20 @@ function AllDone() {
   )
 }
 
+/** Every step of the day is finished: the plan header turns into a teal "Well done". */
+function WellDone({ done }: { done: number }) {
+  return (
+    <header role="status" className="flex animate-pop items-center gap-4 rounded-[16px] bg-primary p-5 text-primary-foreground">
+      <CheckBadge size="lg" tone="white" />
+      <div className="flex flex-col gap-0.5">
+        <p className="text-[12px] font-bold tracking-[0.06em] uppercase opacity-80">Today&apos;s plan</p>
+        <h2 id="plan-title" className="text-[24px] leading-tight font-bold tracking-[-0.01em]">Well done!</h2>
+        <p className="text-[15px] opacity-90">You finished {plural(done, "step")} today. Come back after your next class.</p>
+      </div>
+    </header>
+  )
+}
+
 /** Loop'd tells the student what to study next, in order, with a short time estimate. */
 export function StudyPlan(props: Props) {
   const { steps } = props
@@ -75,20 +89,22 @@ export function StudyPlan(props: Props) {
   if (steps.length === 0) return <AllDone />
   return (
     <section aria-labelledby="plan-title" className="flex flex-col gap-5 rounded-[24px] border border-border bg-card p-5 md:p-7">
-      <header className="flex items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <p className="text-[12px] font-bold tracking-[0.06em] text-subtle uppercase">Today&apos;s plan</p>
-          <h2 id="plan-title" className="text-[22px] leading-tight font-bold tracking-[-0.01em] text-heading">
-            {todo === 0 ? "All done for today" : `Your next ${plural(todo, "step")}`}
-          </h2>
-        </div>
-        {todo > 0 && (
+      {todo === 0 ? (
+        <WellDone done={steps.length} />
+      ) : (
+        <header className="flex items-end justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-[12px] font-bold tracking-[0.06em] text-subtle uppercase">Today&apos;s plan</p>
+            <h2 id="plan-title" className="text-[22px] leading-tight font-bold tracking-[-0.01em] text-heading">
+              Your next {plural(todo, "step")}
+            </h2>
+          </div>
           <p className="flex shrink-0 items-center gap-1.5 text-[14px] font-medium text-label-secondary tabular-nums">
             <Clock aria-hidden className="size-4" />
             About {planMinutes(steps)} min
           </p>
-        )}
-      </header>
+        </header>
+      )}
       <ol className="flex flex-col gap-2">
         {steps.map((step, index) => {
           const row = rowFor(step, props)

@@ -125,8 +125,13 @@ Enunciats oficials dels sponsors (diumenge al matí). Un deck i un guió per rep
 ## Limitacions conegudes (honestes)
 - Una paraula groga que l'alumna mai marca no puja de nivell sola: només es practica el que es marca.
 - Els exercicis d'un concepte són sempre els mateixos en repetir.
+- **Traduir a Context** (0 crides a l'LLM): clicar una paraula o seleccionar una frase la tradueix amb el traductor
+  integrat de Chrome (`Translator`, francès → espanyol, al dispositiu; API del navegador, cap llibreria). Primer el
+  glossari del concepte si té l'entrada exacta. Chrome baixa el model la primera vegada (~30 s): comença en obrir
+  la pestanya Context.
 - Sense `OPENROUTER_API_KEY` a la màquina de l'API no hi ha resums ni traduccions (no hi ha cap error visible).
-- Cal Chrome a classe (Web Speech API) i xarxa per desar clips.
+- Cal Chrome a classe (Web Speech API) i xarxa per desar clips. Traduir a Context també necessita Chrome (138+);
+  en un altre navegador surt «No translation yet» i la resta funciona.
 
 ## Novelty (LauzHack rule 30)
 - **Base de partida**: kit de l'equip (configs de Claude Code, agents/comandes, esquelet d'auth + DB: login Supabase,
