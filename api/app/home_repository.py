@@ -59,7 +59,7 @@ def fetch_lesson_terms(db: Client, lesson_ids: list[str]) -> list[dict]:
 def fetch_clip_marks(db: Client, student_id: str) -> list[dict]:
     result = (
         db.table("clip_marks")
-        .select("clip_id, word, lemma, created_at")
+        .select("clip_id, word, lemma, translation_es, definition_fr, created_at")
         .eq("student_id", student_id)
         .order("created_at", desc=True)
         .execute()

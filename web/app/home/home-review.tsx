@@ -6,6 +6,7 @@ import { useTodayLabel } from "@/components/page-title"
 import { StudentPage } from "@/components/student-page"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { ClipCard } from "./clip-card"
+import { ConceptsSection } from "./concepts-section"
 import { PRACTICE_MODES } from "./practice-modes"
 import { PracticeModesGrid } from "./practice-modes-grid"
 import { PracticeModesList, type PracticeModeItem } from "./practice-modes-list"
@@ -16,7 +17,8 @@ const DONE_BUTTON =
   "inline-flex h-11 items-center gap-2 self-end rounded-full bg-charcoal px-5 text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-subtle)] transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
 
 export function HomeReview() {
-  const { review, marks, words, failed, toggle, finishClip, savePractice } = useHomeReview()
+  const { review, marks, words, concepts, failed, toggle, finishClip, savePractice, answerConcept, conceptUnderstood } =
+    useHomeReview()
   const [openMode, setOpenMode] = useState<string | null>(null)
   const [finishing, setFinishing] = useState<string | null>(null)
   const today = useTodayLabel()
@@ -51,7 +53,11 @@ export function HomeReview() {
         <p role="alert" className="text-[19px]">Your clips could not be loaded. Is the server running?</p>
       ) : !review ? (
         <p className="text-[19px] text-label-secondary">Loading…</p>
-      ) : pending.length === 0 ? (
+      ) : null}
+
+      {review && <ConceptsSection concepts={concepts} onAnswer={answerConcept} onUnderstood={conceptUnderstood} />}
+
+      {failed || !review ? null : pending.length === 0 ? (
         <section aria-label="Practice">
           <PracticeModesGrid modes={PRACTICE_MODES} wordCount={wordCount} onOpen={setOpenMode} />
         </section>

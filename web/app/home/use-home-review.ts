@@ -46,6 +46,15 @@ export function useHomeReview() {
   }
 
   const words = (review?.words_to_practice ?? []).map(toMyWord)
+  const concepts = review?.concepts_to_learn ?? []
+
+  const answerConcept = (conceptId: string, answers: number[]) => api.answerConcept(conceptId, answers)
+
+  function conceptUnderstood(conceptId: string) {
+    setReview((current) =>
+      current && { ...current, concepts_to_learn: (current.concepts_to_learn ?? []).filter((c) => c.id !== conceptId) },
+    )
+  }
 
   function savePractice(results: ExerciseResult[]) {
     for (const { lemma, passed } of results) {
@@ -55,5 +64,5 @@ export function useHomeReview() {
     }
   }
 
-  return { review, marks, words, failed, toggle, finishClip, savePractice }
+  return { review, marks, words, concepts, failed, toggle, finishClip, savePractice, answerConcept, conceptUnderstood }
 }

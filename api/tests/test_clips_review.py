@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import app.roles as roles
+import app.routers.clips_review as clips_review
 from app.auth import get_current_user
 from app.db import get_supabase
 from app.routers.clips_review import router
@@ -24,7 +25,14 @@ def db():
 
 
 @pytest.fixture
-def client(db, monkeypatch):
+def translated(monkeypatch):
+    calls = []
+    monkeypatch.setattr(clips_review, "translate_clip_marks", lambda db, clip_id, student_id, settings: calls.append(clip_id) or 0)
+    return calls
+
+
+@pytest.fixture
+def client(db, monkeypatch, translated):
     monkeypatch.setattr(roles, "fetch_profile", lambda user_id: Profile(display_name=None, role="student"))
     app = FastAPI()
     app.include_router(router)
@@ -53,3 +61,13 @@ def test_requires_token(db):
     app.include_router(router)
     app.dependency_overrides[get_supabase] = lambda: db
     assert TestClient(app).post(f"/api/clips/{CLIP}/reviewed").status_code == 401
+
+
+def test_done_translates_the_clip_marks(client, translated):
+    assert client.post(f"/api/clips/{CLIP}/reviewed").status_code == 200
+    assert translated == [CLIP]
+
+
+def test_foreign_clip_translates_nothing(client, translated):
+    client.post(f"/api/clips/{FOREIGN_CLIP}/reviewed")
+    assert translated == []

@@ -15,7 +15,7 @@ const ROUND = "flex items-center justify-center rounded-full bg-primary text-pri
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const PILL = `inline-flex h-11 touch-manipulation items-center justify-center rounded-full px-6 text-[17px] font-semibold transition-[background-color,opacity] ${FOCUS}`;
 
-type Props = { word: { lemma: string; translation_es: string; key_phrase: string; clip_id: string | null }; onDone: (lemma: string) => void; onExit: () => void };
+type Props = { word: { lemma: string; glossary_lemma?: string | null; translation_es: string; key_phrase: string; clip_id: string | null }; onDone: (lemma: string) => void; onExit: () => void };
 
 export function PracticeFlow({ word, onDone, onExit }: Props) {
   const [step, setStep] = useState(0);
@@ -60,10 +60,15 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
     const heard = await listening.result;
     if (!mounted.current) return;
     setListening(false);
+    const message = heard && heardMatches(heard, word.lemma) ? "Well done!" : "We didn't hear you well, we'll count it.";
+    if (word.glossary_lemma === null) {
+      setHeardMessage(message); // outside the glossary: nothing to level up on the server
+      return;
+    }
     try {
-      const result = await getHomeApi().practice({ lemma: word.lemma, clip_id: word.clip_id, passed: true });
+      const result = await getHomeApi().practice({ lemma: word.glossary_lemma ?? word.lemma, clip_id: word.clip_id, passed: true });
       if (!mounted.current) return;
-      setHeardMessage(heard && heardMatches(heard, word.lemma) ? "Well done!" : "We didn't hear you well, we'll count it.");
+      setHeardMessage(message);
       setLevel(result.level);
     } catch {
       if (mounted.current) setSaveFailed(true);
@@ -124,7 +129,7 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
               </span>
               <p role="status" className="text-[17px] text-label-secondary">{heardMessage}</p>
               {outcome && <p lang="fr" className="text-[28px] font-semibold tracking-[-0.02em]">{outcome}</p>}
-              {outcome && (
+              {(outcome || word.glossary_lemma === null) && (
                 <button type="button" onClick={() => onDone(word.lemma)} className={`${PILL} mt-4 bg-primary text-primary-foreground hover:opacity-90`}>
                   Back
                 </button>
@@ -139,7 +144,7 @@ export function PracticeFlow({ word, onDone, onExit }: Props) {
                   {listening && <span aria-hidden className="absolute inset-0 rounded-full bg-primary/30 motion-safe:animate-ping" />}
                   <Mic aria-hidden className="relative size-8" />
                 </span>
-                <span aria-live="polite">{listening ? "Listening…" : "Hablar"}</span>
+                <span aria-live="polite">{listening ? "Listening…" : "Speak"}</span>
               </button>
             </div>
           ))}

@@ -1,4 +1,5 @@
 import type {
+  ConceptAnswerResult,
   HomeReview,
   MarkResult,
   PracticeRequest,
@@ -15,6 +16,7 @@ export interface HomeApi {
   finishClip(clipId: string): Promise<void>;
   practice(request: PracticeRequest): Promise<PracticeResponse>;
   progress(): Promise<{ messages: ProgressMessage[] }>;
+  answerConcept(conceptId: string, answers: number[]): Promise<ConceptAnswerResult>;
 }
 
 type Request = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -32,6 +34,7 @@ export function createHttpHomeApi(request: Request): HomeApi {
     },
     practice: (body) => request<PracticeResponse>("/api/practice", post(body)),
     progress: () => request<{ messages: ProgressMessage[] }>("/api/me/progress"),
+    answerConcept: (conceptId, answers) => request<ConceptAnswerResult>(`/api/concepts/${conceptId}/answers`, post({ answers })),
   };
 }
 

@@ -103,4 +103,19 @@ describe("createAudioRingRecorder", () => {
     r.stop();
     expect(alive()).toHaveLength(0);
   });
+  it("stamps the clip at the press and never reports more than the window, even if the recorder is slow", async () => {
+    const r = build();
+    r.start();
+    advance(14);
+    const slow = vi.spyOn(FakeRecorder.prototype, "requestData").mockImplementation(function (this: FakeRecorder) {
+      setTimeout(() => this.ondataavailable?.({ data: new Blob(["late"]) }), 8000);
+    });
+    const pressedAt = nowMs / 1000;
+    const pending = r.clip();
+    advance(8);
+    const clip = await pending;
+    slow.mockRestore();
+    expect(clip.tEnd).toBe(pressedAt);
+    expect(clip.tEnd - clip.tStart).toBeLessThanOrEqual(15);
+  });
 });

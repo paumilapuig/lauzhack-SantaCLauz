@@ -112,6 +112,9 @@ export function createFakeHomeApi(): HomeApi {
       levels.set(lemma, level);
       return { lemma, level, leveled_up: level > current };
     },
+    async answerConcept(_conceptId, answers) {
+      return { correct: answers.map(() => true), status: "understood" };
+    },
     async progress() {
       return {
         messages: [

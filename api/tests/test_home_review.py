@@ -215,3 +215,11 @@ def test_other_students_marks_are_not_listed(client_for):
     db = seed([make_clip(1), other],
               marks=[make_mark(2, student=OTHER_STUDENT), make_mark(1, "salut", None)])
     assert [w["word"] for w in get_words(client_for, db)] == ["salut"]
+
+
+def test_out_of_glossary_word_uses_its_stored_translation(client_for):
+    marks = [{"student_id": STUDENT, "clip_id": clip_id(1), "word": "sang", "lemma": None,
+              "translation_es": "sangre", "definition_fr": "Liquide rouge.", "created_at": "2026-11-15T10:01:00+00:00"}]
+    db = seed([make_clip(1, transcript="Le sang circule.")], marks=marks)
+    (word,) = get_review(client_for, db)["words_to_practice"]
+    assert (word["word"], word["lemma"], word["translation_es"], word["definition_fr"]) == ("sang", None, "sangre", "Liquide rouge.")

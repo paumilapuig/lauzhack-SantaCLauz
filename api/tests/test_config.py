@@ -26,3 +26,7 @@ def test_resolved_model_uses_override():
     settings = Settings(_env_file=None, openrouter_model="vendor/custom-model")
 
     assert settings.resolved_model() == "vendor/custom-model"
+
+
+def test_default_model_is_open_weights():
+    assert DEFAULT_OPENROUTER_MODEL == "meta-llama/llama-3.3-70b-instruct"

@@ -37,6 +37,7 @@ def test_one_post_with_url_auth_model_and_image_parts():
     assert body["messages"][0]["content"] == [image]
     assert body["response_format"] == {"type": "json_object"}
     assert body["usage"] == {"include": True}
+    assert body["provider"] == {"require_parameters": True}  # only providers that honour JSON mode
 
 
 def test_returns_content_and_usage_with_cost():
