@@ -19,7 +19,7 @@ const DISCARD_BUTTON =
   "inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-[15px] font-bold text-label transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
 
 export function HomeReview() {
-  const { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood } =
+  const { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood, tapConceptWord } =
     useHomeReview()
   const [openMode, setOpenMode] = useState<string | null>(null)
   const [finishing, setFinishing] = useState<string | null>(null)
@@ -57,7 +57,7 @@ export function HomeReview() {
         <p className="text-[19px] text-label-secondary">Loading…</p>
       ) : null}
 
-      {review && <ConceptsSection concepts={concepts} onAnswer={answerConcept} onUnderstood={conceptUnderstood} />}
+      {review && <ConceptsSection concepts={concepts} onAnswer={answerConcept} onUnderstood={conceptUnderstood} onTapWord={tapConceptWord} />}
 
       {failed || !review ? null : pending.length === 0 ? (
         <section aria-label="Practice">

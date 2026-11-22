@@ -17,6 +17,7 @@ from .routers import (
     teacher,
 )
 from .routers.concepts import router as concepts_router
+from .routers.concept_words import router as concept_words_router
 from .routers.lessons import router as lessons_router
 from .schemas import Health, Me
 
@@ -39,6 +40,7 @@ app.include_router(clips_marks.router)
 app.include_router(clips_review.router)
 app.include_router(home.router)
 app.include_router(concepts_router)
+app.include_router(concept_words_router)
 app.include_router(teacher.router)
 app.include_router(practice.router)
 app.include_router(progress.router)

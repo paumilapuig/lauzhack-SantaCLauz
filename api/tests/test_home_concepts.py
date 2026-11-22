@@ -65,7 +65,7 @@ def test_newest_first_with_lesson_title_and_shape(client_for):  # noqa: F811
     assert first["lesson_title"] == "La cellule"
     assert first["status"] == "pending"
     assert first["lemmas"] == ["mitochondrie"]
-    assert first["explanation"] == [STEP]
+    assert first["explanation"] == [{**STEP, "nodes": [], "links": [], "words": []}]
 
 
 def test_words_and_clips_are_unchanged_by_gaps(client_for):  # noqa: F811
@@ -76,3 +76,18 @@ def test_words_and_clips_are_unchanged_by_gaps(client_for):  # noqa: F811
 
 def test_student_without_gaps_gets_empty_list(client_for):  # noqa: F811
     assert home_with(client_for, [])["concepts_to_learn"] == []
+
+
+def test_a_diagram_step_reaches_the_student_with_from_as_key():
+    from app.home_schemas import ConceptStep
+
+    step = ConceptStep.model_validate({
+        "fr": "Le glucose entre dans la cellule.", "es": "La glucosa entra en la célula.",
+        "nodes": [{"id": "glucose", "fr": "Glucose", "kind": "input", "inside": None}],
+        "links": [{"from": "glucose", "to": "glucose", "fr": "entre"}],
+        "words": [{"fr": "entre", "es": "entra"}],
+    })
+
+    dumped = step.model_dump(by_alias=True)
+    assert dumped["links"][0]["from"] == "glucose"
+    assert dumped["visual"] == ""

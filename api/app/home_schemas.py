@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.lost_concepts.schema import ConceptStep
+
 
 class ReviewClip(BaseModel):
     id: str
@@ -25,13 +27,7 @@ class WordToPractice(BaseModel):
     definition_fr: str | None
     key_phrase: str
     level: int | None
-    clip_id: str
-
-
-class ConceptStep(BaseModel):
-    fr: str
-    es: str
-    visual: str
+    clip_id: str | None
 
 
 class ConceptExerciseForStudent(BaseModel):

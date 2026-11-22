@@ -22,7 +22,12 @@ export type WordToPractice = {
 
 export type MarkResult = { word: string; lemma: string | null; translation_es: string | null; level: number | null };
 
-export type ConceptStep = { fr: string; es: string; visual: string };
+export type DiagramNode = { id: string; fr: string; kind: "input" | "process" | "output" | "place"; inside: string | null };
+export type DiagramLink = { from: string; to: string; fr: string | null };
+export type WordGloss = { fr: string; es: string };
+/** docs/API.md › Concept gaps: older rows have no nodes/links/words, newer ones have no visual. */
+export type ConceptStep = { fr: string; es: string; visual?: string; nodes?: DiagramNode[]; links?: DiagramLink[]; words?: WordGloss[] };
+export type ConceptWordResult = { word: string; lemma: string | null; translation_es: string | null; level: number | null };
 export type ConceptQuestion = { question: string; options: string[] };
 export type ConceptGap = {
   id: string;

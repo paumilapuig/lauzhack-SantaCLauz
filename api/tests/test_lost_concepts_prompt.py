@@ -30,8 +30,14 @@ def test_messages_contain_every_moment_number_transcript_and_lemma():
 
 
 def test_system_prompt_asks_for_the_concept_gap_shape():
-    for expected in ('"concepts"', '"moments"', '"explanation"', '"visual"', '"exercises"', '"answer"'):
+    for expected in ('"concepts"', '"moments"', '"explanation"', '"nodes"', '"links"', '"words"', '"kind"',
+                     '"inside"', '"exercises"', '"answer"', "EXACTLY ONE option"):
         assert expected in SYSTEM_PROMPT
+
+
+def test_system_prompt_no_longer_asks_for_emoji():
+    assert '"visual"' not in SYSTEM_PROMPT
+    assert "Do not use emoji" in SYSTEM_PROMPT
 
 
 def test_select_keeps_the_most_recent_moments_and_renumbers_them():

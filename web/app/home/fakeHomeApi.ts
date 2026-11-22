@@ -1,5 +1,6 @@
 import type { HomeReview, MarkResult, WordToPractice } from "@/lib/student-contract";
 import type { HomeApi } from "./homeApi";
+import { FAKE_CONCEPT, FAKE_CONCEPT_ANSWERS, fakeConceptWord } from "./fakeConcept";
 
 // Demo data for when the web runs without the API (NEXT_PUBLIC_CLASS_API is not "http").
 const FAKE_REVIEW: HomeReview = {
@@ -56,6 +57,7 @@ const FAKE_REVIEW: HomeReview = {
       clip_id: null,
     },
   ],
+  concepts_to_learn: [FAKE_CONCEPT],
 };
 
 const DICTIONARY: Record<string, string> = {
@@ -113,7 +115,13 @@ export function createFakeHomeApi(): HomeApi {
       return { lemma, level, leveled_up: level > current };
     },
     async answerConcept(_conceptId, answers) {
-      return { correct: answers.map(() => true), status: "understood" };
+      const correct = answers.map((answer, i) => answer === FAKE_CONCEPT_ANSWERS[i]);
+      const status = correct.every(Boolean) ? "understood" : "review";
+      if (status === "understood") review.concepts_to_learn = [];
+      return { correct, status };
+    },
+    async markConceptWord(_conceptId, word) {
+      return fakeConceptWord(word);
     },
     async progress() {
       return {

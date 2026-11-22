@@ -1,6 +1,6 @@
 """Shapes of the concept-gap path (docs/API.md › Concept gaps)."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
@@ -32,12 +32,41 @@ class LostMoment(BaseModel):
     transcript: str
 
 
+class DiagramNode(BaseModel):
+    """A box of the concept's process diagram; `kind` picks its shape and colour in the client."""
+
+    id: str
+    fr: str
+    kind: Literal["input", "process", "output", "place"]
+    inside: str | None = None
+
+
+class DiagramLink(BaseModel):
+    """An arrow between two boxes, with an optional short French label."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    from_: str = Field(alias="from", serialization_alias="from")
+    to: str
+    fr: str | None = None
+
+
+class WordGloss(BaseModel):
+    """Spanish for one harder French word of a step, shown when the student taps it."""
+
+    fr: str
+    es: str
+
+
 class ConceptStep(BaseModel):
-    """One step of the visual explanation, animated one at a time by the client."""
+    """One step of the explanation: text plus what it adds to the diagram (cleaned by `diagram.py`)."""
 
     fr: _text(MAX_STEP_FR_CHARS)
     es: _text(MAX_STEP_ES_CHARS)
-    visual: _text(MAX_VISUAL_CHARS)
+    visual: Annotated[str, StringConstraints(strip_whitespace=True, max_length=MAX_VISUAL_CHARS)] = ""
+    nodes: list[DiagramNode] = []
+    links: list[DiagramLink] = []
+    words: list[WordGloss] = []
 
 
 class ConceptExercise(BaseModel):
