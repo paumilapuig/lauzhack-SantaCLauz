@@ -106,14 +106,13 @@ ja demana les frases clau a l'LLM, però no es desen; falten taula, `GET /api/le
   Llama 3.3 70B si es vol pes obert per al text).
 
 ## Reptes (challenges) que presentem
-Enunciats oficials: la web de LauzHack només llista els sponsors (IMC, Scholé AI, AXA); el que hi ha aquí són les notes
-de l'equip dels estands + la regla 30 (novetat explícita). Guió de demo per a cada repte: `docs/demo/pitch.md`.
+Enunciats oficials dels sponsors (diumenge al matí). Un deck i un guió per repte: `docs/demo/pitch.md`.
 
-| Repte | Què volen escoltar | Com hi encaixem |
+| Repte | Criteris oficials | Com hi encaixem |
 |---|---|---|
-| **Scholé AI** (educació) | creativitat, adaptabilitat, usabilitat, **no un xat**, saber si algú ha après | model de domini per alumna i paraula (*knowledge tracing* explicable), dos camins d'aprenentatge (paraules i conceptes), cap xat, evidència d'aprenentatge = nivells + autonomia setmanal |
-| **IMC Tech for Good** | que funcioni, impacte social, demo en directe, una ONG d'educació/inclusió | joves nouvinguts en risc d'orientació a una via menys exigent; demo de punta a punta; l'autonomia mesura l'impacte; candidates per presentar-ho: associacions d'acollida i escolarització de joves migrants a Vaud (a confirmar a l'estand d'IMC) |
-| **AXA — Frugal use of Multimodal AI** | app web real, arquitectura pròpia, frugalitat, res de *slop* | entrada multimodal (veu, àudio, text, PDF, foto); 0 crides a classe; 1 per lliçó; ≤ 1 (+1 reintent) per sessió; reconeixement de veu al navegador; models barats i intercanviables; costos mesurats |
+| **Scholé AI** — experiència d'aprenentatge memorable | creativitat · adaptabilitat · usabilitat; **cap xatbot**; imatge de l'alumne (context, eleccions, respostes) que canvia el que ve després; les seves preguntes 01–04 | nivell per alumna i paraula (*knowledge tracing* explicable, ubicació per cognats), dos camins (paraules i conceptes), cada error canvia la pràctica següent, la IA treballa d'amagat, mai un xat |
+| **IMC — IMCHANGE: Tech for Good** (Learning · Inclusion) | solució tècnica (funciona?) · impacte (a qui ajuda i quant) · presentació (demo en directe), 1–10 cadascun; premi per a una ONG registrada, apolítica, de joventut/educació/inclusió | el seu *idea starter* és «live lecture captions»; demo de punta a punta; autonomia setmanal per alumna; premi per a **Open Cultural Center** (openculturalcenter.org; cal confirmar «apolítica» a l'estand) |
+| **AXA — Frugal use of Multimodal AI** | app real (slides = 0, web app = 1, app polida = 2) · anti-*slop* · problema · repte tècnic · **frugalitat** · treball en equip · presentació | text + imatge (foto del llibre) + so; cada modalitat a text de la manera més barata; 0 crides a classe; < 2 cèntims per lliçó per a 25 alumnes, mesurat |
 
 ## Scope
 - **Fet (MUST)**: F0 + F1 + F2 + F4; lliçó de demo de biologia (respiració cel·lular); 3 usuaris de demo:
