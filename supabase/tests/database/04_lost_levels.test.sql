@@ -87,7 +87,8 @@ select throws_ok(
 
 -- deleting a session or a clip cleans up
 delete from public.clips where id = '00000000-0000-0000-0000-0000000000d1';
-select is((select count(*)::int from public.clip_marks), 0, 'deleting a clip deletes its marks');
+select is((select count(*)::int from public.clip_marks where clip_id = '00000000-0000-0000-0000-0000000000d1'), 0,
+  'deleting a clip deletes its marks');
 
 -- RLS + grants: the browser only reads; writes go through the API (service_role)
 select ok((select relrowsecurity from pg_class where oid = 'public.clip_marks'::regclass),
