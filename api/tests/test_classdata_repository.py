@@ -7,7 +7,7 @@ L1_LEMMAS = ["mitochondrie", "déchet", "chaleur"]
 def test_list_lessons_newest_first():
     lessons = repo.list_lessons(seeded_fake())
     assert [lesson["id"] for lesson in lessons] == [L1, L0]
-    assert set(lessons[0]) == {"id", "title", "subject", "lesson_date"}
+    assert set(lessons[0]) == {"id", "title", "subject", "lesson_date", "course_id"}
 
 
 def test_get_lesson_returns_row_or_none():

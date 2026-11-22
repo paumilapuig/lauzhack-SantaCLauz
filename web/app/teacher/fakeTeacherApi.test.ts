@@ -20,3 +20,33 @@ describe("createFakeTeacherApi (demo mode, no server)", () => {
     expect((await api.getDashboard(created.lesson_id)).lesson.title).toBe("Photosynthèse");
   });
 });
+
+describe("createFakeTeacherApi courses", () => {
+  it("starts with a demo course that holds the demo lesson", async () => {
+    const api = createFakeTeacherApi();
+    const [course] = await api.listCourses();
+    expect(course.lesson_count).toBe(1);
+    expect((await api.listLessons()).find((l) => l.id === DEMO_LESSON_ID)?.course_id).toBe(course.id);
+  });
+
+  it("creates a course, adds a lesson to it and counts it", async () => {
+    const api = createFakeTeacherApi();
+    const bio = await api.createCourse("  Biologie 1re ");
+    expect(bio).toMatchObject({ name: "Biologie 1re", lesson_count: 0 });
+    const created = await api.createLessonFromText({ title: "La cellule", subject: "Biologie", lesson_date: "2026-11-24", course_id: bio.id }, "texte");
+    expect((await api.listLessons()).find((l) => l.id === created.lesson_id)?.course_id).toBe(bio.id);
+    expect((await api.listCourses()).find((c) => c.id === bio.id)?.lesson_count).toBe(1);
+  });
+
+  it("moves a lesson out of its course and into another", async () => {
+    const api = createFakeTeacherApi();
+    const bio = await api.createCourse("Biologie 1re");
+    expect(await api.moveLesson(DEMO_LESSON_ID, bio.id)).toEqual({ id: DEMO_LESSON_ID, course_id: bio.id });
+    await api.moveLesson(DEMO_LESSON_ID, null);
+    expect((await api.listLessons()).find((l) => l.id === DEMO_LESSON_ID)?.course_id).toBeNull();
+  });
+
+  it("rejects a blank course name like the API (422)", async () => {
+    await expect(createFakeTeacherApi().createCourse("   ")).rejects.toMatchObject({ status: 422 });
+  });
+});

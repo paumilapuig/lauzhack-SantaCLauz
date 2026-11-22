@@ -10,14 +10,14 @@ from ..db import get_supabase
 from ..mastery import initial_level
 from ..roles import StudentUser
 from . import classdata_repository as repo
-from .classdata_schemas import ClassPack, LessonSummary, LessonTerm
+from .classdata_schemas import ClassPack, LessonListItem, LessonSummary, LessonTerm
 
 router = APIRouter(prefix="/api/lessons", tags=["classdata"])
 
 SupabaseClient = Annotated[Client, Depends(get_supabase)]
 
 
-@router.get("", response_model=list[LessonSummary])
+@router.get("", response_model=list[LessonListItem])
 def list_lessons(_user: AuthenticatedUser, client: SupabaseClient) -> list[dict]:
     return repo.list_lessons(client)
 

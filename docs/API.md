@@ -48,7 +48,8 @@ RLS principle: a student sees only her rows; a teacher sees rows linked to her/h
 | Table | Columns | RLS |
 |---|---|---|
 | profiles | id uuid PK → auth.users, display_name text, **role text check in ('student','teacher') default 'student'**, **l1 text default 'es'**, **level text check in ('A1','A2','B1') default 'A1'**, created_at | own row read/update; teachers can read all profiles |
-| lessons | id uuid PK, teacher_id uuid → profiles, title text, subject text, lesson_date date, source_text text, created_at timestamptz | all authenticated read; teacher insert/update own |
+| courses | id uuid PK, teacher_id uuid → profiles on delete cascade, name text not null (1–80 chars, e.g. "Biologie 1re"), created_at timestamptz — a teacher's group of lessons | teacher read/insert/update own |
+| lessons | id uuid PK, teacher_id uuid → profiles, title text, subject text, lesson_date date, source_text text, **course_id uuid null → courses on delete set null** (null = not in a course), created_at timestamptz | all authenticated read; teacher insert/update own |
 | lesson_terms | id uuid PK, lesson_id uuid → lessons on delete cascade, lemma text, forms text[], translation_es text, definition_fr text, transparent bool, key_phrase text; unique(lesson_id, lemma) | all authenticated read; lesson's teacher write |
 | word_mastery | student_id uuid → profiles, lemma text, level int check 0–3, times_tapped int default 0, last_seen_at timestamptz; **PK (student_id, lemma)** | student own rows |
 | class_sessions | id uuid PK, lesson_id uuid → lessons, student_id uuid → profiles, started_at timestamptz default now() | student own; lesson's teacher read |
@@ -70,8 +71,8 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 |---|---|---|---|---|---|
 | GET | /health | – | – | `{ "ok": true }` | A |
 | GET | /api/me | any | – | `{ "id", "email", "display_name", "role" }` | A |
-| GET | /api/lessons | any | – | `[{ "id", "title", "subject", "lesson_date" }]` newest first | A |
-| POST | /api/lessons | teacher | JSON `{ "title", "subject", "lesson_date", "source_text" }` **or** multipart `title, subject, lesson_date, file` (txt / PDF / png / jpg, max 10 MB) | `{ "lesson_id", "terms": LessonTerm[] }` | B |
+| GET | /api/lessons | any | – | `[{ "id", "title", "subject", "lesson_date", "course_id": uuid\|null }]` newest first | A |
+| POST | /api/lessons | teacher | JSON `{ "title", "subject", "lesson_date", "source_text", "course_id"?: uuid }` **or** multipart `title, subject, lesson_date, file, course_id?` (txt / PDF / png / jpg, max 10 MB) — `course_id` optional; when sent it must be one of the teacher's courses (`422 Unknown course`, checked **before** the LLM call) | `{ "lesson_id", "terms": LessonTerm[] }` | B (`course_id`: A) |
 | GET | /api/lessons/{id}/class-pack | student | – | ClassPack (below) | A |
 | POST | /api/sessions | student | `{ "lesson_id" }` | `{ "session_id" }` | A |
 | POST | /api/sessions/{id}/events | student | `{ "t_sec": 100.0, "type": "lost", "lemma": null, "context": { "t_start": 40.0, "transcript": "…" } }` — see [Lost event](#lost-event--post-apisessionsidevents) | `{ "ok": true }` | A |
@@ -83,6 +84,9 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | GET | /api/home/review | student | – | HomeReview (below) | B |
 | POST | /api/practice | student | `{ "lemma", "clip_id": uuid\|null, "passed": bool }` | `{ "lemma", "level": int, "leveled_up": bool }` | B |
 | GET | /api/me/progress | student | – | `{ "messages": [{ "kind": "learned_this_week"\|"no_help_needed"\|"keep_going", "text": str }], "words": [{ "lemma", "translation_es": str\|null, "level": 0–3 }], "week": [{ "date": "YYYY-MM-DD", "practised": bool }] }` — **never percentages or numbers out of a total**; texts are in English (e.g. "This week you learned 12 new words"). `words` = every glossary word she marked in a clip or practised, once each (marked ones first, newest first), with her level and the glossary's Spanish (her word garden). `week` = Monday → Sunday of the current week (UTC), `practised` when she finished at least one practice that day | B |
+| GET | /api/teacher/courses | teacher | – | `[{ "id", "name", "lesson_count": int }]` — her courses, by name | A |
+| POST | /api/teacher/courses | teacher | `{ "name" }` (trimmed, 1–80 chars, else 422) | `{ "id", "name", "lesson_count": 0 }` | A |
+| PATCH | /api/teacher/lessons/{id} | teacher (lesson's) | `{ "course_id": uuid\|null }` — move a lesson into one of her courses, or out of it (null) | `{ "id", "course_id" }` — 404 unknown lesson, 403 `Not your lesson`, 422 `Unknown course` | A |
 | GET | /api/teacher/lessons/{id}/dashboard | teacher | – | Dashboard (below) | A (uses B's `mastery.autonomy`) |
 | POST | /api/concepts/{id}/answers | student (gap owner) | `{ "answers": [int] }` — one option index per exercise, in order | `{ "correct": [bool], "status": "understood"\|"review" }` — see [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido) | B |
 | POST | /api/concepts/{id}/words | student (gap owner) | `{ "word": "libère", "key_phrase": "Elle libère de l'énergie." }` | `{ "word", "lemma": str\|null, "translation_es": str\|null, "level": int\|null }` — saves the word to her hard words (`concept_word_marks`, same word twice = no-op); a glossary word applies Rules › Changes (−1 once per lemma and session) like a clip mark | B |

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { Logo } from "./logo"
 import { StudentNav } from "./student-nav"
 
 /** Shared chrome for Clase · Repasar · Progreso */
@@ -21,8 +22,7 @@ export function StudentShell({
             href="/dashboard"
             className="flex items-center gap-2 rounded-full text-[17px] font-bold tracking-[-0.02em] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-brand-orange" />
-            Loop&apos;d
+            <Logo />
           </Link>
           <StudentNav variant="topbar" />
         </div>

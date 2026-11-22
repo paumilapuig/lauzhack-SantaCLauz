@@ -108,3 +108,9 @@ def test_cleanup_failure_does_not_mask_the_original_terms_error():
         create_lesson(USER, META, [make_term("poumon")], db)
     assert str(error.value.__cause__) == "boom"
     assert db.calls[-1][:2] == ("lessons", "delete")
+
+
+def test_lesson_in_a_course_stores_its_course_id():
+    db = FakeSupabase()
+    create_lesson(USER, META.model_copy(update={"course_id": "60000000-0000-4000-8000-000000000001"}), [make_term("air")], db)
+    assert db.calls[0][2]["course_id"] == "60000000-0000-4000-8000-000000000001"

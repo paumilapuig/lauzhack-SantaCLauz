@@ -34,8 +34,8 @@ def test_lessons_listed_for_any_role_newest_first(monkeypatch, user_id):
     response = client.get("/api/lessons")
     assert response.status_code == 200
     assert response.json() == [
-        {"id": L1, "title": "La chaleur", "subject": "Physique", "lesson_date": "2026-11-22"},
-        {"id": L0, "title": "Old lesson", "subject": None, "lesson_date": "2026-11-15"},
+        {"id": L1, "title": "La chaleur", "subject": "Physique", "lesson_date": "2026-11-22", "course_id": None},
+        {"id": L0, "title": "Old lesson", "subject": None, "lesson_date": "2026-11-15", "course_id": None},
     ]
 
 

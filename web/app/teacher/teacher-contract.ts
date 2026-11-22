@@ -3,6 +3,15 @@ export interface LessonSummary {
   title: string;
   subject: string;
   lesson_date: string;
+  /** null = not in a course */
+  course_id: string | null;
+}
+
+/** A teacher's group of lessons, e.g. "Biologie 1re" */
+export interface Course {
+  id: string;
+  name: string;
+  lesson_count: number;
 }
 
 export interface LessonTerm {
@@ -18,6 +27,7 @@ export interface NewLessonFields {
   title: string;
   subject: string;
   lesson_date: string;
+  course_id?: string;
 }
 
 export interface CreateLessonResponse {

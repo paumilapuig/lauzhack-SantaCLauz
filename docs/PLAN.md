@@ -73,7 +73,9 @@ Usuaris: **alumna** (portàtil o tauleta a classe; supòsit: autoritzat com a me
 ### F4. Progrés i profe
 - **Alumna (`/progress`)**: MAI percentatges ni «X de Y». Frases: «This week you learned N new words», «You no longer
   need help with «…»», «Keep going: tomorrow we review «…»».
-- **Profe (`/teacher`, `/teacher/lessons/[id]`)**: crear lliçó (text o fitxer), Key points, Difficult moments (minuts
+- **Profe (`/teacher`, `/teacher/courses/[id]`, `/teacher/lessons/[id]`)**: **cursos** (grups de lliçons, p. ex.
+  «Biologie 1re»: el profe en crea un i hi afegeix cada classe; les lliçons antigues es poden moure a un curs), crear lliçó
+  dins d'un curs (text o fitxer), Key points, Difficult moments (minuts
   amb més «J'ai perdu le fil»), Concepts to review (per alumne, amb estat i intents), Most marked words, Autonomy per
   alumne i evolució setmanal.
 

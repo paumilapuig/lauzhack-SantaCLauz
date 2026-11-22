@@ -15,6 +15,7 @@ from .routers import (
     practice,
     progress,
     teacher,
+    teacher_courses,
 )
 from .routers.concepts import router as concepts_router
 from .routers.concept_words import router as concept_words_router
@@ -42,6 +43,7 @@ app.include_router(home.router)
 app.include_router(concepts_router)
 app.include_router(concept_words_router)
 app.include_router(teacher.router)
+app.include_router(teacher_courses.router)
 app.include_router(practice.router)
 app.include_router(progress.router)
 

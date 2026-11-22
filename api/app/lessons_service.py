@@ -48,6 +48,8 @@ def _insert_lesson(db: Client, user: CurrentUser, meta: CreateLessonJson) -> str
         "lesson_date": meta.lesson_date.isoformat(),
         "source_text": meta.source_text,
     }
+    if meta.course_id:
+        row["course_id"] = str(meta.course_id)
     try:
         return str(db.table("lessons").insert(row).execute().data[0]["id"])
     except Exception as error:

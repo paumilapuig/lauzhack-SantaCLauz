@@ -1,7 +1,9 @@
+import { ApiError } from "@/lib/api";
 import type { TeacherApi } from "./teacherApi";
-import type { LessonSummary, TeacherDashboard } from "./teacher-contract";
+import type { Course, LessonSummary, NewLessonFields, TeacherDashboard } from "./teacher-contract";
 
 export const DEMO_LESSON_ID = "de100000-0000-4000-8000-000000000001";
+const DEMO_COURSE_ID = "de200000-0000-4000-8000-000000000001";
 
 /** The demo lesson as the real API shows it after a few classes (shape of docs/API.md › Dashboard). */
 const DEMO_DASHBOARD: Omit<TeacherDashboard, "lesson"> = {
@@ -53,15 +55,21 @@ const DEMO_DASHBOARD: Omit<TeacherDashboard, "lesson"> = {
   ],
 };
 
-/** Teacher pages in demo mode: the demo lesson in the browser, no server and no login. */
+/** Teacher pages in demo mode: the demo course and lesson in the browser, no server and no login. */
 export function createFakeTeacherApi(): TeacherApi {
+  const courses: Omit<Course, "lesson_count">[] = [{ id: DEMO_COURSE_ID, name: "SVT 11e" }];
   const lessons: LessonSummary[] = [
-    { id: DEMO_LESSON_ID, title: "La respiration cellulaire", subject: "SVT", lesson_date: "2026-11-22" },
+    { id: DEMO_LESSON_ID, title: "La respiration cellulaire", subject: "SVT", lesson_date: "2026-11-22", course_id: DEMO_COURSE_ID },
   ];
 
-  function create(fields: { title: string; subject: string; lesson_date: string }) {
+  const withCount = (course: Omit<Course, "lesson_count">): Course => ({
+    ...course,
+    lesson_count: lessons.filter((lesson) => lesson.course_id === course.id).length,
+  });
+
+  function create({ course_id, ...fields }: NewLessonFields) {
     const id = `demo-${lessons.length}`;
-    lessons.unshift({ id, ...fields });
+    lessons.unshift({ id, ...fields, course_id: course_id ?? null });
     return Promise.resolve({ lesson_id: id, terms: [] });
   }
 
@@ -72,6 +80,20 @@ export function createFakeTeacherApi(): TeacherApi {
     async getDashboard(lessonId) {
       const lesson = lessons.find((l) => l.id === lessonId) ?? lessons[lessons.length - 1];
       return { lesson: { id: lesson.id, title: lesson.title }, ...DEMO_DASHBOARD };
+    },
+    listCourses: async () => [...courses].sort((a, b) => a.name.localeCompare(b.name)).map(withCount),
+    async createCourse(name) {
+      const trimmed = name.trim();
+      if (trimmed.length === 0 || trimmed.length > 80) throw new ApiError(422, "Invalid course name");
+      const course = { id: `demo-course-${courses.length}`, name: trimmed };
+      courses.push(course);
+      return withCount(course);
+    },
+    async moveLesson(lessonId, courseId) {
+      const lesson = lessons.find((l) => l.id === lessonId);
+      if (!lesson) throw new ApiError(404, "Lesson not found");
+      lesson.course_id = courseId;
+      return { id: lessonId, course_id: courseId };
     },
   };
 }

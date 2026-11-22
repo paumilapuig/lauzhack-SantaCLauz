@@ -1,5 +1,6 @@
 import { ApiError, type TokenProvider } from "@/lib/api";
 import type {
+  Course,
   CreateLessonResponse,
   LessonSummary,
   NewLessonFields,
@@ -11,6 +12,10 @@ export interface TeacherApi {
   createLessonFromText(fields: NewLessonFields, sourceText: string): Promise<CreateLessonResponse>;
   createLessonFromFile(fields: NewLessonFields, file: File): Promise<CreateLessonResponse>;
   getDashboard(lessonId: string): Promise<TeacherDashboard>;
+  listCourses(): Promise<Course[]>;
+  createCourse(name: string): Promise<Course>;
+  /** Put a lesson in one of her courses, or take it out (null) */
+  moveLesson(lessonId: string, courseId: string | null): Promise<{ id: string; course_id: string | null }>;
 }
 
 export function createTeacherApi(
@@ -48,10 +53,20 @@ export function createTeacherApi(
       form.set("title", fields.title);
       form.set("subject", fields.subject);
       form.set("lesson_date", fields.lesson_date);
+      if (fields.course_id) form.set("course_id", fields.course_id);
       form.set("file", file);
       return request("/api/lessons", { method: "POST", body: form });
     },
     getDashboard: (lessonId) =>
       request(`/api/teacher/lessons/${lessonId}/dashboard`, { method: "GET" }),
+    listCourses: () => request("/api/teacher/courses", { method: "GET" }),
+    createCourse: (name) =>
+      request("/api/teacher/courses", { method: "POST", json: true, body: JSON.stringify({ name }) }),
+    moveLesson: (lessonId, courseId) =>
+      request(`/api/teacher/lessons/${lessonId}`, {
+        method: "PATCH",
+        json: true,
+        body: JSON.stringify({ course_id: courseId }),
+      }),
   };
 }

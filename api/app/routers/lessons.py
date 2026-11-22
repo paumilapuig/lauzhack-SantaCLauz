@@ -13,7 +13,9 @@ from app.glossary.openrouter_client import OpenRouterError
 from app.glossary.parser import GlossaryParseError
 from app.glossary import upload as upload_limits
 from app.glossary.upload import normalize_upload
+from app.db import get_supabase
 from app.lessons_service import LessonSaveError, create_lesson
+from app.routers.teacher_courses_repository import is_her_course
 from app.schemas import CreateLessonJson, CreateLessonJsonRequest, CreateLessonResponse
 
 router = APIRouter()
@@ -76,6 +78,7 @@ async def _read_multipart(request: Request) -> LessonInput:
     if not source_text.strip() and not images:
         raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, "File has no usable content")
     fields = {key: form.get(key) for key in ("title", "subject", "lesson_date")}
+    fields["course_id"] = form.get("course_id") or None
     return _validated_meta(CreateLessonJson, {**fields, "source_text": source_text}), images
 
 
@@ -97,6 +100,8 @@ async def post_lesson(
     if not settings.openrouter_api_key:
         raise _error(status.HTTP_503_SERVICE_UNAVAILABLE, "LLM not configured")
     meta, images = await _read_input(request)
+    if meta.course_id and not await run_in_threadpool(is_her_course, get_supabase(), str(meta.course_id), user.id):
+        raise _error(status.HTTP_422_UNPROCESSABLE_CONTENT, "Unknown course")
     try:
         result, _metrics = await run_in_threadpool(
             generate_glossary,

@@ -21,7 +21,7 @@ type ViewState =
 
 const BackLink = () => (
   <Link href="/teacher" className="inline-flex w-fit items-center gap-1.5 rounded-full text-[15px] font-medium text-label-secondary hover:text-heading">
-    <ArrowLeft aria-hidden className="size-4" /> My lessons
+    <ArrowLeft aria-hidden className="size-4" /> My courses
   </Link>
 );
 
