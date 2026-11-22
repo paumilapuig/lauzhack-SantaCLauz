@@ -9,7 +9,7 @@ export default function TeacherLayout({
   return (
     <Suspense
       fallback={
-        <p className="p-8 text-sm text-neutral-600">
+        <p className="p-8 text-[16px] text-label-secondary">
           Loading…
         </p>
       }

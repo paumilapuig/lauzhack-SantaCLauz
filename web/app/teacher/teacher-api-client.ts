@@ -1,4 +1,6 @@
+import { apiMode } from "@/lib/apiMode";
 import { createClient } from "@/lib/supabase/client";
+import { createFakeTeacherApi } from "./fakeTeacherApi";
 import { createTeacherApi } from "./teacherApi";
 
 async function getAccessToken(): Promise<string | null> {
@@ -6,7 +8,8 @@ async function getAccessToken(): Promise<string | null> {
   return data.session?.access_token ?? null;
 }
 
-export const teacherApi = createTeacherApi(
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
-  getAccessToken,
-);
+/** Real API when NEXT_PUBLIC_CLASS_API=http, otherwise the demo lesson in the browser. */
+export const teacherApi =
+  apiMode() === "http"
+    ? createTeacherApi(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000", getAccessToken)
+    : createFakeTeacherApi();
