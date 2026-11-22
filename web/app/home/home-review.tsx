@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, X } from "lucide-react"
+import { Check, Lightbulb, X } from "lucide-react"
 import { useState } from "react"
 import { useTodayLabel } from "@/components/page-title"
 import { StudentPage } from "@/components/student-page"
@@ -17,6 +17,15 @@ const DONE_BUTTON =
   "inline-flex h-11 items-center gap-2 rounded-full bg-charcoal px-5 text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-subtle)] transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
 const DISCARD_BUTTON =
   "inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-[15px] font-bold text-label transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+// Concepts from "J'ai perdu le fil": listed with the games, shown only when there is one to learn.
+const CONCEPTS_MODE: PracticeModeItem = {
+  id: "concepts",
+  name: "To understand better",
+  description: "Ideas from class, step by step",
+  icon: Lightbulb,
+  minWords: 0,
+  needs: [],
+}
 
 export function HomeReview() {
   const { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood } =
@@ -25,7 +34,9 @@ export function HomeReview() {
   const [finishing, setFinishing] = useState<string | null>(null)
   const today = useTodayLabel()
 
+  const modes = concepts.length > 0 ? [...PRACTICE_MODES, CONCEPTS_MODE] : PRACTICE_MODES
   const mode = PRACTICE_MODES.find((m) => m.id === openMode)
+  const conceptsOpen = openMode === CONCEPTS_MODE.id && concepts.length > 0
   const closeMode = () => setOpenMode(null)
   const wordCount = (m: PracticeModeItem) => usableWords(words, m.needs).length
 
@@ -57,11 +68,9 @@ export function HomeReview() {
         <p className="text-[19px] text-label-secondary">Loading…</p>
       ) : null}
 
-      {review && <ConceptsSection concepts={concepts} onAnswer={answerConcept} onUnderstood={conceptUnderstood} />}
-
       {failed || !review ? null : pending.length === 0 ? (
         <section aria-label="Practice">
-          <PracticeModesGrid modes={PRACTICE_MODES} wordCount={wordCount} onOpen={setOpenMode} />
+          <PracticeModesGrid modes={modes} wordCount={wordCount} onOpen={setOpenMode} />
         </section>
       ) : (
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-12">
@@ -101,20 +110,20 @@ export function HomeReview() {
           <aside className="lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-border bg-card p-5">
               <h2 className="mb-3 px-1 text-[15px] font-bold tracking-[-0.02em] text-foreground">Practice</h2>
-              <PracticeModesList modes={PRACTICE_MODES} wordCount={wordCount} onOpen={setOpenMode} />
+              <PracticeModesList modes={modes} wordCount={wordCount} onOpen={setOpenMode} />
             </div>
           </aside>
         </div>
       )}
 
-      <Dialog open={!!mode} onOpenChange={(open) => !open && closeMode()}>
-        {mode && (
+      <Dialog open={!!mode || conceptsOpen} onOpenChange={(open) => !open && closeMode()}>
+        {(mode || conceptsOpen) && (
           <DialogContent
             showCloseButton={false}
             className="student inset-0 top-0 left-0 h-dvh max-w-none translate-x-0 translate-y-0 content-start overflow-y-auto rounded-none border-0 bg-background p-6 text-label ring-0 md:inset-auto md:top-1/2 md:left-1/2 md:h-auto md:max-h-[90dvh] md:max-w-[720px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[32px] md:border md:border-border sm:max-w-none"
           >
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-[20px] leading-tight font-semibold">{mode.name}</DialogTitle>
+              <DialogTitle className="text-[20px] leading-tight font-semibold">{mode?.name ?? CONCEPTS_MODE.name}</DialogTitle>
               <button
                 type="button"
                 onClick={closeMode}
@@ -123,7 +132,11 @@ export function HomeReview() {
                 Close
               </button>
             </div>
-            <mode.Component words={usableWords(words, mode.needs)} onFinish={savePractice} onExit={closeMode} />
+            {mode ? (
+              <mode.Component words={usableWords(words, mode.needs)} onFinish={savePractice} onExit={closeMode} />
+            ) : (
+              <ConceptsSection concepts={concepts} onAnswer={answerConcept} onUnderstood={conceptUnderstood} />
+            )}
           </DialogContent>
         )}
       </Dialog>
