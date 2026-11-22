@@ -1,9 +1,9 @@
 # CLAUDE.md — LauzHack 2026 team repo
 
-> **Projecte: "Subtítols que es retiren"** — subtítols en FRANCÈS de la classe en directe per a alumnes nouvinguts (persona: Lucía, 14 anys, A1–A2, 11e HarmoS).
-> Només les paraules del glossari que l'alumna no domina porten ajuda (🟢 sense ajuda · 🟡 traducció ES · 🟠 "te la vas perdre"); l'ajuda es retira quan les aprèn.
-> F1 subtítols · F2 botons (clip d'àudio · "M'he perdut" només text) + 3 activitats a casa · F4 progrés (mai %) + panell del profe (autonomia) · F3 "la classe de demà" (NICE).
-> Frugal: com a màxim 2 crides a l'LLM per lliçó (preparació + resum de "M'he perdut" després de classe; OpenRouter), cap en directe; Web Speech al navegador. Detall: `docs/PLAN.md`, `docs/API.md`, `docs/ROLES.md`.
+> **Projecte: Loop'd** — subtítols en FRANCÈS de la classe en directe per a alumnes nouvinguts (persona: Lucía, 14 anys, A1–A2, 11e HarmoS), sense dependre d'un traductor.
+> A classe: subtítols en **text pla** (sense colors ni traducció) + 2 botons («Je n'ai pas compris» = clip d'àudio · «J'ai perdu le fil» = només text). El navegador calcula en silenci l'estat de cada paraula del glossari (🟢🟡🟠 segons el nivell 0–3) per a l'autonomia.
+> A casa: clips amb la veu del profe → marcar paraules (−1) → 7 jocs (+1) · conceptes de «J'ai perdu le fil» (explicació + preguntes) · progrés (mai %). Profe: moments difícils, conceptes, paraules, autonomia. F3 NO fet.
+> LLM (OpenRouter, `google/gemini-2.5-flash-lite`; imatges sempre al model de visió): 1 crida per lliçó · 0 a classe · 1 per sessió si s'ha perdut (+1 reintent excepcional) · 1 per clip revisat si té paraules fora del glossari. Web Speech al navegador. Detall: `README.md`, `docs/PLAN.md`, `docs/API.md`, `docs/demo/pitch.md`.
 
 Hackathon: Sat 21 Nov 12:00 → Sun 22 Nov 12:00. Speed > perfection, but the demo MUST work.
 Judges ask what is novel (LauzHack rule 30). Keep `docs/PLAN.md` → "Novelty" section up to date.

@@ -34,7 +34,7 @@ Tots els parells de text compleixen **WCAG AA** (≥ 4.5:1; mesurat). Es definei
 | `--sunbeam` / `--color-sunbeam-yellow` | `#ffce00` | banner, highlights, puntuació |
 | `--brand-orange` / `--color-brand-orange` | `#f47d31` | punt de la marca «Loop'd» (sempre a dalt a l'esquerra) |
 | `--deep-indigo` | `#3b197f` | moments contemplatius / fills d'il·lustració |
-| `--lost` | `#1B3A6B` | botó «Me he perdido» (funcional) |
+| `--lost` | `#1B3A6B` | botó «J'ai perdu le fil» (funcional) |
 | `--word-yellow` | `#8A5300` | subratllat i traducció estat groc |
 | `--word-yellow-bg` | `#FFF4D1` | feedback en marcar |
 | `--word-orange` | `#B03A0A` | subratllat doble + icona estat taronja |
@@ -71,6 +71,10 @@ Aliases de compatibilitat (casa): `--label` = charcoal, `--label-secondary` = gr
 Amplada de línia dels subtítols: màx. **28 em**.
 
 ## 4. Els 3 estats de paraula — component `Word`
+
+> **Estat final (diumenge 22):** els subtítols de `/class` són **text pla** (decisió d'equip): els estats es calculen a
+> `web/lib/wordState.ts` i es desen per a l'autonomia, però **no es pinten a classe**. Aquesta taula queda com a
+> especificació si mai es tornen a mostrar; a casa la traducció ES fa servir `--word-yellow`.
 
 Estat calculat per `web/lib/wordState.ts` (owner C). `Word` només el pinta. Les paraules fora del glossari són text pla.
 
@@ -114,7 +118,7 @@ Mentre la classe està en marxa, els dos botons ocupen gairebé tota la pantalla
 - Inactiu: blanc, vora linen, text charcoal.
 
 ### Missatge de progrés (`ProgressMessage`)
-- Fila amb icona lucide 24 px en graphite; text `subheading` en castellà. **Cap %**, cap «x de y», cap barra.
+- Fila amb icona lucide 24 px en graphite; text `subheading` en anglès (UI de l'alumna en anglès des del PR #46). **Cap %**, cap «x de y», cap barra.
 
 ### Marca
 - Punt taronja `#f47d31` + wordmark «Loop'd» en charcoal a dalt a l'esquerra de cada shell d'alumna.
@@ -124,8 +128,8 @@ Mentre la classe està en marxa, els dos botons ocupen gairebé tota la pantalla
 Amplada de contingut: màx. **1200 px** (880 px text llarg), marges 24 px (16 px mòbil). Gaps de secció **64 px**; entre targetes 24–32 px. Alineació a l'esquerra; centrat només buits i modals.
 
 ### `/class` — alumna, en directe
-1. Shell compartit: Loop'd + nav **Clase · Repasar · Progreso** (sense tabbar mentre la classe està en marxa).
-2. Abans de començar: títol «Clase» + lead + targeta amb «Empezar clase» (castellà).
+1. Shell compartit: Loop'd (enllaça a `/dashboard`, «Today») + nav **Class · Review · Progress** (sense tabbar mentre la classe està en marxa).
+2. Abans de començar: títol «Cours» + lead + targeta amb «Commencer le cours» (tot `/class` és en francès). Indicadors: micro («Son : bon / faible / trop fort») i estat («En direct / Reconnexion… / Hors ligne»); pla B «Lire le texte de la leçon».
 3. En marxa: interruptor «Sous-titres» a dalt a la dreta; **una sola línia** de subtítols gran (52 px / 32 px mòbil, `lang="fr"`) dins d'una targeta blanca — les paraules noves entren per la dreta, les velles s'esvaeixen per l'esquerra, i la línia desapareix després de 4 s de silenci. Sense 🟢🟡🟠 a classe (els colors són per a casa).
 4. Els dos botons grans omplen la resta de la pantalla. Els desats són toasts, no cap llista.
 
@@ -175,13 +179,13 @@ Amplada de contingut: màx. **1200 px** (880 px text llarg), marges 24 px (16 px
 | botó perdut (classe, FR) | J'ai perdu le fil |
 | confirmació botó (toast, FR) | Extrait enregistré / Moment enregistré |
 | interruptor subtítols | Sous-titres |
-| escoltant / pausa | Escuchando / En pausa |
+| fi de classe | Terminer le cours / Cours terminé |
 | sr-only taronja | ya la marcaste antes |
-| títol casa | Para repasar / Repasar |
-| títol progrés | Tu progreso / Progreso |
-| profe: moments | Moments difficiles |
-| profe: paraules | Mots les plus marqués |
-| profe: autonomia | Autonomie |
+| títol casa | Review (Clips to review · Practice · To understand better) |
+| títol progrés | Progress |
+| profe: moments | Difficult moments |
+| profe: paraules | Most marked words |
+| profe: autonomia | Autonomy · Concepts to review · Key points |
 | marca | Loop'd |
 
 ## 10. Do / Don't (visual)
