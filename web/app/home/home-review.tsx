@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { CheckBadge } from "@/components/ui/check-badge"
 import { useTodayLabel } from "@/components/page-title"
 import { StudentPage } from "@/components/student-page"
 import { ClipReviewItem } from "./clip-review-item"
@@ -9,24 +10,38 @@ import { PracticeDialog } from "./practice-dialog"
 import { PRACTICE_MODES } from "./practice-modes"
 import { PracticeModesGrid } from "./practice-modes-grid"
 import { PracticeModesList, type PracticeModeItem } from "./practice-modes-list"
-import { buildStudyPlan, type PlanStep } from "./study-plan"
-import { StudyPlan } from "./study-plan-view"
+import { panelId, ReviewSwitch, tabId, type ReviewView } from "./review-switch"
+import { suggestedGame } from "./suggested-game"
 import { usableWords } from "./usable-words"
-import { useCompletedSteps } from "./use-completed-steps"
 import { useHomeReview } from "./use-home-review"
+import { usePlayedGames } from "./use-played-games"
 
 const SECTION_TITLE = "text-[13px] font-bold tracking-[0.06em] text-subtle uppercase"
 
-function scrollToId(id: string) {
-  const reduce = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-  document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" })
+const LEAD: Record<ReviewView, (clipsLeft: number) => string> = {
+  vocab: (clipsLeft) =>
+    clipsLeft > 0 ? "Listen to the class again. Tap every word you didn't understand, then press Done." : "Your clips are done. Time to play with your words.",
+  context: () => "Ideas from class, explained step by step. Then two quick questions.",
+}
+
+function EmptyContext() {
+  return (
+    <div className="flex animate-rise items-center gap-4 rounded-[24px] border border-border bg-card p-6">
+      <CheckBadge size="lg" />
+      <div>
+        <p className="text-[19px] font-bold text-heading">Nothing to untangle right now.</p>
+        <p className="text-[16px] text-label-secondary">Ideas from class you want to understand better show up here.</p>
+      </div>
+    </div>
+  )
 }
 
 export function HomeReview() {
   const home = useHomeReview()
   const { review, marks, words, concepts, failed } = home
+  const [view, setView] = useState<ReviewView>("vocab")
   const [openMode, setOpenMode] = useState<string | null>(null)
-  const { completed, markDone } = useCompletedSteps()
+  const { played, markPlayed } = usePlayedGames()
   const today = useTodayLabel()
 
   const mode = PRACTICE_MODES.find((m) => m.id === openMode)
@@ -37,91 +52,66 @@ export function HomeReview() {
   }
 
   const pending = review?.clips ?? []
-  const plan = review ? buildStudyPlan({ clips: pending, concepts, words: review.words_to_practice, isAvailable, completed }) : []
-  const suggested = plan.find((step) => step.kind === "practice" && !step.done)?.modeId
-  const planned = (kind: PlanStep["kind"], match: (step: PlanStep) => boolean = () => true) =>
-    plan.find((step) => step.kind === kind && !step.done && match(step))
+  const suggested = review ? (suggestedGame(review.words_to_practice, isAvailable, played) ?? undefined) : undefined
+  const practice = { modes: PRACTICE_MODES, wordCount, suggested, played, onOpen: setOpenMode }
 
   function closeMode(practised: boolean) {
-    if (practised && openMode) {
-      const step = planned("practice", (s) => s.kind === "practice" && s.modeId === openMode)
-      markDone(step ?? { kind: "practice", modeId: openMode, words: [], minutes: 2 })
-    }
+    if (practised && openMode) markPlayed(openMode)
     setOpenMode(null)
     if (practised) home.refresh().catch((error) => console.error(error))
   }
 
-  // the clips step is done when the last pending clip is closed (Done or Discard)
-  const closeClip = (action: (clipId: string) => Promise<void>) => async (clipId: string) => {
-    const clipsStep = planned("clips")
-    await action(clipId)
-    if (pending.length === 1 && clipsStep) markDone(clipsStep)
-  }
-
-  function conceptUnderstood(conceptId: string) {
-    const step = planned("concept", (s) => s.kind === "concept" && s.id === conceptId)
-    if (step) markDone(step)
-    home.conceptUnderstood(conceptId)
-  }
-
   return (
-    <StudentPage
-      title="Review"
-      context={today}
-      lead={pending.length > 0 ? "Follow your plan. Start with the clips from class." : "Your clips are done. Keep your words fresh."}
-      wide
-    >
+    <StudentPage title="Review" context={today} lead={LEAD[view](pending.length)} wide>
       {failed ? (
         <p role="alert" className="text-[19px]">Your clips could not be loaded. Is the server running?</p>
       ) : !review ? (
         <p className="text-[19px] text-label-secondary">Loading…</p>
       ) : (
-        <div className="flex flex-col gap-14">
-          <StudyPlan
-            steps={plan}
-            modes={PRACTICE_MODES}
-            onClips={() => scrollToId("clips")}
-            onConcept={(id) => scrollToId(`concept-${id}`)}
-            onPractice={setOpenMode}
-          />
+        <div className="flex flex-col gap-10">
+          <ReviewSwitch value={view} counts={{ vocab: pending.length, context: concepts.length }} onChange={setView} />
 
-          {pending.length > 0 && (
-            <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12">
-              <section id="clips" aria-label="Clips to review" className="flex min-w-0 scroll-mt-24 flex-col gap-10">
-                <div className="flex items-baseline justify-between gap-3">
-                  <h2 className={SECTION_TITLE}>From class</h2>
-                  <p className="text-[14px] font-medium tabular-nums text-label-secondary">{pending.length} to review</p>
-                </div>
-                {pending.map((clip, index) => (
-                  <ClipReviewItem
-                    key={clip.id}
-                    clip={clip}
-                    index={index}
-                    marks={marks[clip.id] ?? {}}
-                    onToggle={(word) => home.toggle(clip.id, word)}
-                    onDone={closeClip(home.finishClip)}
-                    onDiscard={closeClip(home.discardClip)}
-                  />
-                ))}
+          <div role="tabpanel" id={panelId(view)} aria-labelledby={tabId(view)} key={view} className="animate-rise">
+            {view === "context" ? (
+              concepts.length > 0 ? (
+                <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={home.conceptUnderstood} onTapWord={home.tapConceptWord} />
+              ) : (
+                <EmptyContext />
+              )
+            ) : pending.length > 0 ? (
+              <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12">
+                <section aria-label="Clips to review" className="flex min-w-0 flex-col gap-10">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className={SECTION_TITLE}>From class</h2>
+                    <p className="text-[14px] font-medium tabular-nums text-label-secondary">{pending.length} to review</p>
+                  </div>
+                  {pending.map((clip, index) => (
+                    <ClipReviewItem
+                      key={clip.id}
+                      clip={clip}
+                      index={index}
+                      marks={marks[clip.id] ?? {}}
+                      onToggle={(word) => home.toggle(clip.id, word)}
+                      onDone={home.finishClip}
+                      onDiscard={home.discardClip}
+                    />
+                  ))}
+                </section>
+
+                <aside aria-label="Practice" className="lg:sticky lg:top-24">
+                  <div className="rounded-[24px] border border-border bg-card p-4">
+                    <h2 className={`mb-2 px-2 pt-1 ${SECTION_TITLE}`}>Practice</h2>
+                    <PracticeModesList {...practice} />
+                  </div>
+                </aside>
+              </div>
+            ) : (
+              <section aria-label="Practice" className="flex flex-col gap-4">
+                <h2 className={SECTION_TITLE}>Practice</h2>
+                <PracticeModesGrid {...practice} />
               </section>
-
-              <aside aria-label="Practice" className="lg:sticky lg:top-24">
-                <div className="rounded-[24px] border border-border bg-card p-4">
-                  <h2 className={`mb-2 px-2 pt-1 ${SECTION_TITLE}`}>Practice</h2>
-                  <PracticeModesList modes={PRACTICE_MODES} wordCount={wordCount} suggested={suggested} onOpen={setOpenMode} />
-                </div>
-              </aside>
-            </div>
-          )}
-
-          <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={conceptUnderstood} onTapWord={home.tapConceptWord} />
-
-          {pending.length === 0 && (
-            <section aria-label="Practice" className="flex flex-col gap-4">
-              <h2 className={SECTION_TITLE}>Practice</h2>
-              <PracticeModesGrid modes={PRACTICE_MODES} wordCount={wordCount} suggested={suggested} onOpen={setOpenMode} />
-            </section>
-          )}
+            )}
+          </div>
         </div>
       )}
 

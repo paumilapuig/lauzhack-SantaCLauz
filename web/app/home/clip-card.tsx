@@ -3,7 +3,6 @@
 import { Pause, Play } from "lucide-react"
 import type { HomeClip } from "@/lib/student-contract"
 import { ClipTranscript } from "./clip-transcript"
-import { KindPill } from "./kind-pill"
 import { tokenize } from "./transcript"
 import { usePlayback } from "./use-playback"
 import { Waveform } from "./waveform"
@@ -37,17 +36,16 @@ export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
   return (
     <article className="overflow-hidden rounded-[24px] border border-border bg-card">
       <div className="flex flex-col gap-6 px-6 pt-6 pb-2 md:px-8 md:pt-8">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <KindPill kind="word" />
-          <p className="shrink-0 text-[13px] tabular-nums text-subtle">
-            {time} · {clock(clip.t_start * 1000)}–{clock(clip.t_end * 1000)}
-          </p>
-          <p className="w-full text-[13px] font-medium tracking-[-0.01em] text-label-secondary tabular-nums">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="text-[13px] font-bold tracking-[-0.01em] text-label-secondary tabular-nums">
             Clip {index + 1}
             <span aria-hidden className="mx-2 text-label-secondary/40">
               ·
             </span>
             <span lang="fr">{clip.lesson_title}</span>
+          </p>
+          <p className="shrink-0 text-[13px] tabular-nums text-subtle">
+            {time} · {clock(clip.t_start * 1000)}–{clock(clip.t_end * 1000)}
           </p>
         </div>
         <ClipTranscript transcript={clip.transcript} saved={saved} translate={translate} onToggle={onToggle} char={playback.char} />

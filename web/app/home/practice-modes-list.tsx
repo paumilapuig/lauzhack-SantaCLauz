@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import type { Need } from "./usable-words"
-import { SuggestedTag } from "./suggested-tag"
+import { ModeTag } from "./mode-tag"
 
 export type PracticeModeItem = {
   id: string
@@ -14,12 +14,14 @@ export type PracticeModeItem = {
 type Props = {
   modes: PracticeModeItem[]
   wordCount: number | ((mode: PracticeModeItem) => number)
-  /** the game the study plan recommends */
+  /** the game Loop'd recommends now */
   suggested?: string
+  /** games finished today */
+  played?: string[]
   onOpen: (id: string) => void
 }
 
-export function PracticeModesList({ modes, wordCount, suggested, onOpen }: Props) {
+export function PracticeModesList({ modes, wordCount, suggested, played = [], onOpen }: Props) {
   return (
     <ul className="flex flex-col gap-1">
       {modes.map((mode) => {
@@ -41,7 +43,7 @@ export function PracticeModesList({ modes, wordCount, suggested, onOpen }: Props
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2 text-[15px] leading-5 font-bold tracking-[-0.01em] text-heading">
                   {name}
-                  {suggested === id && !disabled && <SuggestedTag />}
+                  {!disabled && <ModeTag suggested={suggested === id} played={played.includes(id)} />}
                 </span>
                 <span className="block text-[13px] leading-4 text-label-secondary">{disabled ? reason : description}</span>
               </span>
