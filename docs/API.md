@@ -58,7 +58,7 @@ RLS principle: a student sees only her rows; a teacher sees rows linked to her/h
 | clip_marks | student_id uuid → profiles, clip_id uuid → clips on delete cascade, word text (surface form as tapped, lowercase), lemma text null (glossary lemma of the clip's lesson whose `forms` contain `word`, else null), created_at timestamptz default now(); **PK (student_id, clip_id, word)** | student own; lesson's teacher read |
 | practice_results | id uuid PK, student_id uuid → profiles, lemma text, clip_id uuid null → clips, passed bool, created_at timestamptz default now() | student own |
 | mark_level_changes | student_id uuid → profiles, session_id uuid → class_sessions on delete cascade, lemma text, level_delta int check in (−1, 0), created_at timestamptz default now(); **PK (student_id, session_id, lemma)** — one row per lemma marked at home per session (see Rules › Changes) | student own |
-| lesson_lost_summaries | lesson_id uuid PK → lessons on delete cascade, lost_count int (number of `lost` events summarised), concepts jsonb (`LostConcept[]`, see [Lost summary](#lost-summary--post-apiteacherlessonsidlost-summary)), created_at timestamptz default now() | lesson's teacher read |
+| concept_gaps | id uuid PK, session_id uuid → class_sessions on delete cascade, student_id uuid → profiles, lesson_id uuid → lessons on delete cascade, concept text (French, short label), minutes int[] (distinct `floor(t_sec / 60)` of its lost moments), lemmas text[] (glossary lemmas of the lesson, may be empty), explanation jsonb (`ConceptStep[]`, 3–5), exercises jsonb (`ConceptExercise[]` **with** `answer`, 2–3), status text check in ('pending','review','understood') default 'pending', attempts int default 0, answered_at timestamptz null, created_at timestamptz default now() — see [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido) | lesson's teacher read; **no student read** (the rows hold the answers; the API serves them without `answer`) |
 
 Note: `class_sessions.student_id` is added to the original sketch (one session per student device, see PLAN › Decisions).
 The `'word'` value stays in the `class_events.type` check for old rows only; the API no longer writes it.
@@ -74,15 +74,15 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | GET | /api/lessons/{id}/class-pack | student | – | ClassPack (below) | A |
 | POST | /api/sessions | student | `{ "lesson_id" }` | `{ "session_id" }` | A |
 | POST | /api/sessions/{id}/events | student | `{ "t_sec": 100.0, "type": "lost", "lemma": null, "context": { "t_start": 40.0, "transcript": "…" } }` — see [Lost event](#lost-event--post-apisessionsidevents) | `{ "ok": true }` | A |
-| POST | /api/sessions/{id}/word-states | student | `{ "states": [{ "lemma", "state": WordState }] }` — first state shown for each glossary word that appeared; sent at end of class | `{ "ok": true, "autonomy": float }` | A |
-| POST | /api/clips | student | multipart: `audio` (webm), `session_id`, `t_start`, `t_end`, `transcript`, optional `kind` (`word`\|`concept`, default `concept`), optional `lemma` — see [Clips](#clips--post-apiclips) | `{ "clip_id", "audio_path" }` — a `concept` clip also inserts a class_event `unclear` at `t_end`; a `word` clip inserts no event | A |
+| POST | /api/sessions/{id}/word-states | student | `{ "states": [{ "lemma", "state": WordState }] }` — first state shown for each glossary word that appeared; sent at end of class | `{ "ok": true, "autonomy": float }` — also schedules, in the background, the concept-gap processing of this session (`app.lost_concepts.process_session`, B; see [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido)); the response never waits for it | A (route) · B (processing) |
+| POST | /api/clips | student | multipart: `audio` (webm), `session_id`, `t_start`, `t_end`, `transcript`, optional `kind` (`word`\|`concept`, default `word`), optional `lemma` — see [Clips](#clips--post-apiclips) | `{ "clip_id", "audio_path" }` — a `concept` clip also inserts a class_event `unclear` at `t_end`; a `word` clip inserts no event | A |
 | POST | /api/clips/{id}/marks | student (clip owner) | `{ "word": "déchets" }` | `{ "word", "lemma": str\|null, "translation_es": str\|null, "level": int\|null }` — upsert into `clip_marks` (same word twice = no-op); glossary words apply Rules › Changes (`−1` on the first mark of the lemma in the session); `translation_es` and `level` (after the change) only for glossary words | A (uses B's `mastery`) |
 | DELETE | /api/clips/{id}/marks/{word} | student (clip owner) | – | `{ "ok": true, "level": int\|null }` — undo a mark; reverts the `−1` when it was the last mark of that lemma in the session | A (uses B's `mastery`) |
 | GET | /api/home/review | student | – | HomeReview (below) | B |
 | POST | /api/practice | student | `{ "lemma", "clip_id": uuid\|null, "passed": bool }` | `{ "lemma", "level": int, "leveled_up": bool }` | B |
 | GET | /api/me/progress | student | – | `{ "messages": [{ "kind": "learned_this_week"\|"no_help_needed"\|"keep_going", "text": str }] }` — **never percentages or numbers out of a total** | B |
 | GET | /api/teacher/lessons/{id}/dashboard | teacher | – | Dashboard (below) | A (uses B's `mastery.autonomy`) |
-| POST | /api/teacher/lessons/{id}/lost-summary | teacher (lesson's teacher) | – | LostSummary (below) — at most **1 LLM call**, after class | A route · B `app/lost_summary.py` |
+| POST | /api/concepts/{id}/answers | student (gap owner) | `{ "answers": [int] }` — one option index per exercise, in order | `{ "correct": [bool], "status": "understood"\|"review" }` — see [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido) | B |
 | GET | /api/lessons/{id}/preview | student | – | `{ "phrases": [{ "text", "audio_url": str\|null, "lemmas": [str] }] }` — `audio_url` null → client uses `speechSynthesis` (F3) | B |
 | POST | /api/lessons/{id}/preview/results | student | `{ "recognized": [lemma] }` | `{ "message": "Mañana entenderás buena parte de la clase" }` (+1 per recognised lemma) (F3) | B |
 
@@ -110,21 +110,21 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 `mastery` contains EVERY lemma of the lesson (defaults filled). `previously_tapped` = glossary lemmas this student marked at home (`clip_marks.lemma`) on a clip of an earlier session.
 
 ### Clips — `POST /api/clips`
-Two kinds of clip (decided Sat 21 Nov, see PLAN › Decisions log):
-- `word` — lexical doubt, a short clip around one unknown word.
-- `concept` — conceptual doubt, a longer clip of an explanation the student did not follow. Default, so a request without `kind` keeps the original meaning.
+Two learning paths (decided Sun 22 Nov 00:30, see PLAN › Decisions log): **words** ("No he entendido" → audio clip, this section) and **concepts** ("Me he perdido" → text only, [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido)). So a clip is always a **lexical** doubt:
+- `word` — the last ~10 s of class audio around words the student did not understand. **Default**; `/class` may omit `kind`.
+- `concept` — kept in the check for old rows only; `/class` never sends it (a conceptual doubt stores no audio).
 
 | Field | Rule |
 |---|---|
 | `audio` | `audio/webm` (base type of the part's `Content-Type`; codec and file name are not checked), max **2 MiB** (2 097 152 bytes; 2 MiB + 1 → 413), not empty |
 | `session_id` | uuid of a session of this student (otherwise 404, nothing is uploaded) |
 | `t_start`, `t_end` | seconds on the same clock as `t_sec` of the events; `t_start >= 0`, `t_end > t_start` |
-| `kind` | `word` \| `concept`, default `concept`; anything else → 422 |
+| `kind` | `word` \| `concept`, default `word`; anything else → 422 |
 | `lemma` | optional; when present it must be a lemma of the session's lesson (422 `Unknown lemma for this lesson`); stored as sent. Whether it is useful at all is **pending confirmation by owner B** (since #22 the student marks words at home, not in class) |
 | `transcript` | optional text, max 5000 chars, default `""` |
 
 - **Implementation status:** PR #21 implements the base contract (`audio`, `session_id`, `t_start`, `t_end`, `transcript`, the `unclear` event and the response). `kind`, `lemma`, the duration ranges and the `word` behaviour come in a later PR with the additive migration of `clips`; until then every clip behaves as `concept` without duration ranges.
-- **Duration** (technical tolerance, not a product target): `word` 1–12 s, `concept` 10–70 s of `t_end - t_start`; outside → 422. The server does not measure the audio itself.
+- **Duration** (technical tolerance, not a product target): `word` 1–16 s (the browser recorder cannot cut at exactly 10 s and yields 10–15 s), `concept` 10–70 s of `t_end - t_start`; outside → 422. The server does not measure the audio itself.
 - **Events:** `concept` inserts a `class_events` row of type `unclear` at `t_end`; `word` inserts none (words are marked at home, `clip_marks`).
 - **Check order:** 401, 403, 422 (fields, duration), 415, 413, 422 (empty), 404 (session), 422 (lemma). Nothing is stored when a check fails.
 - **Storage:** private bucket `clips`, path `{student_id}/{clip_id}.webm`, no overwrite. The response never carries a URL; signed URLs (1 h) are generated by `GET /api/home/review` with `app.storage.signed_clip_url`.
@@ -138,15 +138,17 @@ Two kinds of clip (decided Sat 21 Nov, see PLAN › Decisions log):
     { "id": "c1…", "lesson_title": "La respiration cellulaire", "created_at": "2026-11-21T21:10:00Z",
       "t_start": 0.0, "t_end": 30.0, "transcript": "… elle produit aussi des déchets …",
       "audio_url": "https://…signed…", "terms": ["déchet", "dioxyde de carbone"],
-      "kind": "concept", "lemma": null }
+      "kind": "word", "lemma": null }
   ],
   "words_to_practice": [
     { "word": "déchets", "lemma": "déchet", "translation_es": "desecho", "definition_fr": "Ce qui reste et ne sert plus.",
       "key_phrase": "Elle produit aussi des déchets : de l'eau et du dioxyde de carbone.", "level": 0, "clip_id": "c1…" }
-  ]
+  ],
+  "concepts_to_learn": [ ConceptGapForStudent ]
 }
 ```
-- `kind` and `lemma` are the clip's own columns. A `word` clip is pending until it has a `practice_results` row with `passed = true`. A `concept` clip has no lemma, so the 3 activities do not apply: it is always listed, newest first, and has no completion rule. **Proposal, to be confirmed by owner B.** `terms` = glossary lemmas whose forms appear in the transcript (both kinds).
+- `kind` and `lemma` are the clip's own columns. Only `word` clips are listed (a `concept` row can only be an old one and is skipped). A clip is pending until it has a `practice_results` row with `passed = true`, newest first. `terms` = glossary lemmas whose forms appear in the transcript.
+- `concepts_to_learn` = this student's `concept_gaps` with `status` `pending` or `review`, newest first (shape in [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido)). It is a **separate learning path** from `words_to_practice`: never mixed.
 - `words_to_practice` = one item per `clip_marks` row of this student, newest first; glossary words with level ≥ 2 are left out. `clip_id` = the clip where it was marked. `key_phrase` = the sentence of that clip's transcript that contains `word`. Non-glossary words: `lemma`, `translation_es`, `definition_fr` and `level` are `null`.
 
 ### Lost event — `POST /api/sessions/{id}/events`
@@ -155,27 +157,42 @@ Two kinds of clip (decided Sat 21 Nov, see PLAN › Decisions log):
 - `context` is required: `t_start` with `0 ≤ t_start ≤ t_sec` and `t_sec − t_start ≤ 70` (tolerance), `transcript` 0–5000 chars (empty allowed: silence). Otherwise 422.
 - Stored in `class_events.context_t_start` / `context_transcript`. No LLM call here.
 
-### Lost summary — `POST /api/teacher/lessons/{id}/lost-summary`
-After class the teacher presses "Résumer les moments perdus" on `/teacher`. **One** LLM call groups ALL `lost` contexts of the lesson (all sessions, all students) into concepts.
+### Concept gaps — conceptual doubts ("Me he perdido")
+Two separate learning paths: **words** (clip + marks + 3 activities + levels 0–3) and **concepts** (this section). A concept gap is "something this student did not understand in this class", summarised by the LLM. The student never sees "you got lost here": she gets a short **visual step-by-step explanation** and **exercises**, and her answers tell the system whether she understood. The teacher sees each gap and its status.
+
+**Processing — `app.lost_concepts.process_session(session_id)` (B), once per session, after class**
+- Triggered in the background by `POST /api/sessions/{id}/word-states` (end of class). Never during class.
+- Input: the session's `lost` events with a non-empty `context_transcript` (max 20, most recent; each transcript max 1500 chars, keeping its end), each with a number `n`, plus the lesson's glossary lemmas.
+- **Frugal:** no such event → no call. `concept_gaps` rows already exist for the session → no call (idempotent). Otherwise **exactly 1 LLM call** for the whole session. Calls per student: 0 in class, at most 1 per session after class.
+- The LLM returns `{ "concepts": [{ "concept": str, "moments": [n], "lemmas": [str], "explanation": [ConceptStep], "exercises": [ConceptExercise] }] }`, max 3 concepts, French at A1–A2 level, Spanish glosses.
+- The API validates and drops invalid concepts (unknown `n`, empty `concept`, not 3–5 steps, not 2–3 exercises, not 2–4 options, `answer` out of range); keeps only glossary lemmas; **computes** `minutes` from the moments itself. Each valid concept → one `concept_gaps` row (`status = 'pending'`).
+- LLM error, no valid concept or no `OPENROUTER_API_KEY` → logged, nothing stored, no retry. The class flow is never affected.
+
+`ConceptStep` = `{ "fr": "La cellule reçoit du sucre et de l'oxygène.", "es": "La célula recibe azúcar y oxígeno.", "visual": "🍞 + 💨 → 🔋" }` — `fr` ≤ 200 chars, `es` ≤ 300 chars, `visual` ≤ 40 chars: a tiny emoji/arrow diagram the client animates one step at a time (no images are generated).
+`ConceptExercise` (stored) = `{ "question": "Que fabrique la mitochondrie ?", "options": ["de l'énergie", "du sucre", "de l'eau"], "answer": 0 }` — 2–4 options.
+
+**`ConceptGapForStudent`** (in `GET /api/home/review` › `concepts_to_learn`; exercises **without** `answer`):
 ```json
-{
-  "lesson_id": "8c1e…", "lost_count": 6, "created_at": "2026-11-22T09:10:00Z",
-  "concepts": [
-    { "concept": "Le rôle de l'oxygène dans la respiration", "hint": "Montrer le schéma cellule → énergie.", "minutes": [12, 13], "students": 4 }
-  ]
-}
+{ "id": "g1…", "lesson_title": "La respiration cellulaire", "concept": "Comment la cellule fabrique de l'énergie",
+  "lemmas": ["mitochondrie", "oxygène"],
+  "explanation": [ { "fr": "La cellule reçoit du sucre et de l'oxygène.", "es": "La célula recibe azúcar y oxígeno.", "visual": "🍞 + 💨 → 🔋" } ],
+  "exercises": [ { "question": "Que fabrique la mitochondrie ?", "options": ["de l'énergie", "du sucre", "de l'eau"] } ],
+  "status": "pending" }
 ```
-- Input to the LLM: each moment with a number (`n`) and its transcript, plus the lesson's glossary lemmas. Moments with an empty transcript are left out.
-- The LLM returns `{ "concepts": [{ "concept": str, "hint": str, "moments": [n] }] }`, max 5 concepts, in French. The API drops unknown `n` and empty concepts, then **computes** `minutes` (distinct `floor(t_sec / 60)`, ascending) and `students` (distinct `student_id`) itself — the LLM does not count. Sorted by `students` desc.
-- Frugal: if a stored summary has `lost_count` equal to the current number of non-empty `lost` events → returned as is, **no LLM call**. No non-empty `lost` event → `{ "lost_count": 0, "concepts": [] }`, no call, nothing stored. Otherwise call, upsert into `lesson_lost_summaries`, return.
-- Errors: `401` · `403` not a teacher or not this lesson's teacher · `404` lesson not found · `502` LLM error or no valid concept · `503` LLM not configured.
+
+**Answers — `POST /api/concepts/{id}/answers`** (student, owner of the gap)
+- Body `{ "answers": [int] }`, one index per exercise; wrong length or index out of range → 422. Not her gap → 404. Already `understood` → 409.
+- All correct → `status = 'understood'` (it leaves `concepts_to_learn`); otherwise `status = 'review'` (it stays). `attempts + 1`, `answered_at = now()`. No LLM call.
+- Response `{ "correct": [true, false], "status": "review" }`. The client shows which answers were right and can show the explanation again.
 
 ### Dashboard — `GET /api/teacher/lessons/{id}/dashboard`
 ```json
 {
   "lesson": { "id": "8c1e…", "title": "La respiration cellulaire" },
   "lost_peaks": [ { "minute": 12, "count": 5 }, { "minute": 3, "count": 2 } ],
-  "lost_summary": null,
+  "concept_gaps": [
+    { "student": "Lucía (semaine 1)", "concept": "Comment la cellule fabrique de l'énergie", "minutes": [12], "lemmas": ["mitochondrie"], "status": "review", "attempts": 1 }
+  ],
   "top_words": [ { "lemma": "déchet", "taps": 4 }, { "lemma": "chaleur", "taps": 3 } ],
   "students": [
     { "name": "Lucía (semaine 1)", "autonomy": 0.53, "weekly": [ { "week": "2026-W47", "autonomy": 0.53 } ] },
@@ -185,7 +202,7 @@ After class the teacher presses "Résumer les moments perdus" on `/teacher`. **O
   ]
 }
 ```
-`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[].autonomy`: latest session. `lost_summary`: the stored LostSummary or `null` (the dashboard never calls the LLM).
+`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[].autonomy`: latest session. `concept_gaps`: the `concept_gaps` rows of all sessions of the lesson, sorted by first minute; `student` = `profiles.display_name`. The dashboard never calls the LLM.
 
 ## Demo seed (owner A, `supabase/seed.sql` or a script; nothing secret in git)
 - Users: `prof-demo` (teacher), `lucia-w1`, `lucia-w4` (students). Emails `<name>@demo.lauzhack`, password in the private chat.
@@ -193,6 +210,7 @@ After class the teacher presses "Résumer les moments perdus" on `/teacher`. **O
 - `lucia-w1`: no mastery rows (8 transparent green, 7 yellow → ≈53%).
 - `lucia-w4`: 4 non-transparent at level 2–3 (`nourriture`, `fournir`, `rejeter`, `dégager`), `chaleur` level 1 and marked at home on a clip of an earlier session (→ 🟠), `déchet`, `essoufflé` level 0; 3 earlier weekly sessions with word_states_log giving 53% → 62% → 71%; 12 `practice_results` passed this week (→ "has aprendido 12 palabras nuevas").
 - Earlier sessions with `lost` events peaking at minute 12 (with `context_transcript` taken from `docs/demo/lesson-respiration.md`) and `clip_marks` on `déchets`/`chaleur`. No `mark_level_changes` rows: the seed sets the levels directly.
+- `lucia-w4`: 2 `concept_gaps` from an earlier session (one `understood`, one `review` with `attempts = 1`), so the teacher Dashboard shows concepts before the live demo. `lucia-w1` gets hers from the real after-class call during the demo.
 
 ## Env vars (new; names only — values in the private chat)
 - `api/.env`: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `ELEVENLABS_API_KEY` (F3 only). Owner B adds them to `api/.env.example`.
