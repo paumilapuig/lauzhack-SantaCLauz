@@ -2,6 +2,7 @@
 
 import { Pause, Play } from "lucide-react"
 import type { HomeClip } from "@/lib/student-contract"
+import { clock } from "./clip-clock"
 import { ClipTranscript } from "./clip-transcript"
 import { tokenize } from "./transcript"
 import { usePlayback } from "./use-playback"
@@ -9,10 +10,6 @@ import { Waveform } from "./waveform"
 
 const SLOW_RATE = 0.85
 
-function clock(ms: number) {
-  const total = Math.round(ms / 1000)
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`
-}
 
 type Props = {
   clip: HomeClip
@@ -23,7 +20,7 @@ type Props = {
 }
 
 export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
-  const playback = usePlayback(clip.transcript, clip.audio_url, SLOW_RATE)
+  const playback = usePlayback(clip.transcript, clip.audio_url, SLOW_RATE, clip.t_end - clip.t_start)
   const time = new Date(clip.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
 
   const marks = tokenize(clip.transcript)
