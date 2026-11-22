@@ -11,13 +11,13 @@ STUDENT_CLIP = "50000000-0000-4000-8000-000000000001"
 OTHER_CLIP = "50000000-0000-4000-8000-000000000002"
 
 
-def _term(lemma: str, transparent: bool) -> dict:
+def _term(lemma: str, transparent: bool, forms: list[str] | None = None, translation: str | None = None) -> dict:
     return {
         "id": f"30000000-0000-4000-8000-{len(lemma):012d}",
         "lesson_id": L1,
         "lemma": lemma,
-        "forms": [lemma],
-        "translation_es": None,
+        "forms": forms or [lemma],
+        "translation_es": translation,
         "definition_fr": None,
         "transparent": transparent,
         "key_phrase": None,
@@ -34,7 +34,7 @@ def seeded_fake() -> FakeSupabase:
         ],
         "lesson_terms": [
             _term("mitochondrie", True),
-            _term("déchet", False),
+            _term("déchet", False, ["déchet", "déchets"], "desecho"),
             _term("chaleur", False),
         ],
         "word_mastery": [
@@ -62,6 +62,7 @@ def seeded_fake() -> FakeSupabase:
             {"id": OTHER_CLIP, "session_id": OTHER_SESSION, "student_id": OTHER_STUDENT, "t_start": 0.0,
              "t_end": 10.0, "transcript": "la chaleur", "audio_path": None, "kind": "word", "lemma": None},
         ],
+        "mark_level_changes": [],
         "clip_marks": [
             {"student_id": STUDENT, "clip_id": STUDENT_CLIP, "word": "déchets", "lemma": "déchet",
              "created_at": "2026-11-15T20:00:00+00:00"},

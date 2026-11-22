@@ -123,7 +123,7 @@ Two learning paths (decided Sun 22 Nov 00:30, see PLAN › Decisions log): **wor
 | `lemma` | optional; when present it must be a lemma of the session's lesson (422 `Unknown lemma for this lesson`); stored as sent. Whether it is useful at all is **pending confirmation by owner B** (since #22 the student marks words at home, not in class) |
 | `transcript` | optional text, max 5000 chars, default `""` |
 
-- **Implementation status:** PR #21 implements the base contract (`audio`, `session_id`, `t_start`, `t_end`, `transcript`, the `unclear` event and the response). `kind`, `lemma`, the duration ranges and the `word` behaviour come in a later PR with the additive migration of `clips`; until then every clip behaves as `concept` without duration ranges.
+- **Implementation status:** complete (`kind`, `lemma`, duration ranges and the `word`/`concept` event rule are implemented).
 - **Duration** (technical tolerance, not a product target): `word` 1–16 s (the browser recorder cannot cut at exactly 10 s and yields 10–15 s), `concept` 10–70 s of `t_end - t_start`; outside → 422. The server does not measure the audio itself.
 - **Events:** `concept` inserts a `class_events` row of type `unclear` at `t_end`; `word` inserts none (words are marked at home, `clip_marks`).
 - **Check order:** 401, 403, 422 (fields, duration), 415, 413, 422 (empty), 404 (session), 422 (lemma). Nothing is stored when a check fails.

@@ -11,7 +11,8 @@ from app.db import get_supabase
 from app.routers.clips import router
 from app.storage import signed_clip_url
 from app.schemas import CurrentUser, Profile
-from tests.classdata_seed import OTHER_SESSION, STUDENT, STUDENT_SESSION, seeded_fake
+from app.routers import classdata_session_repository as session_repo
+from tests.classdata_seed import L1, OTHER_SESSION, STUDENT, STUDENT_SESSION, seeded_fake
 
 USER = CurrentUser(id=STUDENT, email="lucia@example.com")
 UNKNOWN_SESSION = "20000000-0000-4000-8000-0000000000ff"
@@ -50,7 +51,7 @@ def client(db, role):
 
 
 def post_clip(client, data=AUDIO, content_type="audio/webm;codecs=opus", **overrides):
-    form = {"session_id": STUDENT_SESSION, "t_start": "10", "t_end": "40", "transcript": "bonjour"}
+    form = {"session_id": STUDENT_SESSION, "t_start": "10", "t_end": "21", "transcript": "bonjour"}
     form.update(overrides)
     return client.post("/api/clips", data=form, files={"audio": ("clip.webm", BytesIO(data), content_type)})
 
@@ -63,9 +64,45 @@ def snapshot(db):
     return len(stored_objects(db)), len(db.tables["clips"]), len(db.tables["class_events"])
 
 
-def test_create_clip_stores_object_row_and_event(client, db):
+CONCEPT = {"kind": "concept", "t_end": "40"}
+
+
+def test_word_clip_is_the_default_and_inserts_no_event(client, db):
     events_before = len(db.tables["class_events"])
     response = post_clip(client)
+    assert response.status_code == 200
+    (row,) = db.tables["clips"]
+    assert (row["kind"], row["lemma"], row["t_start"], row["t_end"]) == ("word", None, 10, 21)
+    assert len(db.tables["class_events"]) == events_before
+
+
+def test_word_clip_stores_a_lemma_of_the_session_lesson(client, db):
+    session = session_repo.insert_session(db, L1, STUDENT)
+    assert post_clip(client, session_id=session, lemma="déchet").status_code == 200
+    assert db.tables["clips"][0]["lemma"] == "déchet"
+
+
+def test_unknown_lemma_is_422_and_nothing_stored(client, db):
+    session = session_repo.insert_session(db, L1, STUDENT)
+    before = snapshot(db)
+    response = post_clip(client, session_id=session, lemma="inconnu")
+    assert (response.status_code, response.json()["detail"]) == (422, "Unknown lemma for this lesson")
+    assert snapshot(db) == before
+
+
+@pytest.mark.parametrize("form", [
+    {"t_end": "10.5"}, {"t_end": "26.5"}, {"kind": "concept", "t_end": "19"},
+    {"kind": "concept", "t_end": "81"}, {"kind": "phrase"},
+], ids=["word-too-short", "word-too-long", "concept-too-short", "concept-too-long", "unknown-kind"])
+def test_out_of_range_or_unknown_kind_is_422_and_nothing_stored(client, db, form):
+    before = snapshot(db)
+    assert post_clip(client, **form).status_code == 422
+    assert snapshot(db) == before
+
+
+def test_create_clip_stores_object_row_and_event(client, db):
+    events_before = len(db.tables["class_events"])
+    response = post_clip(client, **CONCEPT)
     assert response.status_code == 200
     body = response.json()
     assert body["audio_path"] == f"{STUDENT}/{body['clip_id']}.webm"
@@ -128,7 +165,7 @@ def test_clip_insert_failure_removes_object(client, db):
 
 def test_event_insert_failure_removes_clip_and_object(client, db):
     del db.tables["class_events"]
-    response = post_clip(client)
+    response = post_clip(client, **CONCEPT)
     assert (response.status_code, response.json()["detail"]) == (500, "Could not save clip")
     assert stored_objects(db) == {}
     assert db.tables["clips"] == []
@@ -149,7 +186,7 @@ def test_object_removed_even_if_clip_delete_fails(client, db, monkeypatch):
             return getattr(self._query, name)
 
     monkeypatch.setattr(db, "table", lambda name: _BrokenDelete(real_table(name)) if name == "clips" else real_table(name))
-    assert post_clip(client).status_code == 500
+    assert post_clip(client, **CONCEPT).status_code == 500
     assert stored_objects(db) == {}
 
 

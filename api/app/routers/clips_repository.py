@@ -15,7 +15,9 @@ def insert_clip(
     t_start: float,
     t_end: float,
     transcript: str,
-    audio_path: str,
+    audio_path: str | None,
+    kind: str,
+    lemma: str | None,
 ) -> None:
     db.table("clips").insert({
         "id": clip_id,
@@ -25,6 +27,8 @@ def insert_clip(
         "t_end": t_end,
         "transcript": transcript,
         "audio_path": audio_path,
+        "kind": kind,
+        "lemma": lemma,
     }).execute()
 
 

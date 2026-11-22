@@ -43,7 +43,7 @@ def test_apply_preview_bounds():
 
 @pytest.mark.parametrize(
     "level,level_delta,expected",
-    [(0, 0, 0), (1, -1, 2), (3, -1, 3), (2, 0, 2)],
+    [(0, 0, 0), (1, -1, 2), (3, -1, 3), (2, 0, 2), (0, -1, 1)],
 )
 def test_revert_mark(level, level_delta, expected):
     assert mastery.revert_mark(level, level_delta) == expected
