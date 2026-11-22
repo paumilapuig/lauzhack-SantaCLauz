@@ -11,18 +11,24 @@ import { PRACTICE_MODES } from "./practice-modes"
 import { PracticeModesGrid } from "./practice-modes-grid"
 import { PracticeModesList, type PracticeModeItem } from "./practice-modes-list"
 import { panelId, ReviewSwitch, tabId, type ReviewView } from "./review-switch"
+import { StudyPlan } from "./study-plan-view"
+import { buildStudyPlan, conceptStep, gamesPlayed, practiceDone } from "./study-plan"
 import { suggestedGame } from "./suggested-game"
 import { usableWords } from "./usable-words"
 import { useHomeReview } from "./use-home-review"
-import { usePlayedGames } from "./use-played-games"
+import { useCompletedSteps } from "./use-completed-steps"
 
 const SECTION_TITLE = "text-[13px] font-bold tracking-[0.06em] text-subtle uppercase"
 
-const LEAD: Record<ReviewView, (clipsLeft: number) => string> = {
+const LEAD = "Here is today's work. Vocab: the words you missed. Context: the ideas you lost."
+
+const HINT: Record<ReviewView, (clipsLeft: number) => string> = {
   vocab: (clipsLeft) =>
     clipsLeft > 0 ? "Listen to the class again. Tap every word you didn't understand, then press Done." : "Your clips are done. Time to play with your words.",
   context: () => "Ideas from class, explained step by step. Then two quick questions.",
 }
+
+const scrollToSwitch = () => document.getElementById("review-switch")?.scrollIntoView({ behavior: "smooth", block: "start" })
 
 function EmptyContext() {
   return (
@@ -41,7 +47,8 @@ export function HomeReview() {
   const { review, marks, words, concepts, failed } = home
   const [view, setView] = useState<ReviewView>("vocab")
   const [openMode, setOpenMode] = useState<string | null>(null)
-  const { played, markPlayed } = usePlayedGames()
+  const { completed, markDone } = useCompletedSteps()
+  const played = gamesPlayed(completed)
   const today = useTodayLabel()
 
   const mode = PRACTICE_MODES.find((m) => m.id === openMode)
@@ -55,26 +62,53 @@ export function HomeReview() {
   const suggested = review ? (suggestedGame(review.words_to_practice, isAvailable, played) ?? undefined) : undefined
   const practice = { modes: PRACTICE_MODES, wordCount, suggested, played, onOpen: setOpenMode }
 
+  const plan = review
+    ? buildStudyPlan({ clips: pending, concepts, words: review.words_to_practice, isAvailable, completed })
+    : []
+
+  function show(next: ReviewView) {
+    setView(next)
+    scrollToSwitch()
+  }
+
   function closeMode(practised: boolean) {
-    if (practised && openMode) markPlayed(openMode)
+    if (practised && openMode && review) markDone(practiceDone(openMode, review.words_to_practice))
     setOpenMode(null)
     if (practised) home.refresh().catch((error) => console.error(error))
   }
 
+  /** Closing the last clip checks the clips step off. */
+  async function closeClip(close: (clipId: string) => Promise<void>, clipId: string) {
+    const last = pending.length === 1
+    await close(clipId)
+    if (last) markDone({ kind: "clips", count: 1, minutes: 1 })
+  }
+
+  function understood(conceptId: string) {
+    const gap = concepts.find((c) => c.id === conceptId)
+    if (gap) markDone(conceptStep(gap))
+    home.conceptUnderstood(conceptId)
+  }
+
   return (
-    <StudentPage title="Review" context={today} lead={LEAD[view](pending.length)} wide>
+    <StudentPage title="Review" context={today} lead={LEAD} wide>
       {failed ? (
         <p role="alert" className="text-[19px]">Your clips could not be loaded. Is the server running?</p>
       ) : !review ? (
         <p className="text-[19px] text-label-secondary">Loading…</p>
       ) : (
         <div className="flex flex-col gap-10">
-          <ReviewSwitch value={view} counts={{ vocab: pending.length, context: concepts.length }} onChange={setView} />
+          <StudyPlan steps={plan} modes={PRACTICE_MODES} onClips={() => show("vocab")} onConcept={() => show("context")} onPractice={setOpenMode} />
+
+          <div id="review-switch" className="flex scroll-mt-24 flex-col gap-4">
+            <ReviewSwitch value={view} counts={{ vocab: pending.length, context: concepts.length }} onChange={setView} />
+            <p className="text-[16px] text-label-secondary">{HINT[view](pending.length)}</p>
+          </div>
 
           <div role="tabpanel" id={panelId(view)} aria-labelledby={tabId(view)} key={view} className="animate-rise">
             {view === "context" ? (
               concepts.length > 0 ? (
-                <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={home.conceptUnderstood} onTapWord={home.tapConceptWord} />
+                <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={understood} onTapWord={home.tapConceptWord} />
               ) : (
                 <EmptyContext />
               )
@@ -92,8 +126,8 @@ export function HomeReview() {
                       index={index}
                       marks={marks[clip.id] ?? {}}
                       onToggle={(word) => home.toggle(clip.id, word)}
-                      onDone={home.finishClip}
-                      onDiscard={home.discardClip}
+                      onDone={(id) => closeClip(home.finishClip, id)}
+                      onDiscard={(id) => closeClip(home.discardClip, id)}
                     />
                   ))}
                 </section>

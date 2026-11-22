@@ -97,4 +97,21 @@ describe("HomeReview", () => {
     await waitFor(() => expect(within(updated).getByRole("button", { name: /Flashcards/ }).textContent).toContain("Done today"))
     expect(within(updated).getByRole("button", { name: /Step by step/ }).textContent).toContain("For you")
   })
+
+  it("today's plan stays above the tabs; a finished game is checked off and leaves the to-do (bug Sun 22 Nov)", async () => {
+    render(<HomeReview />)
+    const plan = await screen.findByRole("region", { name: /Your next/ })
+    const practiseRow = within(plan).getByRole("button", { name: /Practise with Flashcards/ })
+    expect(practiseRow.textContent).not.toContain("Done")
+    fireEvent.click(practiseRow)
+    while (screen.queryByText("Tap to see")) {
+      fireEvent.click(screen.getByText("Tap to see"))
+      fireEvent.click(screen.getByText("I knew it"))
+    }
+    fireEvent.click(await screen.findByRole("button", { name: "Back" }))
+    await waitFor(() => expect(within(plan).getByRole("button", { name: /Practise with Flashcards/ }).textContent).toContain("Done"))
+    expect(within(plan).queryAllByRole("button", { name: /Practise with/ })).toHaveLength(1)
+    fireEvent.click(screen.getByRole("tab", { name: /Context/ }))
+    expect(screen.getByRole("region", { name: /Your next/ })).toBe(plan)
+  })
 })

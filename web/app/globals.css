@@ -135,6 +135,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scrollbar-gutter: stable; /* short and long tabs keep the same width, so nothing jumps sideways */
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01" on, "cv11" on;
