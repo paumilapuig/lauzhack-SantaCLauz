@@ -1,24 +1,17 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
+import { TeacherGate } from "./teacher-gate";
 import { TeacherShell } from "./teacher-shell";
 
-export default async function TeacherLayout({
+export default function TeacherLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "teacher") redirect("/home");
-
-  return <TeacherShell>{children}</TeacherShell>;
+  return (
+    <TeacherShell>
+      <Suspense fallback={<p className="text-sm text-neutral-600">Chargement…</p>}>
+        <TeacherGate>{children}</TeacherGate>
+      </Suspense>
+    </TeacherShell>
+  );
 }
