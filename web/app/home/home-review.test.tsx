@@ -36,6 +36,19 @@ describe("HomeReview", () => {
     expect(screen.queryByText(/^\d+ to review$/)).toBeNull()
   })
 
+  it("Discard unmarks the clip's words and removes the clip", async () => {
+    const unmark = vi.spyOn(api, "unmark")
+    const finishClip = vi.spyOn(api, "finishClip")
+    const { container } = render(<HomeReview />)
+    await screen.findByText("2 to review")
+    fireEvent.click((await screen.findAllByRole("button", { name: /mitochondries/i }))[0])
+    await waitFor(() => expect(container.querySelector('[data-state="yellow"]')).not.toBeNull())
+    fireEvent.click(screen.getAllByRole("button", { name: "Discard" })[0])
+    expect(await screen.findByText("1 to review")).toBeTruthy()
+    expect(unmark).toHaveBeenCalledWith(expect.any(String), "mitochondries")
+    expect(finishClip).toHaveBeenCalledTimes(1)
+  })
+
   it("finishing a mode saves practice for glossary words only", async () => {
     const practice = vi.spyOn(api, "practice")
     render(<HomeReview />)

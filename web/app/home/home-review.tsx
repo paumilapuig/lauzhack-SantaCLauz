@@ -1,6 +1,6 @@
 "use client"
 
-import { Check } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { useState } from "react"
 import { useTodayLabel } from "@/components/page-title"
 import { StudentPage } from "@/components/student-page"
@@ -14,10 +14,12 @@ import { usableWords } from "./usable-words"
 import { useHomeReview } from "./use-home-review"
 
 const DONE_BUTTON =
-  "inline-flex h-11 items-center gap-2 self-end rounded-full bg-charcoal px-5 text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-subtle)] transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+  "inline-flex h-11 items-center gap-2 rounded-full bg-charcoal px-5 text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-subtle)] transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+const DISCARD_BUTTON =
+  "inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-[15px] font-bold text-label transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
 
 export function HomeReview() {
-  const { review, marks, words, concepts, failed, toggle, finishClip, savePractice, answerConcept, conceptUnderstood } =
+  const { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood } =
     useHomeReview()
   const [openMode, setOpenMode] = useState<string | null>(null)
   const [finishing, setFinishing] = useState<string | null>(null)
@@ -27,10 +29,10 @@ export function HomeReview() {
   const closeMode = () => setOpenMode(null)
   const wordCount = (m: PracticeModeItem) => usableWords(words, m.needs).length
 
-  async function done(clipId: string) {
+  async function close(clipId: string, action: (clipId: string) => Promise<void>) {
     setFinishing(clipId)
     try {
-      await finishClip(clipId)
+      await action(clipId)
     } finally {
       setFinishing(null)
     }
@@ -81,10 +83,16 @@ export function HomeReview() {
                     translate={(word) => clipMarks[word.toLowerCase()] ?? ""}
                     onToggle={(word) => toggle(clip.id, word)}
                   />
-                  <button type="button" onClick={() => done(clip.id)} disabled={finishing === clip.id} className={DONE_BUTTON}>
-                    <Check className="size-4" aria-hidden />
-                    {finishing === clip.id ? "Saving…" : "Done"}
-                  </button>
+                  <div className="flex justify-end gap-2">
+                    <button type="button" onClick={() => close(clip.id, discardClip)} disabled={finishing === clip.id} className={DISCARD_BUTTON}>
+                      <X className="size-4" aria-hidden />
+                      Discard
+                    </button>
+                    <button type="button" onClick={() => close(clip.id, finishClip)} disabled={finishing === clip.id} className={DONE_BUTTON}>
+                      <Check className="size-4" aria-hidden />
+                      {finishing === clip.id ? "Saving…" : "Done"}
+                    </button>
+                  </div>
                 </div>
               )
             })}

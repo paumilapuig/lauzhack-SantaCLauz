@@ -45,6 +45,12 @@ export function useHomeReview() {
     show(await api.review())
   }
 
+  /** Understood it on replay: drop the clip's marks, then close it like Done. */
+  async function discardClip(clipId: string) {
+    await Promise.all(Object.keys(marks[clipId] ?? {}).map((word) => api.unmark(clipId, word)))
+    await finishClip(clipId)
+  }
+
   const words = (review?.words_to_practice ?? []).map(toMyWord)
   const concepts = review?.concepts_to_learn ?? []
 
@@ -64,5 +70,5 @@ export function useHomeReview() {
     }
   }
 
-  return { review, marks, words, concepts, failed, toggle, finishClip, savePractice, answerConcept, conceptUnderstood }
+  return { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood }
 }
