@@ -202,7 +202,7 @@ Two separate learning paths: **words** (clip + marks + 3 activities + levels 0â€
   ]
 }
 ```
-`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[].autonomy`: latest session. `concept_gaps`: the `concept_gaps` rows of all sessions of the lesson, sorted by first minute; `student` = `profiles.display_name`. The dashboard never calls the LLM.
+`lost_peaks`: `lost` events of all sessions of the lesson, bucketed by `floor(t_sec / 60)`, sorted by count desc. `top_words`: `clip_marks` with a `lemma`, counted per lemma (`taps` = number of marks), sorted desc, max 10. `students[]`: every student with a session of the lesson, sorted by name; `autonomy` = latest session that has `word_states_log` rows (`null` if none yet), `weekly` from those sessions. Only the lesson's teacher (`403 Not your lesson`); unknown lesson `404`. `concept_gaps`: the `concept_gaps` rows of all sessions of the lesson, sorted by first minute; `student` = `profiles.display_name`. The dashboard never calls the LLM.
 
 ## Demo seed (owner A, `supabase/seed.sql` or a script; nothing secret in git)
 - Users: `prof-demo` (teacher), `lucia-w1`, `lucia-w4` (students). Emails `<name>@demo.lauzhack`, password in the private chat.
