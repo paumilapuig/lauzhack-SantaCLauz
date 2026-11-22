@@ -41,6 +41,14 @@ def test_apply_preview_bounds():
     assert mastery.apply_preview(3) == 3
 
 
+@pytest.mark.parametrize(
+    "level,level_delta,expected",
+    [(0, 0, 0), (1, -1, 2), (3, -1, 3), (2, 0, 2)],
+)
+def test_revert_mark(level, level_delta, expected):
+    assert mastery.revert_mark(level, level_delta) == expected
+
+
 def test_autonomy():
     assert mastery.autonomy([]) == 0.0
     assert mastery.autonomy(["green", "yellow", "orange", "green"]) == 0.5
