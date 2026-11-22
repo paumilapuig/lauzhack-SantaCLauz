@@ -5,6 +5,7 @@ from .auth import AuthenticatedUser
 from .config import get_settings
 from .profiles import fetch_profile
 from .routers import classdata, classdata_sessions, classdata_word_states, clips, home
+from .routers.concepts import router as concepts_router
 from .routers.lessons import router as lessons_router
 from .schemas import Health, Me
 
@@ -24,6 +25,7 @@ app.include_router(classdata_sessions.router)
 app.include_router(classdata_word_states.router)
 app.include_router(clips.router)
 app.include_router(home.router)
+app.include_router(concepts_router)
 
 
 @app.get("/health", response_model=Health)

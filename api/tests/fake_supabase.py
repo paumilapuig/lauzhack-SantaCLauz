@@ -29,6 +29,7 @@ class _Query:
         self._single = False
         self._payload: list[dict] = []
         self._conflict: list[str] = []
+        self._update_payload: dict = {}
 
     def select(self, columns: str = "*"):
         self._mode = "select"
@@ -70,7 +71,14 @@ class _Query:
         self._mode = "delete"
         return self
 
+    def update(self, payload: dict):
+        self._mode = "update"
+        self._update_payload = payload
+        return self
+
     def execute(self):
+        if self._mode == "update":
+            return SimpleNamespace(data=self._update_matching())
         if self._mode == "delete":
             return SimpleNamespace(data=self._remove_matching())
         if self._mode == "insert":
@@ -83,6 +91,12 @@ class _Query:
         removed = [r for r in self._rows if all(f(r) for f in self._filters)]
         self._rows[:] = [r for r in self._rows if r not in removed]
         return deepcopy(removed)
+
+    def _update_matching(self) -> list[dict]:
+        matching = [r for r in self._rows if all(f(r) for f in self._filters)]
+        for row in matching:
+            row.update(deepcopy(self._update_payload))
+        return deepcopy(matching)
 
     def _store(self, row: dict) -> dict:
         stored = deepcopy(row)

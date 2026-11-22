@@ -8,7 +8,7 @@ from supabase import Client
 
 from .. import home_repository as repo
 from ..db import get_supabase
-from ..home_review import build_clips, build_words
+from ..home_review import build_clips, build_concepts, build_words
 from ..home_schemas import HomeReview
 from ..roles import StudentUser
 
@@ -25,6 +25,8 @@ def get_home_review(user: StudentUser, client: SupabaseClient) -> HomeReview:
     lesson_terms = repo.fetch_lesson_terms(client, lesson_ids)
     marks = repo.fetch_clip_marks(client, user.id)
     mastery = repo.fetch_mastery(client, user.id, sorted({m["lemma"] for m in marks if m["lemma"]}))
+    gaps = repo.fetch_concept_gaps(client, user.id)
+    gap_lessons = repo.fetch_lessons(client, sorted({g["lesson_id"] for g in gaps}))
     return HomeReview(
         clips=build_clips(
             clips,
@@ -35,4 +37,5 @@ def get_home_review(user: StudentUser, client: SupabaseClient) -> HomeReview:
             partial(repo.sign_audio, client),
         ),
         words_to_practice=build_words(marks, clips, sessions, lesson_terms, mastery),
+        concepts_to_learn=build_concepts(gaps, {row["id"]: row["title"] for row in gap_lessons}),
     )

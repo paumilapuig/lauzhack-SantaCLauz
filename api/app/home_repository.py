@@ -31,6 +31,18 @@ def fetch_passed_clip_ids(db: Client, student_id: str) -> set[str]:
     return {row["clip_id"] for row in result.data if row["clip_id"] is not None}
 
 
+def fetch_concept_gaps(db: Client, student_id: str) -> list[dict]:
+    result = (
+        db.table("concept_gaps")
+        .select("id, lesson_id, concept, lemmas, explanation, exercises, status, created_at")
+        .eq("student_id", student_id)
+        .in_("status", ["pending", "review"])
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return result.data
+
+
 def fetch_sessions(db: Client, ids: list[str]) -> list[dict]:
     if not ids:
         return []

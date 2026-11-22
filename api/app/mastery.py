@@ -34,6 +34,11 @@ def apply_preview(level: int) -> int:
     return min(MAX_LEVEL, level + 1)
 
 
+def revert_mark(level: int, level_delta: int) -> int:
+    """Undo a mark that changed the level by level_delta, max 3."""
+    return min(MAX_LEVEL, level - level_delta)
+
+
 def autonomy(states: list[str]) -> float:
     """Share of words shown green; 0.0 for no words."""
     if not states:
