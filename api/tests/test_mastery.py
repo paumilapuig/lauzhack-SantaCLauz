@@ -25,6 +25,11 @@ def test_state(level, tapped, expected):
     assert mastery.state(level, tapped) == expected
 
 
+@pytest.mark.parametrize("level,delta,expected", [(1, -1, 2), (0, 0, 0), (3, -1, 3), (0, -1, 1)])
+def test_revert_mark_gives_back_exactly_what_was_subtracted(level, delta, expected):
+    assert mastery.revert_mark(level, delta) == expected
+
+
 def test_apply_tap_bounds():
     assert mastery.apply_tap(3) == 2
     assert mastery.apply_tap(0) == 0

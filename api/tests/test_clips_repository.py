@@ -11,7 +11,7 @@ def test_insert_clip_stores_row_with_given_id():
     db = seeded_fake()
     db.tables["clips"] = []
 
-    insert_clip(db, CLIP_ID, SESSION_ID, STUDENT, 1.5, 31.5, "bonjour", f"{STUDENT}/{CLIP_ID}.webm")
+    insert_clip(db, CLIP_ID, SESSION_ID, STUDENT, 1.5, 31.5, "bonjour", f"{STUDENT}/{CLIP_ID}.webm", "concept", None)
 
     assert len(db.tables["clips"]) == 1
     row = db.tables["clips"][0]
@@ -23,6 +23,8 @@ def test_insert_clip_stores_row_with_given_id():
         "t_end": 31.5,
         "transcript": "bonjour",
         "audio_path": f"{STUDENT}/{CLIP_ID}.webm",
+        "kind": "concept",
+        "lemma": None,
     }
 
 

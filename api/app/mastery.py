@@ -24,6 +24,11 @@ def apply_tap(level: int) -> int:
     return max(0, level - 1)
 
 
+def revert_mark(level: int, level_delta: int) -> int:
+    """Undoing the last home mark of a session gives back exactly what it subtracted (0 or 1), max 3."""
+    return min(MAX_LEVEL, level - level_delta)
+
+
 def apply_practice(level: int, passed: bool) -> int:
     """Passing a practice activity raises the level by 1, max 3."""
     return min(MAX_LEVEL, level + 1) if passed else level
