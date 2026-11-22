@@ -21,6 +21,12 @@ def lost_events(db: Client, session_ids: list[str]) -> list[dict]:
     )
 
 
+def clip_starts(db: Client, session_ids: list[str]) -> list[dict]:
+    if not session_ids:
+        return []
+    return db.table("clips").select("t_start").in_("session_id", session_ids).execute().data
+
+
 def word_states(db: Client, session_ids: list[str]) -> list[dict]:
     if not session_ids:
         return []

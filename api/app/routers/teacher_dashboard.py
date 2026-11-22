@@ -16,6 +16,13 @@ def lost_peaks(lost_events: list[dict]) -> list[dict]:
             for minute, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))]
 
 
+def unclear_peaks(clips: list[dict]) -> list[dict]:
+    """«Je n'ai pas compris» clips bucketed per minute of their start (what she heard), most first."""
+    counts = Counter(int(clip["t_start"] // 60) for clip in clips)
+    return [{"minute": minute, "count": count}
+            for minute, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))]
+
+
 def top_words(marks: list[dict]) -> list[dict]:
     """Home marks of glossary words counted per lemma, most first, max 10."""
     counts = Counter(mark["lemma"] for mark in marks if mark["lemma"])

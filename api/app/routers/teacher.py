@@ -55,6 +55,7 @@ class DashboardStudent(BaseModel):
 class Dashboard(BaseModel):
     lesson: DashboardLesson
     lost_peaks: list[LostPeak]
+    unclear_peaks: list[LostPeak]
     concept_gaps: list[DashboardConceptGap]
     top_words: list[TopWord]
     students: list[DashboardStudent]
@@ -74,6 +75,7 @@ def get_dashboard(lesson_id: UUID, user: TeacherUser, db: Db) -> Dashboard:
     return Dashboard(
         lesson=DashboardLesson(id=lesson["id"], title=lesson["title"]),
         lost_peaks=dash.lost_peaks(repo.lost_events(db, session_ids)),
+        unclear_peaks=dash.unclear_peaks(repo.clip_starts(db, session_ids)),
         concept_gaps=dash.concept_gaps(gaps, names),
         top_words=dash.top_words(repo.marks(db, session_ids)),
         students=dash.students(sessions, repo.word_states(db, session_ids), names),

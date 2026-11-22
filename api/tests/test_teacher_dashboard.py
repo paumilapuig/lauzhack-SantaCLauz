@@ -16,6 +16,11 @@ def test_lost_peaks_bucket_per_minute_most_first():
         {"minute": 0, "count": 2}, {"minute": 12, "count": 2}, {"minute": 3, "count": 1}]
 
 
+def test_unclear_peaks_bucket_clips_per_minute_of_their_start_most_first():
+    clips = [{"t_start": 721.0}, {"t_start": 750.5}, {"t_start": 30.0}]
+    assert dash.unclear_peaks(clips) == [{"minute": 12, "count": 2}, {"minute": 0, "count": 1}]
+
+
 def test_top_words_count_glossary_marks_only_max_ten():
     marks = [{"lemma": "déchet"}, {"lemma": "déchet"}, {"lemma": "chaleur"}, {"lemma": None}]
     marks += [{"lemma": f"mot{i}"} for i in range(12)]
