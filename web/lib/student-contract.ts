@@ -47,3 +47,8 @@ export type PracticeResponse = { lemma: string; level: number; leveled_up: boole
 
 export type ProgressKind = "learned_this_week" | "no_help_needed" | "keep_going";
 export type ProgressMessage = { kind: ProgressKind; text: string };
+/** A glossary word she met, with her level 0–3 (her word garden). */
+export type ProgressWord = { lemma: string; translation_es: string | null; level: number };
+/** A day of the current week (Monday first); practised = she finished a practice that day. */
+export type ProgressDay = { date: string; practised: boolean };
+export type Progress = { messages: ProgressMessage[]; words: ProgressWord[]; week: ProgressDay[] };

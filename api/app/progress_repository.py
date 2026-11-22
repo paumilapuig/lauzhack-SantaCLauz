@@ -23,6 +23,24 @@ def fetch_passed_practices(db: Client, student_id: str) -> list[tuple[str, datet
     return [(row["lemma"], _parse_timestamp(row["created_at"])) for row in result.data]
 
 
+def fetch_practice_times(db: Client, student_id: str) -> list[datetime]:
+    """When she finished each practice, passed or not (for her week)."""
+    result = db.table("practice_results").select("created_at").eq("student_id", student_id).execute()
+    return [_parse_timestamp(row["created_at"]) for row in result.data]
+
+
+def fetch_translations(db: Client, lemmas: list[str]) -> dict[str, str]:
+    """The glossary's Spanish for each lemma (first lesson that has one)."""
+    if not lemmas:
+        return {}
+    result = db.table("lesson_terms").select("lemma, translation_es").in_("lemma", lemmas).execute()
+    translations: dict[str, str] = {}
+    for row in result.data:
+        if row.get("translation_es") and row["lemma"] not in translations:
+            translations[row["lemma"]] = row["translation_es"]
+    return translations
+
+
 def fetch_mark_lemmas(db: Client, student_id: str) -> list[str]:
     result = (
         db.table("clip_marks")

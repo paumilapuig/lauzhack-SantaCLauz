@@ -130,18 +130,19 @@ def test_progress_returns_messages_for_the_token_student_only(client_for):
     response = client_for(db).get(URL)
 
     assert response.status_code == 200
-    assert response.json() == {"messages": [
+    assert response.json()["messages"] == [
         {"kind": "learned_this_week", "text": "This week you learned 1 new word"},
         {"kind": "keep_going", "text": "Keep going: tomorrow we review «noyau»"},
-    ]}
+    ]
 
 
 def test_progress_without_data_only_encourages(client_for):
     response = client_for(empty_db()).get(URL)
 
-    assert response.json() == {"messages": [
+    assert response.json()["messages"] == [
         {"kind": "keep_going", "text": "Keep going, you're doing great"},
-    ]}
+    ]
+    assert response.json()["words"] == []
 
 
 def test_progress_teacher_is_forbidden(client_for, role):
@@ -160,3 +161,28 @@ def test_main_app_exposes_progress_next_to_me():
     paths = main.app.openapi()["paths"]
     assert "get" in paths["/api/me/progress"]
     assert "get" in paths["/api/me"]
+
+
+def test_progress_has_the_word_garden_and_the_week(client_for):
+    db = FakeSupabase({
+        "practice_results": [
+            practice(STUDENT, "cellule", "2026-11-18T10:00:00+00:00"),
+            practice(STUDENT, "atome", "2026-11-17T10:00:00+00:00", passed=False),
+            practice(OTHER_STUDENT, "ion", "2026-11-16T10:00:00+00:00"),
+        ],
+        "clip_marks": [mark(STUDENT, "noyau", "2026-11-18T09:00:00+00:00")],
+        "word_mastery": [{"student_id": STUDENT, "lemma": "cellule", "level": 2}],
+        "lesson_terms": [
+            {"lesson_id": LESSON, "lemma": "cellule", "transparent": False, "translation_es": "célula"},
+            {"lesson_id": LESSON, "lemma": "noyau", "transparent": False, "translation_es": "núcleo"},
+        ],
+    })
+
+    body = client_for(db).get(URL).json()
+
+    assert body["words"] == [
+        {"lemma": "noyau", "translation_es": "núcleo", "level": 0},
+        {"lemma": "cellule", "translation_es": "célula", "level": 2},
+    ]
+    assert [d["practised"] for d in body["week"]] == [False, True, True, False, False, False, False]
+    assert body["week"][0]["date"] == "2026-11-16"

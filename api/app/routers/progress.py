@@ -1,4 +1,4 @@
-"""GET /api/me/progress: encouraging messages, never percentages (docs/API.md)."""
+"""GET /api/me/progress: encouraging messages, her word garden and her week; never percentages (docs/API.md)."""
 
 from datetime import UTC, datetime
 from typing import Annotated
@@ -8,8 +8,9 @@ from supabase import Client
 
 from .. import progress_repository as repo
 from ..db import get_supabase
+from ..progress_garden import build_week, build_words
 from ..progress_messages import build_progress_messages
-from ..progress_schemas import MessageOut, ProgressOut
+from ..progress_schemas import DayOut, MessageOut, ProgressOut, WordOut
 from ..roles import StudentUser
 
 router = APIRouter(prefix="/api/me", tags=["progress"])
@@ -31,4 +32,10 @@ def get_progress(user: StudentUser, client: SupabaseClient, now: Now) -> Progres
     lemmas = sorted({lemma for lemma, _ in passed} | set(mark_lemmas))
     levels = repo.fetch_levels(client, user.id, lemmas)
     messages = build_progress_messages(passed, mark_lemmas, levels, now)
-    return ProgressOut(messages=[MessageOut(kind=m.kind, text=m.text) for m in messages])
+    words = build_words(mark_lemmas, [lemma for lemma, _ in passed], levels, repo.fetch_translations(client, lemmas))
+    week = build_week(repo.fetch_practice_times(client, user.id), now)
+    return ProgressOut(
+        messages=[MessageOut(kind=m.kind, text=m.text) for m in messages],
+        words=[WordOut(lemma=w.lemma, translation_es=w.translation_es, level=w.level) for w in words],
+        week=[DayOut(date=d.date, practised=d.practised) for d in week],
+    )
