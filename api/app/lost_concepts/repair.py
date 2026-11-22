@@ -9,6 +9,8 @@ import re
 
 from pydantic import ValidationError
 
+from app.lost_concepts.diagram import repair_diagram
+
 from app.lost_concepts.schema import (
     MAX_EXERCISES,
     MAX_STEPS,
@@ -59,7 +61,7 @@ def _valid_items(raw: object, model, limit: int) -> list[dict]:
     kept: list[dict] = []
     for item in raw:
         try:
-            kept.append(model.model_validate(item).model_dump())
+            kept.append(model.model_validate(item).model_dump(by_alias=True))
         except ValidationError:
             continue
     return kept[:limit]
@@ -73,7 +75,7 @@ def _steps(raw: object) -> list[dict]:
         if isinstance(step, dict) and isinstance(step.get("visual"), str) else step
         for step in raw
     ]
-    return _valid_items(shortened, ConceptStep, MAX_STEPS)
+    return _valid_items(repair_diagram(shortened), ConceptStep, MAX_STEPS)
 
 
 def repair_concept(raw: dict, known_moments: set[int]) -> dict:

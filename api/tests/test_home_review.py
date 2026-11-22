@@ -56,6 +56,7 @@ def seed(clips=(), results=(), marks=(), mastery=(), terms=None, store_audio=Tru
         "clip_marks": list(marks),
         "word_mastery": list(mastery),
         "concept_gaps": [],
+        "concept_word_marks": [],
     })
     if store_audio:
         for row in clips:

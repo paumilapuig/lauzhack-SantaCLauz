@@ -77,7 +77,8 @@ def test_two_lost_moments_make_one_call_and_store_pending_gaps_with_answers():
     assert row["lemmas"] == ["mitochondrie"]
     assert row["status"] == "pending"
     assert row["exercises"][0]["answer"] == 1
-    assert row["explanation"][0] == {"fr": "La cellule respire.", "es": "La célula respira.", "visual": "🫁 → 🔋"}
+    assert row["explanation"][0] == {"fr": "La cellule respire.", "es": "La célula respira.", "visual": "🫁 → 🔋",
+                                     "nodes": [], "links": [], "words": []}
 
 
 def test_no_lost_moment_with_text_makes_no_call():

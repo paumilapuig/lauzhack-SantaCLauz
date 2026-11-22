@@ -59,6 +59,7 @@ RLS principle: a student sees only her rows; a teacher sees rows linked to her/h
 | practice_results | id uuid PK, student_id uuid → profiles, lemma text, clip_id uuid null → clips, passed bool, created_at timestamptz default now() | student own |
 | mark_level_changes | student_id uuid → profiles, session_id uuid → class_sessions on delete cascade, lemma text, level_delta int check in (−1, 0), created_at timestamptz default now(); **PK (student_id, session_id, lemma)** — one row per lemma marked at home per session (see Rules › Changes) | student own |
 | concept_gaps | id uuid PK, session_id uuid → class_sessions on delete cascade, student_id uuid → profiles, lesson_id uuid → lessons on delete cascade, concept text (French, short label), minutes int[] (distinct `floor(t_sec / 60)` of its lost moments), lemmas text[] (glossary lemmas of the lesson, may be empty), explanation jsonb (`ConceptStep[]`, 3–5), exercises jsonb (`ConceptExercise[]` **with** `answer`, 2–3), status text check in ('pending','review','understood') default 'pending', attempts int default 0, answered_at timestamptz null, created_at timestamptz default now() — see [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido) | lesson's teacher read; **no student read** (the rows hold the answers; the API serves them without `answer`) |
+| concept_word_marks | student_id uuid → profiles, gap_id uuid → concept_gaps on delete cascade, lesson_id uuid → lessons, word text (lowercase, as tapped), lemma text null (glossary lemma of the gap's lesson, else null), translation_es text null, key_phrase text (the step sentence or diagram label it was tapped in), created_at timestamptz default now(); **PK (student_id, gap_id, word)** — words tapped inside a concept explanation (see Concept gaps › Words) | student own; lesson's teacher read |
 
 Note: `class_sessions.student_id` is added to the original sketch (one session per student device, see PLAN › Decisions).
 The `'word'` value stays in the `class_events.type` check for old rows only; the API no longer writes it.
@@ -84,6 +85,7 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | GET | /api/me/progress | student | – | `{ "messages": [{ "kind": "learned_this_week"\|"no_help_needed"\|"keep_going", "text": str }] }` — **never percentages or numbers out of a total**; texts are in English (e.g. "This week you learned 12 new words") | B |
 | GET | /api/teacher/lessons/{id}/dashboard | teacher | – | Dashboard (below) | A (uses B's `mastery.autonomy`) |
 | POST | /api/concepts/{id}/answers | student (gap owner) | `{ "answers": [int] }` — one option index per exercise, in order | `{ "correct": [bool], "status": "understood"\|"review" }` — see [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido) | B |
+| POST | /api/concepts/{id}/words | student (gap owner) | `{ "word": "libère", "key_phrase": "Elle libère de l'énergie." }` | `{ "word", "lemma": str\|null, "translation_es": str\|null, "level": int\|null }` — saves the word to her hard words (`concept_word_marks`, same word twice = no-op); a glossary word applies Rules › Changes (−1 once per lemma and session) like a clip mark | B |
 | GET | /api/lessons/{id}/preview | student | – | `{ "phrases": [{ "text", "audio_url": str\|null, "lemmas": [str] }] }` — `audio_url` null → client uses `speechSynthesis` (F3 — **not implemented**) | B |
 | POST | /api/lessons/{id}/preview/results | student | `{ "recognized": [lemma] }` | `{ "message": "Mañana entenderás buena parte de la clase" }` (+1 per recognised lemma) (F3 — **not implemented**) | B |
 
@@ -150,7 +152,7 @@ Two learning paths (decided Sun 22 Nov 00:30, see PLAN › Decisions log): **wor
 ```
 - `kind` and `lemma` are the clip's own columns. A clip is **pending until the student presses Done** on it (`POST /api/clips/{id}/reviewed` → `clips.reviewed_at`). Only the **5 newest** pending clips are listed, newest first. `terms` = glossary lemmas whose forms appear in the transcript.
 - `concepts_to_learn` = this student's `concept_gaps` with `status` `pending` or `review`, newest first (shape in [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido)). It is a **separate learning path** from `words_to_practice`: never mixed.
-- `words_to_practice` = one item per `clip_marks` row of this student, newest first; glossary words with level ≥ 2 are left out. `clip_id` = the clip where it was marked. `key_phrase` = the sentence of that clip's transcript that contains `word`. Non-glossary words: `lemma` and `level` are `null`; `translation_es`/`definition_fr` come from `clip_marks` (filled on Done) or are `null`.
+- `words_to_practice` = one item per `clip_marks` row **and per `concept_word_marks` row** of this student — concept words first, then clip words, each newest first (concept words have `clip_id: null` and the tapped sentence as `key_phrase`); glossary words with level ≥ 2 are left out. `clip_id` = the clip where it was marked. `key_phrase` = the sentence of that clip's transcript that contains `word`. Non-glossary words: `lemma` and `level` are `null`; `translation_es`/`definition_fr` come from `clip_marks` (filled on Done) or are `null`.
 
 ### Lost event — `POST /api/sessions/{id}/events`
 « J'ai perdu le fil » saves **text only, no audio**: the transcript of the last 60 s (`t_start = max(0, t_sec − 60)`).
@@ -172,6 +174,13 @@ Two separate learning paths: **words** (clip + marks + 3 activities + levels 0�
 - Every OpenRouter call (glossary, concepts, translations) retries HTTP 429/502/503/504 twice, after 1 s and 3 s (`app/glossary/openrouter_client.py`); other errors are not retried.
 
 `ConceptStep` = `{ "fr": "La cellule reçoit du sucre et de l'oxygène.", "es": "La célula recibe azúcar y oxígeno.", "visual": "🍞 + 💨 → 🔋" }` — `fr` ≤ 200 chars, `es` ≤ 300 chars, `visual` ≤ 40 chars: a tiny emoji/arrow diagram the client animates one step at a time (no images are generated).
+
+**Diagram + words (prompt v4, Sun 22 Nov). No emoji:** the concept is drawn as a process diagram. Each `ConceptStep` also carries, all optional (default `[]`, so older rows still render as a list):
+- `nodes`: the boxes this step adds, `[{ "id": "glucose", "fr": "Glucose", "kind": "input", "inside": null }]` — `kind` ∈ `input` (what goes in) · `process` (what happens) · `output` (what comes out) · `place` (where it happens, drawn as a zone); `inside` = id of a `place` node this box sits in, or null. 0–3 per step, ≤ 10 per concept, `id` unique (`[a-z0-9-]`, ≤ 24), `fr` ≤ 40 chars.
+- `links`: the arrows this step adds, `[{ "from": "glucose", "to": "glycolyse", "fr": "entre dans" }]` — `fr` optional (≤ 30 chars); both ends must be nodes of this or an earlier step (others are dropped).
+- `words`: Spanish for the harder French words of this step (its `fr`, node and arrow labels), `[{ "fr": "libère", "es": "libera" }]` — ≤ 8 per step. Shown when the student taps a word; no extra LLM call.
+- `visual` (the old emoji line) becomes optional and is no longer asked for nor shown when a diagram exists.
+The client draws it (no image is generated, colours and shapes come from `kind`): every node is visible but faded, nodes of steps already explained are solid, the current step's nodes are highlighted and its arrows animate, « Explore ▶ » moves to the next step. Every French word can be tapped: translation (glossary, else the step's `words`) and `POST /api/concepts/{id}/words`.
 `ConceptExercise` (stored) = `{ "question": "Que fabrique la mitochondrie ?", "options": ["de l'énergie", "du sucre", "de l'eau"], "answer": 0 }` — 2–4 options.
 
 **`ConceptGapForStudent`** (in `GET /api/home/review` › `concepts_to_learn`; exercises **without** `answer`):

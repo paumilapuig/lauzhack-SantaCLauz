@@ -1,5 +1,6 @@
 import type {
   ConceptAnswerResult,
+  ConceptWordResult,
   HomeReview,
   MarkResult,
   PracticeRequest,
@@ -17,6 +18,7 @@ export interface HomeApi {
   practice(request: PracticeRequest): Promise<PracticeResponse>;
   progress(): Promise<{ messages: ProgressMessage[] }>;
   answerConcept(conceptId: string, answers: number[]): Promise<ConceptAnswerResult>;
+  markConceptWord(conceptId: string, word: string, keyPhrase: string): Promise<ConceptWordResult>;
 }
 
 type Request = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -35,6 +37,8 @@ export function createHttpHomeApi(request: Request): HomeApi {
     practice: (body) => request<PracticeResponse>("/api/practice", post(body)),
     progress: () => request<{ messages: ProgressMessage[] }>("/api/me/progress"),
     answerConcept: (conceptId, answers) => request<ConceptAnswerResult>(`/api/concepts/${conceptId}/answers`, post({ answers })),
+    markConceptWord: (conceptId, word, keyPhrase) =>
+      request<ConceptWordResult>(`/api/concepts/${conceptId}/words`, post({ word, key_phrase: keyPhrase })),
   };
 }
 

@@ -1,0 +1,27 @@
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes draw {
+  from { stroke-dashoffset: 400; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 0 0 rgb(255 206 0 / 0.9); }
+  to { box-shadow: 0 0 0 10px rgb(255 206 0 / 0); }
+}
+
+.current {
+  animation: pop 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both, glow 1200ms ease-out 420ms 2;
+}
+
+.drawing {
+  stroke-dasharray: 400;
+  animation: draw 900ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .current, .drawing { animation: none; }
+}

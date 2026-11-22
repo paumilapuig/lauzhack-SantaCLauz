@@ -56,6 +56,8 @@ export function useHomeReview() {
 
   const answerConcept = (conceptId: string, answers: number[]) => api.answerConcept(conceptId, answers)
 
+  const tapConceptWord = (conceptId: string, word: string, keyPhrase: string) => api.markConceptWord(conceptId, word, keyPhrase)
+
   function conceptUnderstood(conceptId: string) {
     setReview((current) =>
       current && { ...current, concepts_to_learn: (current.concepts_to_learn ?? []).filter((c) => c.id !== conceptId) },
@@ -70,5 +72,5 @@ export function useHomeReview() {
     }
   }
 
-  return { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood }
+  return { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood, tapConceptWord }
 }

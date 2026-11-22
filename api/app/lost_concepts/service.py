@@ -92,7 +92,7 @@ def _row(gap: ConceptGap, session: dict) -> dict:
         "concept": gap.concept,
         "minutes": gap.minutes,
         "lemmas": gap.lemmas,
-        "explanation": [step.model_dump() for step in gap.explanation],
+        "explanation": [step.model_dump(by_alias=True) for step in gap.explanation],
         "exercises": [exercise.model_dump() for exercise in gap.exercises],
         "status": "pending",
     }
