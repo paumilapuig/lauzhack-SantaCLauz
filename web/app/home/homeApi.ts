@@ -5,7 +5,7 @@ import type {
   MarkResult,
   PracticeRequest,
   PracticeResponse,
-  ProgressMessage,
+  Progress,
   WordToPractice,
 } from "@/lib/student-contract";
 import type { MyWord } from "./types";
@@ -16,7 +16,7 @@ export interface HomeApi {
   unmark(clipId: string, word: string): Promise<void>;
   finishClip(clipId: string): Promise<void>;
   practice(request: PracticeRequest): Promise<PracticeResponse>;
-  progress(): Promise<{ messages: ProgressMessage[] }>;
+  progress(): Promise<Progress>;
   answerConcept(conceptId: string, answers: number[]): Promise<ConceptAnswerResult>;
   markConceptWord(conceptId: string, word: string, keyPhrase: string): Promise<ConceptWordResult>;
 }
@@ -35,7 +35,7 @@ export function createHttpHomeApi(request: Request): HomeApi {
       await request(`/api/clips/${clipId}/reviewed`, post());
     },
     practice: (body) => request<PracticeResponse>("/api/practice", post(body)),
-    progress: () => request<{ messages: ProgressMessage[] }>("/api/me/progress"),
+    progress: () => request<Progress>("/api/me/progress"),
     answerConcept: (conceptId, answers) => request<ConceptAnswerResult>(`/api/concepts/${conceptId}/answers`, post({ answers })),
     markConceptWord: (conceptId, word, keyPhrase) =>
       request<ConceptWordResult>(`/api/concepts/${conceptId}/words`, post({ word, key_phrase: keyPhrase })),

@@ -82,6 +82,27 @@ const sentenceWith = (transcript: string, word: string) =>
   transcript.split(/(?<=[.!?])\s+/).find((s) => s.toLowerCase().includes(word)) ?? transcript;
 
 /** In-memory HomeApi: same behaviour as the real API, nothing leaves the browser. */
+/** Words the demo student already grew, next to the ones of today's clips. */
+const FAKE_GARDEN = [
+  { lemma: "muscle", translation_es: "músculo", level: 1 },
+  { lemma: "oxygène", translation_es: "oxígeno", level: 2 },
+  { lemma: "cellule", translation_es: "célula", level: 2 },
+  { lemma: "glucose", translation_es: "glucosa", level: 3 },
+  { lemma: "mitochondrie", translation_es: "mitocondria", level: 3 },
+];
+
+/** This week, Monday first: she practised on Monday, Tuesday and today. */
+function fakeWeek(today: Date) {
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + i);
+    const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    return { date, practised: i < 2 || day.toDateString() === today.toDateString() };
+  });
+}
+
 export function createFakeHomeApi(): HomeApi {
   const review: HomeReview = structuredClone(FAKE_REVIEW);
   const levels = new Map(review.words_to_practice.map((w) => [w.lemma ?? w.word, w.level ?? 0]));
@@ -128,7 +149,10 @@ export function createFakeHomeApi(): HomeApi {
       return fakeConceptWord(word);
     },
     async progress() {
+      const met = review.words_to_practice.map((w) => ({ lemma: w.lemma ?? w.word, translation_es: w.translation_es, level: levels.get(w.lemma ?? w.word) ?? 0 }));
       return {
+        words: [...met, ...FAKE_GARDEN],
+        week: fakeWeek(new Date()),
         messages: [
           { kind: "learned_this_week", text: "This week you learned 12 new words" },
           { kind: "no_help_needed", text: "You no longer need help with «mitochondrie»" },
