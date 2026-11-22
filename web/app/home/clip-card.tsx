@@ -48,7 +48,11 @@ export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
             {time} · {clock(clip.t_start * 1000)}–{clock(clip.t_end * 1000)}
           </p>
         </div>
-        <ClipTranscript transcript={clip.transcript} saved={saved} translate={translate} onToggle={onToggle} char={playback.char} />
+        {clip.transcript.trim() ? (
+          <ClipTranscript transcript={clip.transcript} saved={saved} translate={translate} onToggle={onToggle} char={playback.char} />
+        ) : (
+          <p className="text-[17px] text-label-secondary">We couldn&apos;t catch the words of this moment. Listen to it, then press Done.</p>
+        )}
       </div>
 
       <div className="mt-4 flex items-center gap-4 border-t border-separator bg-fill px-6 py-4 md:px-8">
