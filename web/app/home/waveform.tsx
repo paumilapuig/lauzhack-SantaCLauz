@@ -70,13 +70,13 @@ export function Waveform({ seed, marks, progress, showHead }: Props) {
           style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}
           className="absolute inset-0 flex items-center justify-between"
         >
-          {bars("bg-label")}
+          {bars("bg-brand-orange")}
         </div>
         {pins.map((m) => (
-          <span key={m.at} style={{ left: `${m.at * 100}%` }} className="absolute inset-y-0 w-0.5 bg-marker-strong" />
+          <span key={m.at} style={{ left: `${m.at * 100}%` }} className="absolute inset-y-1 w-1 -translate-x-1/2 rounded-full bg-word-yellow" />
         ))}
         {showHead && (
-          <span style={{ left: `${progress * 100}%` }} className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-label" />
+          <span style={{ left: `${progress * 100}%` }} className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-heading" />
         )}
       </div>
       <div className="relative h-4">
@@ -84,7 +84,7 @@ export function Waveform({ seed, marks, progress, showHead }: Props) {
           <span
             key={m.at}
             style={{ left: `${m.at * 100}%` }}
-            className="absolute top-1 -translate-x-1/2 whitespace-nowrap font-mono text-xs leading-4 text-word-yellow"
+            className="absolute top-1 -translate-x-1/2 whitespace-nowrap text-[12px] leading-4 font-bold text-word-yellow"
           >
             {m.label}
           </span>

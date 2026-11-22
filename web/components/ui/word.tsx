@@ -37,6 +37,8 @@ export function Word({
   useEffect(() => () => clearTimeout(timer.current), [])
 
   const showTranslation = state !== "green" || revealed
+  // at home (compact, inside the clip) a marked word is a soft yellow block, not an underline
+  const marked = compact && state === "yellow"
 
   function handleClick() {
     onTap()
@@ -55,12 +57,14 @@ export function Word({
       aria-describedby={showTranslation ? glossId : undefined}
       onClick={handleClick}
       className={cn(
-        "inline-flex min-h-11 flex-col items-center justify-center rounded-sm",
+        "inline-flex min-h-11 touch-manipulation flex-col items-center justify-center rounded-[10px] transition-colors duration-200",
         !compact && "min-w-11",
+        compact && "-mx-0.5 px-0.5 hover:bg-fill",
+        marked && "animate-pulse-once bg-word-yellow-bg hover:bg-word-yellow-bg",
         "data-[tapped]:bg-word-yellow-bg"
       )}
     >
-      <span className={UNDERLINE[state === "green" && revealed ? "yellow" : state]}>
+      <span className={marked ? "" : UNDERLINE[state === "green" && revealed ? "yellow" : state]}>
         {text}
         {state === "orange" && (
           <>
@@ -70,7 +74,7 @@ export function Word({
         )}
       </span>
       {showTranslation && (
-        <span id={glossId} lang="es" className="text-[max(14px,0.45em)] leading-[1.1] font-normal text-word-yellow">
+        <span id={glossId} lang="es" className="text-[max(14px,0.45em)] leading-[1.1] font-bold text-word-yellow">
           {translation}
         </span>
       )}

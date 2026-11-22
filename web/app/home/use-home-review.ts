@@ -6,6 +6,7 @@ import { marksFrom, withMark, withoutMark, type ClipMarks } from "./clip-marks"
 import type { ExerciseResult } from "./exercises/types"
 import { getHomeApi } from "./getHomeApi"
 import { toMyWord } from "./homeApi"
+import type { PracticeOutcome, PracticeSummaryData } from "./practice-summary"
 
 /** /home state: pending clips, the words marked on them, and the actions that change them. */
 export function useHomeReview() {
@@ -64,13 +65,32 @@ export function useHomeReview() {
     )
   }
 
-  function savePractice(results: ExerciseResult[]) {
+  /** Saves each glossary word's result and returns what Loop'd now knows about it. */
+  async function savePractice(results: ExerciseResult[]): Promise<PracticeSummaryData> {
+    const outcomes: PracticeOutcome[] = []
+    const others: string[] = []
     for (const { lemma, passed } of results) {
       const word = words.find((w) => w.lemma === lemma)
-      if (!word?.glossary_lemma) continue
-      api.practice({ lemma: word.glossary_lemma, clip_id: word.clip_id, passed }).catch((error) => console.error(error))
+      if (!word?.glossary_lemma) {
+        others.push(lemma)
+        continue
+      }
+      try {
+        const saved = await api.practice({ lemma: word.glossary_lemma, clip_id: word.clip_id, passed })
+        outcomes.push({ lemma: word.lemma, translation: word.translation_es, level: saved.level, leveledUp: saved.leveled_up })
+      } catch (error) {
+        console.error(error)
+      }
     }
+    return { outcomes, others }
   }
 
-  return { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood, tapConceptWord }
+  async function refresh() {
+    show(await api.review())
+  }
+
+  return {
+    review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, refresh,
+    answerConcept, conceptUnderstood, tapConceptWord,
+  }
 }

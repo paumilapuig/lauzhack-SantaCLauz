@@ -1,132 +1,115 @@
 "use client"
 
-import { Check, X } from "lucide-react"
 import { useState } from "react"
 import { useTodayLabel } from "@/components/page-title"
 import { StudentPage } from "@/components/student-page"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { ClipCard } from "./clip-card"
+import { ClipReviewItem } from "./clip-review-item"
 import { ConceptsSection } from "./concepts-section"
+import { PracticeDialog } from "./practice-dialog"
 import { PRACTICE_MODES } from "./practice-modes"
 import { PracticeModesGrid } from "./practice-modes-grid"
 import { PracticeModesList, type PracticeModeItem } from "./practice-modes-list"
+import { buildStudyPlan } from "./study-plan"
+import { StudyPlan } from "./study-plan-view"
 import { usableWords } from "./usable-words"
 import { useHomeReview } from "./use-home-review"
 
-const DONE_BUTTON =
-  "inline-flex h-11 items-center gap-2 rounded-full bg-charcoal px-5 text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-subtle)] transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
-const DISCARD_BUTTON =
-  "inline-flex h-11 items-center gap-2 rounded-full border border-border px-5 text-[15px] font-bold text-label transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+const SECTION_TITLE = "text-[13px] font-bold tracking-[0.06em] text-subtle uppercase"
+
+function scrollToId(id: string) {
+  const reduce = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" })
+}
 
 export function HomeReview() {
-  const { review, marks, words, concepts, failed, toggle, finishClip, discardClip, savePractice, answerConcept, conceptUnderstood, tapConceptWord } =
-    useHomeReview()
+  const home = useHomeReview()
+  const { review, marks, words, concepts, failed } = home
   const [openMode, setOpenMode] = useState<string | null>(null)
-  const [finishing, setFinishing] = useState<string | null>(null)
   const today = useTodayLabel()
 
   const mode = PRACTICE_MODES.find((m) => m.id === openMode)
-  const closeMode = () => setOpenMode(null)
   const wordCount = (m: PracticeModeItem) => usableWords(words, m.needs).length
-
-  async function close(clipId: string, action: (clipId: string) => Promise<void>) {
-    setFinishing(clipId)
-    try {
-      await action(clipId)
-    } finally {
-      setFinishing(null)
-    }
+  const isAvailable = (id: string) => {
+    const m = PRACTICE_MODES.find((candidate) => candidate.id === id)
+    return !!m && wordCount(m) >= m.minWords
   }
 
   const pending = review?.clips ?? []
+  const plan = review ? buildStudyPlan({ clips: pending, concepts, words: review.words_to_practice, isAvailable }) : []
+  const suggested = plan.find((step) => step.kind === "practice")?.modeId
+
+  function closeMode(practised: boolean) {
+    setOpenMode(null)
+    if (practised) home.refresh().catch((error) => console.error(error))
+  }
 
   return (
     <StudentPage
       title="Review"
       context={today}
-      lead={
-        pending.length > 0
-          ? "Listen to the class again. Tap every word you didn't understand, then press Done."
-          : "No clips left to review. Practise the words you picked."
-      }
+      lead={pending.length > 0 ? "Follow your plan. Start with the clips from class." : "Your clips are done. Keep your words fresh."}
       wide
     >
       {failed ? (
         <p role="alert" className="text-[19px]">Your clips could not be loaded. Is the server running?</p>
       ) : !review ? (
         <p className="text-[19px] text-label-secondary">Loading…</p>
-      ) : null}
-
-      {review && <ConceptsSection concepts={concepts} onAnswer={answerConcept} onUnderstood={conceptUnderstood} onTapWord={tapConceptWord} />}
-
-      {failed || !review ? null : pending.length === 0 ? (
-        <section aria-label="Practice">
-          <PracticeModesGrid modes={PRACTICE_MODES} wordCount={wordCount} onOpen={setOpenMode} />
-        </section>
       ) : (
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-12">
-          <section aria-label="Clips to review" className="flex min-w-0 flex-col gap-10">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-[15px] font-bold tracking-[-0.02em] text-foreground">From class</h2>
-              <p className="text-[14px] tabular-nums text-label-secondary">
-                {pending.length} to review
-              </p>
-            </div>
-            {pending.map((clip, index) => {
-              const clipMarks = marks[clip.id] ?? {}
-              return (
-                <div key={clip.id} className="flex flex-col gap-3">
-                  <ClipCard
+        <div className="flex flex-col gap-14">
+          <StudyPlan
+            steps={plan}
+            modes={PRACTICE_MODES}
+            onClips={() => scrollToId("clips")}
+            onConcept={(id) => scrollToId(`concept-${id}`)}
+            onPractice={setOpenMode}
+          />
+
+          {pending.length > 0 && (
+            <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12">
+              <section id="clips" aria-label="Clips to review" className="flex min-w-0 scroll-mt-24 flex-col gap-10">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className={SECTION_TITLE}>From class</h2>
+                  <p className="text-[14px] font-medium tabular-nums text-label-secondary">{pending.length} to review</p>
+                </div>
+                {pending.map((clip, index) => (
+                  <ClipReviewItem
+                    key={clip.id}
                     clip={clip}
                     index={index}
-                    saved={new Set(Object.keys(clipMarks))}
-                    translate={(word) => clipMarks[word.toLowerCase()] ?? ""}
-                    onToggle={(word) => toggle(clip.id, word)}
+                    marks={marks[clip.id] ?? {}}
+                    onToggle={(word) => home.toggle(clip.id, word)}
+                    onDone={home.finishClip}
+                    onDiscard={home.discardClip}
                   />
-                  <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => close(clip.id, discardClip)} disabled={finishing === clip.id} className={DISCARD_BUTTON}>
-                      <X className="size-4" aria-hidden />
-                      Discard
-                    </button>
-                    <button type="button" onClick={() => close(clip.id, finishClip)} disabled={finishing === clip.id} className={DONE_BUTTON}>
-                      <Check className="size-4" aria-hidden />
-                      {finishing === clip.id ? "Saving…" : "Done"}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </section>
+                ))}
+              </section>
 
-          <aside className="lg:sticky lg:top-24">
-            <div className="rounded-[24px] border border-border bg-card p-5">
-              <h2 className="mb-3 px-1 text-[15px] font-bold tracking-[-0.02em] text-foreground">Practice</h2>
-              <PracticeModesList modes={PRACTICE_MODES} wordCount={wordCount} onOpen={setOpenMode} />
+              <aside aria-label="Practice" className="lg:sticky lg:top-24">
+                <div className="rounded-[24px] border border-border bg-card p-4">
+                  <h2 className={`mb-2 px-2 pt-1 ${SECTION_TITLE}`}>Practice</h2>
+                  <PracticeModesList modes={PRACTICE_MODES} wordCount={wordCount} suggested={suggested} onOpen={setOpenMode} />
+                </div>
+              </aside>
             </div>
-          </aside>
+          )}
+
+          <ConceptsSection concepts={concepts} onAnswer={home.answerConcept} onUnderstood={home.conceptUnderstood} onTapWord={home.tapConceptWord} />
+
+          {pending.length === 0 && (
+            <section aria-label="Practice" className="flex flex-col gap-4">
+              <h2 className={SECTION_TITLE}>Practice</h2>
+              <PracticeModesGrid modes={PRACTICE_MODES} wordCount={wordCount} suggested={suggested} onOpen={setOpenMode} />
+            </section>
+          )}
         </div>
       )}
 
-      <Dialog open={!!mode} onOpenChange={(open) => !open && closeMode()}>
-        {mode && (
-          <DialogContent
-            showCloseButton={false}
-            className="student inset-0 top-0 left-0 h-dvh max-w-none translate-x-0 translate-y-0 content-start overflow-y-auto rounded-none border-0 bg-background p-6 text-label ring-0 md:inset-auto md:top-1/2 md:left-1/2 md:h-auto md:max-h-[90dvh] md:max-w-[720px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[32px] md:border md:border-border sm:max-w-none"
-          >
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-[20px] leading-tight font-semibold">{mode.name}</DialogTitle>
-              <button
-                type="button"
-                onClick={closeMode}
-                className="min-h-11 px-2 text-[17px] font-medium text-primary focus-visible:outline-2 focus-visible:outline-primary"
-              >
-                Close
-              </button>
-            </div>
-            <mode.Component words={usableWords(words, mode.needs)} onFinish={savePractice} onExit={closeMode} />
-          </DialogContent>
-        )}
-      </Dialog>
+      <PracticeDialog
+        mode={mode}
+        words={mode ? usableWords(words, mode.needs) : []}
+        onSave={home.savePractice}
+        onClose={closeMode}
+      />
     </StudentPage>
   )
 }

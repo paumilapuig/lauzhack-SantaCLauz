@@ -49,15 +49,34 @@ describe("HomeReview", () => {
     expect(finishClip).toHaveBeenCalledTimes(1)
   })
 
-  it("finishing a mode saves practice for glossary words only", async () => {
+  it("finishing a mode saves practice and shows what Loop'd now knows", async () => {
     const practice = vi.spyOn(api, "practice")
     render(<HomeReview />)
-    fireEvent.click(await screen.findByRole("button", { name: /Flashcards/ }))
+    const rail = await screen.findByRole("complementary", { name: "Practice" })
+    fireEvent.click(within(rail).getByRole("button", { name: /Flashcards/ }))
     expect(screen.getByRole("dialog", { name: "Flashcards" })).toBeTruthy()
-    while (screen.queryByText("Leveled up:", { exact: false }) === null && screen.queryByRole("button", { name: "Back" }) === null) {
+    while (screen.queryByText("Tap to see")) {
       fireEvent.click(screen.getByText("Tap to see"))
       fireEvent.click(screen.getByText("I knew it"))
     }
     await waitFor(() => expect(practice).toHaveBeenCalledWith(expect.objectContaining({ lemma: "déchet", passed: true })))
+    expect(await screen.findByText("help with", { exact: false })).toBeTruthy()
+    expect(screen.getAllByText("What Loop'd knows").length).toBeGreaterThan(0)
+  })
+
+  it("shows a study plan: clips first, then practice with the suggested game", async () => {
+    render(<HomeReview />)
+    const plan = await screen.findByRole("region", { name: /Your next/ })
+    const steps = within(plan).getAllByRole("listitem")
+    expect(steps[0].textContent).toContain("Listen again to 2 clips")
+    expect(steps.at(-1)?.textContent).toContain("Practise with Flashcards")
+    fireEvent.click(within(steps.at(-1)!).getByRole("button"))
+    expect(screen.getByRole("dialog", { name: "Flashcards" })).toBeTruthy()
+  })
+
+  it("labels every clip as a word you missed", async () => {
+    render(<HomeReview />)
+    await screen.findByText("2 to review")
+    expect(screen.getAllByText("A word you missed")).toHaveLength(2)
   })
 })
