@@ -38,6 +38,7 @@ sees where the class lost her and how her autonomy grows week after week.
 ## Run it
 ```bash
 bash scripts/setup-member.sh     # tools, .env files from the templates, dependencies
+bash scripts/demo-env.sh         # demo on any laptop: fills web/.env.local + api/.env, asks for the 2 secrets
 npm run dev:api                  # API → http://localhost:8000/docs   (needs api/.env)
 npm run dev:web                  # web → http://localhost:3000        (needs web/.env.local)
 npm run test                     # Vitest (web) + pytest (api)
@@ -45,7 +46,10 @@ npm run test                     # Vitest (web) + pytest (api)
 - `api/.env` (see `api/.env.example`): `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `OPENROUTER_API_KEY`,
   `OPENROUTER_MODEL` (default `google/gemini-2.5-flash-lite`), optional `OPENROUTER_VISION_MODEL`. Without the
   OpenRouter key everything works except lesson creation, concept summaries and translations of extra words.
-- `web/.env.local` (see `web/.env.example`): Supabase URL + anon key, `NEXT_PUBLIC_API_URL`, and
+- `scripts/demo-env.sh` never changes a value that is already set. The public values (Supabase URL, publishable key,
+  `NEXT_PUBLIC_CLASS_API=http`) come from `web/.env.example`; it asks only for `SUPABASE_SECRET_KEY` and
+  `OPENROUTER_API_KEY` (team chat). Secrets never go into git.
+- `web/.env.local` (see `web/.env.example`): Supabase URL + publishable key, `NEXT_PUBLIC_API_URL`, and
   **`NEXT_PUBLIC_CLASS_API=http`** to use the real API. Without it the student pages run on in-browser demo data and
   show « Mode démo ».
 - Demo accounts (passwords in the team chat): `prof-demo@demo.lauzhack` (teacher), `lucia-w1@demo.lauzhack`
