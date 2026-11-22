@@ -84,8 +84,8 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 | GET | /api/me/progress | student | – | `{ "messages": [{ "kind": "learned_this_week"\|"no_help_needed"\|"keep_going", "text": str }] }` — **never percentages or numbers out of a total**; texts are in English (e.g. "This week you learned 12 new words") | B |
 | GET | /api/teacher/lessons/{id}/dashboard | teacher | – | Dashboard (below) | A (uses B's `mastery.autonomy`) |
 | POST | /api/concepts/{id}/answers | student (gap owner) | `{ "answers": [int] }` — one option index per exercise, in order | `{ "correct": [bool], "status": "understood"\|"review" }` — see [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido) | B |
-| GET | /api/lessons/{id}/preview | student | – | `{ "phrases": [{ "text", "audio_url": str\|null, "lemmas": [str] }] }` — `audio_url` null → client uses `speechSynthesis` (F3) | B |
-| POST | /api/lessons/{id}/preview/results | student | `{ "recognized": [lemma] }` | `{ "message": "Mañana entenderás buena parte de la clase" }` (+1 per recognised lemma) (F3) | B |
+| GET | /api/lessons/{id}/preview | student | – | `{ "phrases": [{ "text", "audio_url": str\|null, "lemmas": [str] }] }` — `audio_url` null → client uses `speechSynthesis` (F3 — **not implemented**) | B |
+| POST | /api/lessons/{id}/preview/results | student | `{ "recognized": [lemma] }` | `{ "message": "Mañana entenderás buena parte de la clase" }` (+1 per recognised lemma) (F3 — **not implemented**) | B |
 
 `POST /api/lessons` details (owner B):
 - PDF with ≥ 200 chars of text → sent as text; otherwise the first 5 pages are rendered and sent as images (vision model). Photos are sent as images. Exactly one LLM call per lesson. A call with images always uses `OPENROUTER_VISION_MODEL` (default `google/gemini-2.5-flash-lite`), so a text-only `OPENROUTER_MODEL` never breaks photo or scanned-PDF lessons.
@@ -111,7 +111,7 @@ Storage: private bucket **`clips`**, object path `{student_id}/{clip_id}.webm`. 
 `mastery` contains EVERY lemma of the lesson (defaults filled). `previously_tapped` = glossary lemmas this student marked at home (`clip_marks.lemma`) on a clip of an earlier session.
 
 ### Clips — `POST /api/clips`
-Two learning paths (decided Sun 22 Nov 00:30, see PLAN › Decisions log): **words** ("No he entendido" → audio clip, this section) and **concepts** ("Me he perdido" → text only, [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido)). So a clip is always a **lexical** doubt:
+Two learning paths (decided Sun 22 Nov 00:30, see PLAN › Decisions log): **words** (« Je n'ai pas compris » → audio clip, this section) and **concepts** (« J'ai perdu le fil » → text only, [Concept gaps](#concept-gaps--conceptual-doubts-me-he-perdido)). So a clip is always a **lexical** doubt:
 - `word` — the last ~10 s of class audio around words the student did not understand. **Default**; `/class` may omit `kind`.
 - `concept` — kept in the check for old rows only; `/class` never sends it (a conceptual doubt stores no audio).
 
@@ -153,7 +153,7 @@ Two learning paths (decided Sun 22 Nov 00:30, see PLAN › Decisions log): **wor
 - `words_to_practice` = one item per `clip_marks` row of this student, newest first; glossary words with level ≥ 2 are left out. `clip_id` = the clip where it was marked. `key_phrase` = the sentence of that clip's transcript that contains `word`. Non-glossary words: `lemma` and `level` are `null`; `translation_es`/`definition_fr` come from `clip_marks` (filled on Done) or are `null`.
 
 ### Lost event — `POST /api/sessions/{id}/events`
-"Me he perdido" saves **text only, no audio**: the transcript of the last 60 s (`t_start = max(0, t_sec − 60)`).
+« J'ai perdu le fil » saves **text only, no audio**: the transcript of the last 60 s (`t_start = max(0, t_sec − 60)`).
 - `type` must be `"lost"`; `"word"` → 422 (words are marked at home). `lemma` must be absent or `null`.
 - `context` is required: `t_start` with `0 ≤ t_start ≤ t_sec` and `t_sec − t_start ≤ 70` (tolerance), `transcript` 0–5000 chars (empty allowed: silence). Otherwise 422.
 - Stored in `class_events.context_t_start` / `context_transcript`. No LLM call here.
@@ -168,6 +168,8 @@ Two separate learning paths: **words** (clip + marks + 3 activities + levels 0�
 - The LLM returns `{ "concepts": [{ "concept": str, "moments": [n], "lemmas": [str], "explanation": [ConceptStep], "exercises": [ConceptExercise] }] }`, max 3 concepts, French at A1–A2 level, Spanish glosses.
 - The API first **repairs** each concept (`app/lost_concepts/repair.py`): unknown moment numbers are dropped (none left → the concept is linked to every moment of the session); a `visual` over 40 chars is shortened at a space; invalid steps and exercises are dropped one by one; extra steps/exercises are trimmed to 5/3. Then it drops concepts that are still invalid (empty `concept`, fewer than 2 steps — the prompt asks for 3–5 —, fewer than 2 valid exercises); keeps only glossary lemmas; **computes** `minutes` from the moments itself. Each valid concept → one `concept_gaps` row (`status = 'pending'`). Measured Sun 22 Nov (demo lesson, Gemini 2.5 Flash Lite): 8/8 sessions with ≥ 1 concept, ~2–3 s, ~$0.0005 per session.
 - LLM error, no valid concept after the retry, or no `OPENROUTER_API_KEY` → logged, nothing stored. The class flow is never affected.
+- Emoji written by the model as UTF-8 byte tokens (`<0xF0><0x9F>…`) are decoded before parsing (dropped if broken).
+- Every OpenRouter call (glossary, concepts, translations) retries HTTP 429/502/503/504 twice, after 1 s and 3 s (`app/glossary/openrouter_client.py`); other errors are not retried.
 
 `ConceptStep` = `{ "fr": "La cellule reçoit du sucre et de l'oxygène.", "es": "La célula recibe azúcar y oxígeno.", "visual": "🍞 + 💨 → 🔋" }` — `fr` ≤ 200 chars, `es` ≤ 300 chars, `visual` ≤ 40 chars: a tiny emoji/arrow diagram the client animates one step at a time (no images are generated).
 `ConceptExercise` (stored) = `{ "question": "Que fabrique la mitochondrie ?", "options": ["de l'énergie", "du sucre", "de l'eau"], "answer": 0 }` — 2–4 options.

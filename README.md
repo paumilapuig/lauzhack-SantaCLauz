@@ -1,111 +1,77 @@
-# lauzhack-SantaCLauz
+# Loop'd — French class, without a translator
 
-## Arrencar-ho tot (5 ordres)
-```bash
-bash scripts/setup-member.sh             # 1. eines, .env a partir de les plantilles, dependències
-npm run dev:web                          # 2. web  → http://localhost:3000  (login → /dashboard)
-npm run dev:api                          # 3. API  → http://localhost:8000/docs
-npm run test                             # 4. tests: Vitest (web) + pytest (api)
-npx supabase db push --remote            # 5. aplicar migracions noves de supabase/migrations (només A)
-```
-Estructura: `web/` Next.js 16 (App Router, `proxy.ts` refresca la sessió) · `api/` FastAPI (`app/main.py`) ·
-`supabase/migrations/` esquema de la BD. Contracte: `docs/API.md`. Regles: `CLAUDE.md`.
+**LauzHack 2026 · team SantaCLauz** (Miquel, Laura, Paula, Pau)
 
----
+Loop'd helps newcomer students (*élèves allophones*) follow a live class taught in French, **without depending on a
+translator**. In class the student sees live French subtitles and has two big buttons. At home she gets back the
+seconds she did not understand, in her teacher's own voice, and practises only those words and ideas. The teacher
+sees where the class lost her and how her autonomy grows week after week.
 
-# Kit LauzHack 2026 — setup de l'equip (4 × Claude Pro)
+> Persona: **Lucía**, 14, from Valencia, 3 months in Lausanne, 11e HarmoS, French A1–A2. She was good at science in
+> Spain; here she fails biology because she cannot follow spoken French.
 
-LauzHack: dissabte 21 nov, hacking de 12:00 a diumenge 12:00 (EPFL). Les normes permeten fer servir codi i recursos
-existents, però el que presenteu ha de ser nou respecte d'ells i ho heu de dir explícitament als jutges (regla 30).
-→ Aquest kit és **genèric** (auth + db + configs), i ho declarareu a `docs/PLAN.md › Novelty`.
+## How it works
 
-## 0. Respostes ràpides
-- **Projecte a claude.ai?** No cal. Amb Pro, un Project de claude.ai és personal (no el podeu compartir entre 4 comptes)
-  i Claude Code no el llegeix. **Tot l'alineament viu al repo**: `CLAUDE.md` + `.claude/` + `.mcp.json` + `docs/`.
-  Feu servir claude.ai només per al pitch/slides.
-- **Com s'alineen els agents?** Cada persona té el seu Claude Code, però tots llegeixen els mateixos fitxers del repo:
-  regles (`CLAUDE.md`), skills (`.claude/skills/`), plugins (`.claude/settings.json`), MCP (`.mcp.json`),
-  contracte (`docs/API.md`) i estat (`docs/STATUS.md`). Si una cosa no és al repo, els agents no la saben.
-- **Què NO instal·lar** (de la llista que us han passat): *Everything Claude Code* (48 agents/180+ skills, se solapa amb
-  Superpowers, menja context i límits de Pro), *firstmate* (orquestrador sencer, massa per a 24 h), i no poseu
-  *agent-browser* i *playwright-cli* alhora (fan el mateix → triat playwright-cli). Orca **o** Superset, no tots dos.
-
-## 1. Stack
-| Capa | Tecnologia | Per què |
+| Moment | Student | System |
 |---|---|---|
-| Frontend | Next.js + Tailwind + shadcn/ui | el que millor fa Claude, deploy a Vercel en 1 clic |
-| Backend | FastAPI (Python, `uv`) | sou de data science: ML/pandas aquí. Opcional si no cal Python |
-| BD + Auth | Supabase (1 projecte compartit al núvol) | Postgres + login fet, sense servidor |
-| Agents | Claude Code + Superpowers + Caveman + skills al repo | tots iguals per `git pull` |
-| MCP | Supabase (esquema/SQL), Context7 (docs actualitzades) | |
+| **Teacher prepares** (`/teacher`) | – | The teacher uploads the lesson (text, PDF, photo of the book or the board). **1 LLM call** builds a 10–20 word glossary: lemma, inflected forms, Spanish translation, simple French definition, *transparent* (Spanish cognate) or not, a sentence of the lesson. |
+| **In class** (`/class`, French UI) | Live French subtitles (Web Speech API in Chrome). Two buttons: **« Je n'ai pas compris »** saves the last ~10–15 s of audio; **« J'ai perdu le fil »** saves the last 60 s of text only. **« Terminer le cours »** at the end. | **No LLM, no network per sentence.** The browser matches glossary words in the transcript and records, for each word that came up, whether this student still needs help with it (from her levels). |
+| **After class** | – | Only if she pressed « J'ai perdu le fil »: **1 LLM call per session** turns those moments into up to 3 *concepts she did not follow*, each with a 3–5 step visual explanation (French + Spanish + emoji diagram) and 2–3 questions. |
+| **At home** (`/home`, `/progress`) | **Clips to review**: replays each clip with karaoke text, taps the words she did not get, presses **Done**. **Practice**: 7 short games on *her* words in *her* teacher's sentences (step by step: listen → fill the gap → say it out loud). **To understand better**: the concept explanations + questions. **Progress**: positive sentences, never a percentage. | Marking a glossary word = level −1; a passed game = +1 (levels 0–3). Done on a clip = 1 small LLM call that translates the words she marked outside the glossary. Concept answers are graded without LLM. |
+| **Teacher dashboard** (`/teacher/lessons/[id]`) | – | Key points, the minute where most students got lost, concepts each student struggles with (pending / to review / understood), most marked words, and **autonomy** per student = share of glossary words she followed without help, with its weekly evolution. Only the teacher sees numbers. |
 
-## 2. AVUI — el lead (persona A), ~45 min
-1. **GitHub**: `gh repo create lauzhack-<equip> --private --clone && cd lauzhack-<equip>`
-   Settings → Collaborators → convida els 3. Settings → Branches → protegeix `main` (exigir PR).
-2. Copia tot el contingut d'aquest kit a l'arrel del repo (inclosos `.claude/`, `.mcp.json`, `.gitignore`).
-3. **Supabase**: supabase.com → New project (regió Europe/Zurich o Frankfurt). Organization → Members → convida els 3.
-   Apunta el *Project ref* (Settings → General) i les claus (Settings → API Keys).
-   Authentication → Providers → Email: **desactiva "Confirm email"** (per anar ràpid a la demo).
-4. `SUPABASE_REF=<ref> DESIGN_REF=linear bash scripts/bootstrap-lead.sh` → instal·la les skills dins del repo i baixa un `DESIGN.md`.
-5. `bash scripts/setup-member.sh` i omple `web/.env.local` i `api/.env`.
-6. `claude` → accepta trust + plugins → `/model` Opus → enganxa el primer prompt de **`PROMPT-scaffold.md`**.
-   Quan acabi: `npx supabase link --project-ref <ref>` → `npx supabase db push`. Comprova login → dashboard.
-7. Merge del PR a `main`. Envia les claus pel xat privat de l'equip (un sol missatge; mai al repo).
+## Why it is different
+- **It teaches instead of translating.** Translators help today and create dependency; there is no translator in the
+  exam. The help is per word and per student, and it disappears as she learns.
+- **Explainable learning model, no black box.** Each (student, word) has a level 0–3: starts at 3 for Spanish
+  cognates (*mitochondrie*, *oxygène*) and 0 otherwise; −1 when she marks it at home, +1 per practice passed. Same rules
+  in Python (`api/app/mastery.py`) and TypeScript (`web/lib/wordState.ts`).
+- **Frugal multimodal AI.** Speech recognition runs in the browser; the LLM is never called in class. Per lesson:
+  1 call (glossary, also from photos/scans). Per student and class: 1 call after class only if she got lost (+1 retry only
+  if the reply is unusable), and 1 tiny call per reviewed clip only if she marked words outside the glossary. Measured:
+  glossary 3.5 s and $0.0008 per lesson, concepts 2–3 s and ~$0.0005 per session, translations 0.5 s and $0.00005
+  (Gemini 2.5 Flash Lite via OpenRouter) ⇒ under 2 cents per lesson for a class of 25, worst case. Every AI answer is
+  validated and repaired by code; transient provider errors (429/5xx) are retried twice.
+- **Two learning paths, never mixed:** words (audio clip → mark → games → levels) and concepts ("I lost the thread" →
+  explanation → questions → understood / to review).
 
-## 3. AVUI — cada membre (B, C, D), ~15 min
-1. `gh auth login` → accepta la invitació → `gh repo clone <user>/lauzhack-<equip> && cd lauzhack-<equip>`
-2. `bash scripts/setup-member.sh` → omple `web/.env.local` i `api/.env` amb les claus del xat.
-3. `claude` a l'arrel del repo:
-   - accepta "trust this folder" → t'oferirà instal·lar **Superpowers** i **Caveman** → accepta
-   - `/mcp` → supabase → Authenticate (amb el compte convidat a l'organització)
-   - `/skills` → han de sortir: grill-me, grilling, design-taste-frontend, image-to-code, web-design-guidelines, unslop, playwright-cli, seo-audit
-4. Prova: `npm run dev` a `web/` + `uv run fastapi dev app/main.py` a `api/` → login funciona.
-5. (Opcional) instal·la **Orca** (Mac/Win/Linux) o **Superset** (Mac) si vols 2–3 agents en paral·lel en worktrees.
-   Amb Pro, més de 2 agents a la vegada per persona us cremarà el límit abans de mitjanit.
-
-## 4. Què fa cada eina i quan usar-la
-| Eina | Tipus | Quan | Com |
-|---|---|---|---|
-| Superpowers | plugin | features no trivials: brainstorm → pla → implementar → review | automàtic / "brainstorm this" |
-| grill-me (+grilling) | skill | 12:00 per alinear la idea; abans de qualsevol feature gran | `/grill-me` |
-| Caveman | plugin | sempre (respostes curtes = menys límit gastat) | `/caveman` per activar/desactivar |
-| design-taste-frontend | skill | quan es construeix UI nova | automàtic en tasques de UI |
-| DESIGN.md (awesome-design-md) | fitxer | estil visual coherent per als 4 agents | ja a l'arrel |
-| image-to-code | skill | D fa un mockup/captura → codi | "use image-to-code on mock.png" |
-| unslop | skill | diumenge 09:00, polir la UI que sembla feta per IA | `/unslop` |
-| web-design-guidelines | skill | auditoria accessibilitat/UX abans de la demo | "review web/app with web-design-guidelines" |
-| playwright-cli | skill+CLI | l'agent obre el navegador, fa clic i screenshot per verificar | automàtic en verificar UI |
-| seo-audit | skill | només si feu landing pública (prioritat baixa) | "seo audit" |
-| Supabase MCP | MCP | mirar esquema, fer queries, debug d'auth | automàtic |
-| Context7 | MCP | docs actualitzades de Next/Supabase/FastAPI | "use context7" |
-| `/sync`, `/ship` | comandes del repo | inici i final de cada tasca | |
-
-## 5. DEMÀ — com treballar junts
-- **12:00–12:45** tots davant d'una pantalla: prompt de `/grill-me` (a `PROMPT-scaffold.md`) → `docs/PLAN.md` + `docs/API.md` → merge.
-- **Rols**: A = lead/BD/integració i merges · B = `api/` + ML · C = `web/app` lògica · D = UI, `DESIGN.md`, QA, pitch.
-- **Cicle de cada tasca (~1 h)**: `/sync <àrea>` → tasca → `/ship` → PR petit → A el revisa i fa merge.
-- **Contracte primer**: si cal un endpoint/columna nova, s'escriu a `docs/API.md` en un PR propi abans de codificar.
-  Mentrestant, el front fa servir dades mock amb la mateixa forma.
-- **Migracions**: només A. La resta les demana a `docs/STATUS.md › Requests`.
-- **Límits Pro**: Sonnet per defecte, Opus només per plans/bugs difícils, `/clear` entre tasques, Caveman activat.
-  Si a algú se li acaba el límit, passa a QA manual/slides mentre els altres programen.
-- **Diumenge 09:00 freeze** → només bugs + `/unslop` + assaig de la demo. **12:00** entrega.
-
-## 6. Estructura del kit
+## Run it
+```bash
+bash scripts/setup-member.sh     # tools, .env files from the templates, dependencies
+npm run dev:api                  # API → http://localhost:8000/docs   (needs api/.env)
+npm run dev:web                  # web → http://localhost:3000        (needs web/.env.local)
+npm run test                     # Vitest (web) + pytest (api)
 ```
-CLAUDE.md                 regles comunes per a tots els agents
-.claude/settings.json     plugins compartits + permisos (bloqueja llegir .env i push a main)
-.claude/commands/         /sync i /ship
-.claude/skills/           (els omple bootstrap-lead.sh)
-.mcp.json                 Supabase + Context7
-docs/PLAN.md API.md STATUS.md
-web/.env.example api/.env.example
-scripts/bootstrap-lead.sh scripts/setup-member.sh
-PROMPT-scaffold.md        prompts llestos per enganxar
-```
-Ajust personal sense afectar l'equip (p. ex. desactivar Caveman): `.claude/settings.local.json` (ignorat per git).
+- `api/.env` (see `api/.env.example`): `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `OPENROUTER_API_KEY`,
+  `OPENROUTER_MODEL` (default `google/gemini-2.5-flash-lite`), optional `OPENROUTER_VISION_MODEL`. Without the
+  OpenRouter key everything works except lesson creation, concept summaries and translations of extra words.
+- `web/.env.local` (see `web/.env.example`): Supabase URL + anon key, `NEXT_PUBLIC_API_URL`, and
+  **`NEXT_PUBLIC_CLASS_API=http`** to use the real API. Without it the student pages run on in-browser demo data and
+  show « Mode démo ».
+- Demo accounts (passwords in the team chat): `prof-demo@demo.lauzhack` (teacher), `lucia-w1@demo.lauzhack`
+  (week 1 profile), `lucia-w4@demo.lauzhack` (week 4 profile, prepared history). Demo lesson « La respiration
+  cellulaire »: `/class?lesson=de100000-0000-4000-8000-000000000001`.
+- Chrome is required in class (Web Speech API). Plan B without network: « Lire le texte de la leçon » plays the demo
+  lesson as subtitles.
 
-## 7. Demo seed (només LOCAL)
-- Carrega `supabase/seed.sql` a l'stack local: `docker exec -i <contenidor supabase_db> psql -U postgres -d postgres -v ON_ERROR_STOP=1 < supabase/seed.sql` (és idempotent; es pot repetir).
-- Crea els usuaris de demo amb la contrasenya de desenvolupament `demo-local-only`. Només serveix en local; el seed **no s'executa mai** al projecte compartit (ni `db push`, ni `--linked`).
-- Tests: `npx supabase test db --db-url postgresql://postgres:postgres@127.0.0.1:<port>/postgres`. El test 03 necessita el seed carregat abans.
+## Stack
+`web/` Next.js 16 (App Router, TypeScript, Tailwind, shadcn/ui) · `api/` FastAPI (Python 3.12, uv) · Supabase
+(Postgres + Auth + Storage, RLS) · OpenRouter (LLM) · browser Web Speech API + MediaRecorder.
+
+## Documentation
+| File | What |
+|---|---|
+| `docs/PLAN.md` | Product, scope, what is done, decisions log, novelty (LauzHack rule 30) |
+| `docs/API.md` | Contract web ↔ api ↔ db (source of truth): endpoints, tables, rules |
+| `docs/STATUS.md` | Who did what, handover, known limitations |
+| `docs/demo/pitch.md` | Demo scripts per challenge (Scholé AI, IMC Tech for Good, AXA) + slide deck |
+| `DESIGN.md` | Visual system |
+| `docs/DEPLOY.md` | Deploy notes |
+| `docs/KIT.md` | How the team's Claude Code setup was built (historical) |
+
+## Novelty (rule 30)
+Starting point: the team's starter kit (Claude Code config, Supabase login + `/api/me` + `profiles` skeleton) and
+open-source libraries. **Built during the hackathon:** the whole product — per-student, per-word mastery model and
+transparency detection, live subtitle tracking without LLM, audio clips from a browser ring buffer, home review with
+marks and 7 games, concept path from "I lost the thread" (one LLM call per session), teacher dashboard with autonomy,
+demo content.

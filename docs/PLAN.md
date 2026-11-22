@@ -1,101 +1,152 @@
-# PLAN — "Subtítols que es retiren" (nom de treball)
+# PLAN — Loop'd (abans «Subtítols que es retiren»)
 
-> Font de veritat del QUÈ fem. El COM (endpoints, taules, JSON) és a `docs/API.md`. El QUI i QUAN, a `docs/ROLES.md`.
+> Font de veritat del QUÈ fem i de l'estat final (diumenge 22 nov). El COM (endpoints, taules, JSON) és a `docs/API.md`.
+> El QUI i QUAN històric, a `docs/ROLES.md`. Guions de demo i slides: `docs/demo/pitch.md`.
 
-## Nom (l'equip en tria un a la Sincronització 1)
-1. **Fondu** — els subtítols "es fonen" a mesura que aprens.
-2. **Petit à petit** — l'ajuda es retira paraula a paraula.
-3. **Sans sous-titres** — l'objectiu final: entendre la classe sense ajuda.
+## Nom
+**Loop'd** és el nom que surt a l'app (logo i títol). El deck antic de Pau feia servir «Fondu»; per coherència amb el que
+veu el jurat, el pitch fa servir **Loop'd**.
 
 ## One-liner
-Ajudem alumnes nouvinguts (allophones) a entendre la classe en francès **sense dependre d'un traductor**: subtítols en francès en directe amb ajuda només a les paraules que encara no dominen, i que es retira a mesura que les aprenen.
+Ajudem alumnes nouvinguts (allophones) a seguir la classe en francès **sense dependre d'un traductor**: subtítols en
+francès en directe, dos botons per dir «no ho he entès» i «m'he perdut», i a casa repassen només el que no van entendre,
+amb la veu del seu profe, fins que ja no necessiten ajuda.
 
 ## Persona
-**Lucía**, 14 anys, de València. Fa 3 mesos que viu a Lausana per la feina dels pares i fa 11e HarmoS (últim curs obligatori) en francès. Nivell A1–A2. A València anava bé de ciències; aquí suspèn biologia perquè no entén el francès parlat del profe. Si suspèn, la poden orientar a una via menys exigent.
+**Lucía**, 14 anys, de València. Fa 3 mesos que viu a Lausana per la feina dels pares i fa 11e HarmoS (últim curs
+obligatori) en francès. Nivell A1–A2. A València anava bé de ciències; aquí suspèn biologia perquè no entén el francès
+parlat del profe. Si suspèn, la poden orientar a una via menys exigent.
 
 ## Problema
-Les eines que existeixen (subtítols traduïts en directe: molts projectes de hackathon i productes comercials) **tradueixen** la classe. L'ajuden avui però no l'ensenyen: continua depenent del traductor, i a l'examen no n'hi ha.
+Les eines que existeixen (subtítols traduïts en directe) **tradueixen** la classe. L'ajuden avui però no l'ensenyen:
+continua depenent del traductor, i a l'examen no n'hi ha.
 
-## Idea
-Subtítols **en francès** de la classe en directe, amb ajuda només a les paraules que la Lucía encara no domina. Cada paraula que demostra dominar deixa de tenir ajuda. Objectiu: que entengui la classe sola.
+## Idea (estat final)
+- **A classe**: subtítols **en francès, text pla** (decisió d'equip, diumenge: sense colors ni traducció a la pantalla
+  de classe, perquè l'alumna escolti el profe i no llegeixi castellà). El navegador sap, sense LLM, quines paraules del
+  glossari han sortit i si l'alumna encara les necessitaria amb ajuda (segons el seu nivell): això és la mesura
+  d'**autonomia**.
+- **Dos botons**: «Je n'ai pas compris» (clip d'àudio dels últims ~10–15 s) i «J'ai perdu le fil» (només el text dels
+  últims 60 s).
+- **A casa**: la paraula no entesa, en la frase real i la veu real del profe; jocs curts; explicació visual dels
+  conceptes on es va perdre. L'ajuda per paraula es **retira** quan la paraula arriba a nivell ≥ 2 (deixa de sortir per
+  practicar i passa a «ja no necessites ajuda»).
+- **Profe**: on s'ha perdut la classe, quins conceptes costen a cada alumne, paraules més marcades i autonomia setmanal.
 
-Usuaris: **alumna** (tauleta o portàtil a classe; supòsit: autoritzat com a mesura de suport per a alumnes allophones) i **profe**.
+Usuaris: **alumna** (portàtil o tauleta a classe; supòsit: autoritzat com a mesura de suport per a alumnes allophones) i
+**profe**.
 
-## Features (ordre d'implementació: F1 → F2 → F4 → F3)
+## Features i estat final
 
-### F1. Subtítols que es retiren (a classe) — EL NUCLI
-- La pantalla mostra el que diu el profe en francès, frase a frase.
-- Cada paraula del glossari de la lliçó té un estat per a aquesta alumna:
-  - 🟢 **sense ajuda** — transparent des del castellà (*photosynthèse*) o ja dominada;
-  - 🟡 **amb ajuda** — la traducció castellana petita a sota;
-  - 🟠 **"te la vas perdre"** — l'alumna la va marcar a casa en el clip d'una classe anterior i encara no la domina; se li recorda quan el profe la torna a dir.
-- Les paraules fora del glossari es mostren sense marcar.
-- NO hi ha "falsos amics" ni categoria vermella. NO traduïm frases senceres.
-- Accessibilitat: cada estat té també un estil propi (subratllat, etc.), no només color. Definit a `DESIGN.md`.
-
-### F2. Botons a classe + clip (classe → casa)
-- A classe NO es toquen paraules (decisió de Pau, PR #22): l'alumna només té dos botons.
-- Botó gran **"No he entès"**: es desa un clip d'àudio curt + la transcripció d'aquell fragment (tipus `word`/`concept`, `docs/API.md` › Clips).
-- Botó **"M'he perdut"** (problema de concepte): es desa **només el text** dels últims 60 s, sense àudio. En acabar la classe, l'LLM en treu els **conceptes que no ha entès** (1 crida per sessió). Són un **camí d'aprenentatge separat** del de paraules: a casa té una explicació visual pas a pas + exercicis, i les respostes diuen si ho ha entès. El profe veu cada concepte i si ja l'ha entès (F4).
-- **A casa**: llista de clips; reescolta el clip, marca la paraula que no entenia (nivell −1) i fa 3 activitats curtes en context real:
-  1. escoltar-la al clip i identificar-la;
-  2. col·locar-la en una frase del profe amb un buit;
-  3. dir-la en veu alta (Web Speech API `fr-FR`; si no la reconeix bé, es dona per feta amb un avís — mai bloquejar).
-  Si supera les 3, la paraula puja de nivell.
-
-### F4. Progrés i panell del profe
-- **Alumna**: MAI percentatges. Només frases positives ("Aquesta setmana has après 12 paraules noves", "Ja no necessites ajuda per a *mitochondrie*").
-- **Profe**, per a cada classe: els moments (minut) amb més "M'he perdut", els **conceptes que costen a cada alumne** (de "M'he perdut", 1 crida a l'LLM per sessió després de classe) amb el seu estat (pendent / a repassar / entès), les paraules més marcades a casa, i per a cada alumne nouvingut l'**autonomia** = paraules del glossari que han sortit sense ajuda ÷ total de paraules del glossari que han sortit a la classe. També l'evolució setmanal de l'autonomia.
-
-### F3. La classe de demà, avui (NICE — només si a les 02:00 F1, F2 i F4 funcionen)
-- 3 minuts a casa la nit abans: 5–8 frases clau de la lliçó de demà, àudio lent; l'alumna toca les paraules que reconeix. Al final: "Demà entendràs bona part de la classe" (sense percentatge).
-- L'LLM n'extreu les frases clau en preparar la lliçó; l'àudio es genera UN COP per lliçó amb ElevenLabs (veu neutra; veu del profe només amb consentiment explícit — a la demo, la d'algú de l'equip que hi consent). Fallback: `speechSynthesis` del navegador.
-
-## Algorisme de retirada d'ajuda (sense IA, regles explicables)
-- Nivell per alumne i paraula, de 0 a 3. Inicial: **3** si és transparent des del castellà, **0** si no.
-- A classe: nivell ≥ 2 → 🟢; nivell < 2 → 🟡; si la va marcar a casa en una classe anterior i encara té nivell < 2 → 🟠.
-- Marcar-la a casa → −1 (mínim 0), un cop per paraula i classe; desmarcar-la ho desfà. Superar les 3 activitats a casa → +1. Reconèixer-la a F3 → +1. Màxim 3. Detall exacte a `docs/API.md` › Rules.
-- Transparència: l'LLM la marca en preparar la lliçó i `api/` la valida amb similitud de cadenes normalitzada (sense accents) entre lema francès i traducció castellana ≥ 0.7 (detall exacte a `docs/API.md`).
-
-## Arquitectura (frugal — requisit d'AXA)
-- **Preparació** (1 crida per lliçó): el profe puja PDF/text → `api/` crida l'LLM via OpenRouter → glossari JSON (lema, formes flexionades, traducció ES, definició senzilla FR, transparent sí/no) + frases clau → Supabase.
-- **A classe** (temps real, SENSE LLM): transcripció al navegador amb Web Speech API (`lang='fr-FR'`, resultats interims, Chrome) → el client carrega UNA vegada el glossari + el mapa de domini (`class-pack`) → `web/lib/wordState.ts` fa correspondre les formes flexionades i decideix l'estat. Cap crida de xarxa per frase.
-- **Després de classe** (com a màxim 1 crida per sessió d'alumne, automàtica en acabar la classe): els textos de "M'he perdut" d'aquella sessió → l'LLM genera fins a 3 conceptes, cadascun amb explicació visual (3–5 passos amb emojis) i 2–3 exercicis → taula `concept_gaps`. Sense textos, no hi ha crida. Les respostes de l'alumna es corregeixen sense LLM.
-- **Pla B** si Web Speech falla: àudio pregravat de la classe de demo + transcripció ja feta, reproduïts sincronitzats.
-- **Clip**: MediaRecorder amb buffer circular (fins a 70 s) al navegador; en prémer el botó es puja l'àudio a Supabase Storage + el fragment de transcripció.
-- **Dades**: Supabase (Postgres + Auth + Storage). Rols `student` i `teacher` a `profiles`.
-- **Stack**: el del kit (web/ Next.js + Tailwind + shadcn/ui; api/ FastAPI amb uv; Supabase). Serveis externs nous: OpenRouter (LLM, clau d'AXA, 10 $/equip) i ElevenLabs (només F3).
-
-## Challenge / track / sponsor prizes targeted
-| Repte | Què demanen | Com encaixem |
+| | Feature | Estat |
 |---|---|---|
-| **Scholé** | creativitat, adaptabilitat, usabilitat, no xat, saber si algú ha après | subtítols diferents per alumne que canvien amb el que aprèn; domini per paraula = *knowledge tracing*; F2/F3 sense xat |
-| **IMC Tech for Good** | funciona, impacte, demo en directe; per a una ONG d'educació/inclusió | joves nouvinguts en risc d'orientació a una via menys exigent; l'autonomia mesura l'impacte; Pau pregunta a l'estand d'IMC quina ONG encaixa |
-| **AXA — IA multimodal frugal** | app web real, arquitectura pròpia, frugalitat, res de *slop* | entrada d'àudio; 1 crida a l'LLM per lliçó (preparació) + com a màxim 1 per sessió d'alumne després de classe (conceptes), cap en directe; "M'he perdut" només desa text; reconeixement de veu al navegador |
+| F0 | Preparació de la lliçó: el profe puja text / PDF / foto → glossari amb 1 crida a l'LLM | ✅ fet (`POST /api/lessons`, `/teacher`) |
+| F1 | Subtítols en directe en francès + seguiment de paraules del glossari sense LLM | ✅ fet (text pla; estats calculats i desats a `word_states_log`) |
+| F2 | Botons a classe → clip d'àudio / text; a casa: clips, marcar paraules, 7 jocs, conceptes | ✅ fet |
+| F4 | Progrés de l'alumna (mai %) + panell del profe amb autonomia | ✅ fet |
+| F3 | «La classe de demà, avui» (frases clau la nit abans) | ❌ no fet (NICE). Al pitch: següent pas |
 
-## Demo script (90 s) — l'ÚNIC que ha de funcionar
-1. **(10 s)** "La Lucía té 14 anys i fa 3 mesos que és a Lausana. Els traductors li tradueixen la classe; nosaltres li ensenyem a no necessitar-los."
-2. **(25 s)** En directe: Pau llegeix en veu alta `docs/demo/lesson-respiration.md`. Els subtítols surten amb verds i grocs a la pantalla de `lucia-w1`. Just després de **"déchets"** premem **"No he entès"**, i més tard **"M'he perdut"** (no es toquen paraules a classe).
-3. **(20 s)** A casa: el clip, marquem **"déchets"**, les 3 activitats; la paraula puja de nivell.
-4. **(20 s)** El mateix fragment amb `lucia-w4`: el groc gairebé desapareix (i surt un 🟠) i "Aquesta setmana has après 12 paraules noves". Al panell del profe, autonomia de ~55% a 80%.
-5. **(15 s)** Panell del profe: el minut on més alumnes s'han perdut i el concepte que li costa a la Lucía (i si ja l'ha entès). (Si hi ha F3, 10 s de "la classe de demà".) Diem al jurat que w1 i w4 són perfils simulats amb dades preparades.
+### F1. A classe (`/class`, en francès)
+- Subtítols del que diu el profe, en directe (Web Speech API `fr-FR`, Chrome). Una línia gran; interruptor
+  «Sous-titres»; indicador del micro («Son : bon / faible / trop fort») i d'estat («En direct / Reconnexion… / Hors
+  ligne»).
+- Pla B sense xarxa: «Lire le texte de la leçon» reprodueix el text de la lliçó de demo com a subtítols.
+- El client carrega UNA vegada el `class-pack` (glossari + nivells de l'alumna). `web/lib/wordState.ts` reconeix les
+  formes flexionades (multi-paraula, elisions `l'`/`d'`) i guarda el primer estat de cada paraula que surt:
+  `green` (nivell ≥ 2), `yellow` (< 2) o `orange` (< 2 i marcada a casa en una classe anterior).
+- «Terminer le cours» envia aquests estats (`POST /word-states`) → autonomia de la sessió + resum de conceptes en
+  segon pla.
+
+### F2. Botons + casa
+- **« Je n'ai pas compris »**: clip d'àudio de ~10–15 s (buffer circular de `MediaRecorder` al navegador, cada clip un
+  webm vàlid) + transcripció d'aquell tros → bucket privat `clips`.
+- **« J'ai perdu le fil »**: només el text dels últims 60 s, sense àudio.
+- **A casa (`/home`, «Review»)**:
+  - *Clips to review*: el clip amb la veu del profe i el text en karaoke; l'alumna toca les paraules que no entenia
+    (paraula del glossari → −1 nivell, un cop per paraula i classe; desmarcar ho desfà) i prem **Done**. Done tradueix amb
+    1 crida petita les paraules marcades que no són del glossari, perquè també es puguin practicar.
+  - *Practice*: 7 jocs (Flashcards, Pairs, Dictation, Letters, Order the sentence, True or false?, Step by step =
+    escoltar → completar la frase del profe → dir-la en veu alta). Cada joc superat d'una paraula del glossari = +1.
+  - *To understand better*: per a cada concepte on es va perdre, explicació pas a pas (francès + castellà + diagrama
+    d'emojis) i 2–3 preguntes; tot bé → «entès», si no → «a repassar» (correcció sense LLM).
+
+### F4. Progrés i profe
+- **Alumna (`/progress`)**: MAI percentatges ni «X de Y». Frases: «This week you learned N new words», «You no longer
+  need help with «…»», «Keep going: tomorrow we review «…»».
+- **Profe (`/teacher`, `/teacher/lessons/[id]`)**: crear lliçó (text o fitxer), Key points, Difficult moments (minuts
+  amb més «J'ai perdu le fil»), Concepts to review (per alumne, amb estat i intents), Most marked words, Autonomy per
+  alumne i evolució setmanal.
+
+### F3. La classe de demà (NO FET)
+Pensat: 5–8 frases clau de la lliçó la nit abans, àudio lent, l'alumna toca les paraules que reconeix (+1). El glossari
+ja demana les frases clau a l'LLM, però no es desen; falten taula, `GET /api/lessons/{id}/preview` i la pàgina.
+
+## Algorisme de nivells (sense IA, regles explicables) — `api/app/mastery.py`
+- Nivell per alumna i paraula, de 0 a 3. Inicial: **3** si és transparent des del castellà, **0** si no.
+- Estat: nivell ≥ 2 → 🟢 sense ajuda; < 2 → 🟡 amb ajuda; < 2 i marcada a casa abans → 🟠 «ja l'havies marcat».
+- Marcar-la a casa → −1 (mínim 0), un cop per paraula i classe; desmarcar ho desfà exactament (`mark_level_changes`).
+  Joc superat → +1 (màxim 3).
+- Transparència: l'LLM la proposa i l'API la valida: `similitud(lema, traducció) ≥ 0.7` (difflib, sense accents).
+  *libérer/liberar* 0.86 ✅, *oxygène/oxígeno* 0.71 ✅, *déchet/desecho* 0.62 ❌, *chaleur/calor* 0.67 ❌.
+- Autonomia d'una sessió = paraules en 🟢 ÷ paraules del glossari que han sortit. Setmanal = mitjana per setmana ISO.
+
+## Arquitectura (frugal)
+- **Preparació** (1 crida per lliçó): text, PDF (amb text → text; escanejat → 5 pàgines com a imatges) o foto →
+  OpenRouter → glossari JSON validat → Supabase. Les crides amb imatges van sempre a un model que llegeix imatges
+  (`OPENROUTER_VISION_MODEL`, per defecte `google/gemini-2.5-flash-lite`).
+- **A classe** (0 crides a l'LLM, 0 crides per frase): Web Speech API al navegador + `class-pack` carregat un cop.
+- **Després de classe** (1 crida per sessió d'alumna, només si ha premut «J'ai perdu le fil»; 1 reintent només si la
+  resposta no és utilitzable): fins a 3 conceptes amb explicació i exercicis → `concept_gaps`. La resposta de l'LLM es
+  repara (`repair.py`) abans de validar-la: mesurat 8/8 sessions amb ≥ 1 concepte, ~2–3 s, ~0,0005 $.
+- **A casa**: 1 crida petita per clip revisat, només si hi ha paraules marcades fora del glossari (traducció +
+  definició). Les respostes i els jocs es corregeixen sense LLM.
+- **Dades**: Supabase (Postgres + Auth + Storage, RLS). Rols `student` / `teacher`. L'API usa la clau secreta i aplica
+  les mateixes regles al codi.
+- **Model**: `OPENROUTER_MODEL` (per defecte `google/gemini-2.5-flash-lite`; qualsevol model JSON d'OpenRouter, p. ex.
+  Llama 3.3 70B si es vol pes obert per al text).
+
+## Reptes (challenges) que presentem
+Enunciats oficials: la web de LauzHack només llista els sponsors (IMC, Scholé AI, AXA); el que hi ha aquí són les notes
+de l'equip dels estands + la regla 30 (novetat explícita). Guió de demo per a cada repte: `docs/demo/pitch.md`.
+
+| Repte | Què volen escoltar | Com hi encaixem |
+|---|---|---|
+| **Scholé AI** (educació) | creativitat, adaptabilitat, usabilitat, **no un xat**, saber si algú ha après | model de domini per alumna i paraula (*knowledge tracing* explicable), dos camins d'aprenentatge (paraules i conceptes), cap xat, evidència d'aprenentatge = nivells + autonomia setmanal |
+| **IMC Tech for Good** | que funcioni, impacte social, demo en directe, una ONG d'educació/inclusió | joves nouvinguts en risc d'orientació a una via menys exigent; demo de punta a punta; l'autonomia mesura l'impacte; candidates per presentar-ho: associacions d'acollida i escolarització de joves migrants a Vaud (a confirmar a l'estand d'IMC) |
+| **AXA — Frugal use of Multimodal AI** | app web real, arquitectura pròpia, frugalitat, res de *slop* | entrada multimodal (veu, àudio, text, PDF, foto); 0 crides a classe; 1 per lliçó; ≤ 1 (+1 reintent) per sessió; reconeixement de veu al navegador; models barats i intercanviables; costos mesurats |
 
 ## Scope
-- **MUST** (camí de la demo): F1 + F2 + F4; una lliçó de biologia de demo (respiració cel·lular, `docs/demo/`); 3 usuaris de demo: `lucia-w1` (perfil setmana 1), `lucia-w4` (perfil setmana 4, mateixa lliçó, la majoria de paraules en verd), `prof-demo`.
-- **NICE**: F3; deploy a Fly.io (`docs/DEPLOY.md`).
-- **OUT** (ho diem al pitch com a següent pas): altres parelles de llengües, login real de menors, diverses assignatures, app nativa, transcripció local amb Whisper (opció de privacitat).
+- **Fet (MUST)**: F0 + F1 + F2 + F4; lliçó de demo de biologia (respiració cel·lular); 3 usuaris de demo:
+  `lucia-w1` (setmana 1), `lucia-w4` (setmana 4, historial preparat: autonomia 53 % → 80 %), `prof-demo`.
+- **No fet**: F3; deploy públic (`docs/DEPLOY.md`).
+- **OUT** (següents passos al pitch): F3, altres parelles de llengües, login real de menors, diverses assignatures, app
+  nativa, transcripció local amb Whisper (privacitat), pujada automàtica del nivell de les paraules que surten sovint
+  sense ser marcades.
+
+## Limitacions conegudes (honestes)
+- Una paraula groga que l'alumna mai marca no puja de nivell sola: només es practica el que es marca.
+- Cada joc superat suma +1: dues rondes poden posar una paraula en verd.
+- Els exercicis d'un concepte són sempre els mateixos en repetir.
+- Sense `OPENROUTER_API_KEY` a la màquina de l'API no hi ha resums ni traduccions (no hi ha cap error visible).
+- Cal Chrome a classe (Web Speech API) i xarxa per desar clips.
 
 ## Novelty (LauzHack rule 30)
-- **Base de partida**: kit de l'equip (configs de Claude Code, agents/comandes, esquelet d'auth + DB: login Supabase, `/api/me`, taula `profiles`), llibreries open source (Next.js, shadcn/ui, FastAPI, Supabase), APIs del navegador (Web Speech, MediaRecorder) i serveis externs (OpenRouter, ElevenLabs).
-- **Nou durant el hackathon**: tot el producte — model de domini per paraula i alumne amb retirada d'ajuda, detecció de transparència ES→FR, subtítols per estat en temps real sense LLM, clips d'àudio, camí d'aprenentatge de conceptes a partir dels moments "M'he perdut" (explicació visual + exercicis generats amb una sola crida per sessió), activitats a casa, càlcul d'autonomia i panell del profe, contingut de demo.
+- **Base de partida**: kit de l'equip (configs de Claude Code, agents/comandes, esquelet d'auth + DB: login Supabase,
+  `/api/me`, taula `profiles`), llibreries open source (Next.js, shadcn/ui, FastAPI, Supabase), APIs del navegador (Web
+  Speech, MediaRecorder) i OpenRouter.
+- **Nou durant el hackathon**: tot el producte — model de domini per paraula i alumna amb regles explicables, detecció
+  de transparència ES→FR (LLM + similitud), seguiment de paraules en directe sense LLM, clips d'àudio amb buffer
+  circular al navegador, revisió a casa amb marques i 7 jocs, camí de conceptes a partir de «J'ai perdu le fil» (una
+  crida per sessió, amb reparació de la resposta), traducció de paraules marcades, càlcul d'autonomia i panell del
+  profe, contingut de demo.
 
 ## Owners
-| Persona | Àrea (per parts del producte) | Fita actual |
-|---|---|---|
-| **A — Miquel** | lead: esquelet, migracions + seed, endpoints de dades de classe (class-pack, sessions, events, word-states, clips), pantalles del profe (/teacher), revisió i merge de PRs, deploy | revisar i fusionar aquest PR; migració del contracte |
-| **B — Laura** | IA i dades: POST /api/lessons (LLM), transparència, algorisme de nivells, autonomia, /api/practice, /api/home/review, /api/me/progress, F3 | spike del glossari + `mastery.py` |
-| **C — Paula** | classe: pàgina /class sencera (Web Speech, `wordState.ts` + tests, subtítols, botons, buffer 30 s, pujada del clip) | spike de subtítols amb Web Speech |
-| **D — Pau** | casa + demo: /home i /progress, `DESIGN.md`, components base, guió i contingut de demo (`docs/demo/`), slides, estands, assajos | clau d'AXA, ONG d'IMC, `DESIGN.md` |
+| Persona | Àrea |
+|---|---|
+| **A — Miquel** | lead: esquelet, migracions + seed, dades de classe (class-pack, sessions, events, word-states, clips, marques), `/teacher`, merges |
+| **B — Laura** | IA i dades: `POST /api/lessons` (LLM), transparència, nivells i autonomia (`mastery.py`), `/api/home/review`, practice, progress, conceptes (`lost_concepts`) |
+| **C — Paula** | `/class` (Web Speech, `wordState.ts`, botons, buffer d'àudio) i integració de la demo |
+| **D — Pau** | `/home`, `/progress`, `DESIGN.md`, demo i pitch |
 
 ## Decisions log
 - Sat 17:20 — **L'esquelet ja és a `main`** (PR #1: login Supabase, `/dashboard`, `GET /api/me`, taula `profiles`, tests). Per tant, a la Fase 1 Miquel NO torna a executar `PROMPT-scaffold.md`: només ajusta el que falti i aplica la migració del contracte + usuaris de demo.
@@ -115,6 +166,14 @@ Usuaris: **alumna** (tauleta o portàtil a classe; supòsit: autoritzat com a me
 - Sun 22 00:30 — **Dos camins d'aprenentatge** (substitueix la línia "Resum de M'he perdut" de Sat 21 23:00): **paraules** = "No he entès" → clip d'àudio de 10 s (`kind` per defecte `word`, tolerància 1–16 s) → marcar a casa → 3 activitats → nivells. **Conceptes** = "M'he perdut" → només text → 1 crida a l'LLM per sessió en acabar la classe (`app.lost_concepts.process_session`, B, en segon pla des de `POST /word-states`) → taula `concept_gaps` (concepte, explicació visual 3–5 passos, 2–3 exercicis) → a casa `concepts_to_learn` + `POST /api/concepts/{id}/answers` (correcció sense LLM: tot bé → `understood`, si no → `review`). El profe ho veu al Dashboard (`concept_gaps`). Desapareixen `lesson_lost_summaries` i `POST /api/teacher/lessons/{id}/lost-summary`.
 - Sat 21 23:00 — **Nivells**: marcar una paraula del glossari a casa fa −1 (un cop per lema i sessió; desmarcar-la ho desfà exactament, taula `mark_level_changes`); superar les 3 activitats fa +1. `type: "word"` desapareix de `POST /events` (422).
 - Sat 21 — web: jsdom + @testing-library/react (devDeps) for component tests; opt in per file with `// @vitest-environment jsdom`.
+
+- Sun 22 — **Subtítols de classe en text pla** (sense colors ni traducció a la pantalla de classe). Els estats 🟢🟡🟠 es continuen calculant al navegador i es desen per a l'autonomia.
+- Sun 22 02:20 — UI de l'alumna i del profe **en anglès** (jurat internacional); `/class` sencer **en francès** (PR #46). Inici = `/dashboard`.
+- Sun 22 02:20 — **Done** per clip (`POST /api/clips/{id}/reviewed`): el clip surt de la llista; només els 5 clips pendents més nous (PR #46).
+- Sun 22 03:00 — Traducció de les paraules marcades fora del glossari amb 1 crida en prémer Done (`clip_marks.translation_es/definition_fr`, PR #47).
+- Sun 22 04:30 — **Model**: `google/gemini-2.5-flash-lite` per defecte (Laura). Les crides amb imatges van sempre a `OPENROUTER_VISION_MODEL` (Llama 3.3 70B, posat per defecte al #47, no llegeix imatges → fotos i PDF escanejats fallaven). Resum de conceptes: reparació de la resposta + 1 reintent només si no és utilitzable (PR #48).
+- Sun 22 05:40 — OpenRouter va respondre 429 (límit temporal del proveïdor) a 3 de 6 crides seguides: totes les crides reintenten 429/502/503/504 dues vegades (1 s, 3 s). Els emojis que Gemini escriu com a bytes (`<0xF0>…`) es descodifiquen (PR #49).
+- Sun 22 04:30 — Pressupost de crides a l'LLM (final): 1 per lliçó · 0 a classe · 1 per sessió d'alumna si ha premut «J'ai perdu le fil» (+1 reintent excepcional) · 1 per clip revisat si té paraules fora del glossari.
 
 ## Timeline
 - Sat 17:45 — PR de documentació fusionat (PLAN, API, ROLES, STATUS, demo).
