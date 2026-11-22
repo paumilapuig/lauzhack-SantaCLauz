@@ -29,6 +29,7 @@
 - Pau → Miquel: API.md actualitzat (paraules marcades a casa, no a classe). Cal: migració `clip_marks`, `POST /api/clips/{id}/marks` i `DELETE /api/clips/{id}/marks/{word}`; `previously_tapped` i `top_words` ara surten de `clip_marks`; seed de `lucia-w4` amb marques a `déchets`/`chaleur`. **Nivells: decidit** (Sat 21 23:00): marcar a casa −1 un cop per lema i sessió, desmarcar ho desfà; `word` surt de `/events`. API.md › Rules actualitzat.
 - Pau → Laura: `GET /api/home/review` › `words_to_practice` ara surt de `clip_marks` (camp nou `word`; `lemma`/`translation_es`/`definition_fr`/`level` són null per a paraules fora del glossari).
 - Miquel → Laura: nous fitxers a `api/tests/` (`fake_supabase.py`, `classdata_seed.py`, `test_classdata_*`); reutilitza `app.roles` (`StudentUser`/`TeacherUser`) i `classdata_schemas.LessonTerm`.
+- Laura ha afegit update() a fake_supabase.py
 - Laura ha afegit 1 línia a PLAN.md › Decisions log (PyMuPDF per a l'entrada PDF del spike). (fet)
 - Laura → Miquel: `mastery` ja és a main (`from app import mastery`): initial_level, state, apply_tap, apply_practice, apply_preview, autonomy, weekly_autonomy. (fet)
 - Laura → Miquel: apuntar a PLAN.md › Decisions que `api/` fa servir **Pillow** i **PyMuPDF** (PDF/fotos per a `POST /api/lessons`; PyMuPDF és AGPL, OK per al hackathon).
