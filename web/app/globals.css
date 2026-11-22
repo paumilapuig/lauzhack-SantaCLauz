@@ -135,6 +135,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* French text the student asked to translate (home/translate): the yellow of a hard word */
+  ::highlight(loopd-translate) {
+    background-color: var(--word-yellow-bg);
+    text-decoration: underline dashed var(--word-yellow) 2px;
+    text-underline-offset: 0.18em;
+  }
   html {
     scrollbar-gutter: stable; /* short and long tabs keep the same width, so nothing jumps sideways */
   }

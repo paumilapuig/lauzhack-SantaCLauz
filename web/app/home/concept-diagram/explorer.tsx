@@ -7,6 +7,7 @@ import { ConceptDiagram } from "./diagram"
 import styles from "./diagram.module.css"
 import { layoutDiagram } from "./diagram-layout"
 import { TappableText } from "./tappable-text"
+import { translateFrToEs } from "../translate/browser-translator"
 import { glossFor } from "./words"
 
 type Props = {
@@ -35,10 +36,12 @@ export function ConceptExplorer({ gap, onTapWord, questions }: Props) {
     setSaved((s) => new Set(s).add(word))
     try {
       const result = await onTapWord(gap.id, word, keyPhrase)
-      if (result.translation_es) setGloss((g) => (g?.word === word ? { word, es: result.translation_es } : g))
+      if (result.translation_es) return setGloss((g) => (g?.word === word ? { word, es: result.translation_es } : g))
     } catch {
-      /* the translation is already shown; saving can be retried by tapping again */
+      /* saving can be retried by tapping again; the translation below still shows */
     }
+    const es = await translateFrToEs(word) // a word outside the glossary: the browser translates it
+    setGloss((g) => (g?.word === word && !g.es ? { word, es: es ?? "—" } : g))
   }
 
   function go(step: number) {
@@ -90,7 +93,7 @@ export function ConceptExplorer({ gap, onTapWord, questions }: Props) {
             <span className="text-[#545454]"> · saved to your words</span>
           </p>
         )}
-        <p className="text-[13px] text-[#707070]">Tap any word you don’t understand. Tap a box to jump to its step.</p>
+        <p className="text-[13px] text-[#707070]">Tap any word you don’t understand, or select a sentence to translate it. Tap a box to jump to its step.</p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         {current > 0 && !finished && (
