@@ -12,31 +12,33 @@ from app.routers.classdata_schemas import (
 LESSON_ID = "8c1e0000-0000-0000-0000-000000000001"
 
 
-def test_word_event_requires_lemma():
+CONTEXT = {"t_start": 40.0, "transcript": "Elle produit des déchets."}
+
+
+def test_lost_event_keeps_context():
+    event = ClassEventCreate(t_sec=100.0, type="lost", lemma=None, context=CONTEXT)
+    assert (event.context.t_start, event.context.transcript) == (40.0, "Elle produit des déchets.")
+
+
+def test_lost_event_accepts_empty_transcript():
+    assert ClassEventCreate(t_sec=5.0, type="lost", context={"t_start": 0, "transcript": ""}).context.transcript == ""
+
+
+@pytest.mark.parametrize("body", [
+    {"t_sec": 1.0, "type": "word", "lemma": "déchet", "context": CONTEXT},
+    {"t_sec": 1.0, "type": "unclear", "context": CONTEXT},
+    {"t_sec": 100.0, "type": "lost"},
+    {"t_sec": 100.0, "type": "lost", "lemma": "déchet", "context": CONTEXT},
+    {"t_sec": -1, "type": "lost", "context": {"t_start": 0, "transcript": ""}},
+    {"t_sec": 30.0, "type": "lost", "context": {"t_start": 40.0, "transcript": ""}},
+    {"t_sec": 100.0, "type": "lost", "context": {"t_start": 29.0, "transcript": ""}},
+    {"t_sec": 100.0, "type": "lost", "context": {"t_start": -1, "transcript": ""}},
+    {"t_sec": 100.0, "type": "lost", "context": {"t_start": 40.0, "transcript": "a" * 5001}},
+], ids=["word", "unclear", "no-context", "lemma", "negative-t", "start-after-t",
+        "over-70s", "negative-start", "long-transcript"])
+def test_invalid_lost_event_rejected(body):
     with pytest.raises(ValidationError):
-        ClassEventCreate(t_sec=1.0, type="word", lemma=None)
-    with pytest.raises(ValidationError):
-        ClassEventCreate(t_sec=1.0, type="word", lemma="")
-
-
-def test_word_event_keeps_lemma():
-    event = ClassEventCreate(t_sec=12.4, type="word", lemma="déchet")
-    assert event.lemma == "déchet"
-
-
-def test_lost_event_drops_lemma():
-    event = ClassEventCreate(t_sec=1.0, type="lost", lemma="déchet")
-    assert event.lemma is None
-
-
-def test_negative_t_sec_rejected():
-    with pytest.raises(ValidationError):
-        ClassEventCreate(t_sec=-1, type="lost")
-
-
-def test_unclear_type_rejected():
-    with pytest.raises(ValidationError):
-        ClassEventCreate(t_sec=1.0, type="unclear")
+        ClassEventCreate(**body)
 
 
 def test_duplicate_lemmas_rejected():

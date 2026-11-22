@@ -32,10 +32,14 @@ def test_mastery_rows_empty_lemmas_skips_query():
     assert repo.mastery_rows(object(), STUDENT, []) == {}
 
 
-def test_tapped_lemmas_excludes_other_students():
+def test_tapped_lemmas_come_from_home_marks_of_the_student():
     client = seeded_fake()
-    assert repo.tapped_lemmas(client, STUDENT, L1_LEMMAS) == {"chaleur"}
-    assert repo.tapped_lemmas(client, OTHER_STUDENT, L1_LEMMAS) == {"déchet"}
+    assert repo.tapped_lemmas(client, STUDENT, L1_LEMMAS) == {"déchet"}
+    assert repo.tapped_lemmas(client, OTHER_STUDENT, L1_LEMMAS) == {"chaleur"}
+
+
+def test_tapped_lemmas_ignore_words_outside_the_requested_lemmas():
+    assert repo.tapped_lemmas(seeded_fake(), STUDENT, ["chaleur"]) == set()
 
 
 def test_tapped_lemmas_empty_lemmas_skips_query():

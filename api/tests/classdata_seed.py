@@ -7,6 +7,8 @@ L1 = "10000000-0000-4000-8000-000000000001"
 L0 = "10000000-0000-4000-8000-000000000000"
 STUDENT_SESSION = "20000000-0000-4000-8000-000000000001"
 OTHER_SESSION = "20000000-0000-4000-8000-000000000002"
+STUDENT_CLIP = "50000000-0000-4000-8000-000000000001"
+OTHER_CLIP = "50000000-0000-4000-8000-000000000002"
 
 
 def _term(lemma: str, transparent: bool) -> dict:
@@ -54,4 +56,18 @@ def seeded_fake() -> FakeSupabase:
              "created_at": "2026-11-22T09:01:00+00:00"},
         ],
         "word_states_log": [],
+        "clips": [
+            {"id": STUDENT_CLIP, "session_id": STUDENT_SESSION, "student_id": STUDENT, "t_start": 0.0,
+             "t_end": 10.0, "transcript": "des déchets", "audio_path": None, "kind": "word", "lemma": None},
+            {"id": OTHER_CLIP, "session_id": OTHER_SESSION, "student_id": OTHER_STUDENT, "t_start": 0.0,
+             "t_end": 10.0, "transcript": "la chaleur", "audio_path": None, "kind": "word", "lemma": None},
+        ],
+        "clip_marks": [
+            {"student_id": STUDENT, "clip_id": STUDENT_CLIP, "word": "déchets", "lemma": "déchet",
+             "created_at": "2026-11-15T20:00:00+00:00"},
+            {"student_id": STUDENT, "clip_id": STUDENT_CLIP, "word": "hier", "lemma": None,
+             "created_at": "2026-11-15T20:01:00+00:00"},
+            {"student_id": OTHER_STUDENT, "clip_id": OTHER_CLIP, "word": "chaleur", "lemma": "chaleur",
+             "created_at": "2026-11-22T20:00:00+00:00"},
+        ],
     })

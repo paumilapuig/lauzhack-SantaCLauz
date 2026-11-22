@@ -53,7 +53,7 @@ def test_class_pack_for_student(monkeypatch):
     }
     assert {t["lemma"] for t in body["terms"]} == {"mitochondrie", "déchet", "chaleur"}
     assert body["mastery"] == {"mitochondrie": 3, "déchet": 1, "chaleur": 0}
-    assert body["previously_tapped"] == ["chaleur"]
+    assert body["previously_tapped"] == ["déchet"]
 
 
 def test_class_pack_without_token_is_401(monkeypatch):

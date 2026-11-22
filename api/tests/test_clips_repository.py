@@ -37,6 +37,7 @@ def test_delete_clip_removes_row_by_id():
 
 def test_delete_clip_does_not_raise_on_missing_table(caplog):
     db = seeded_fake()
+    del db.tables["clips"]
     with caplog.at_level(logging.ERROR):
         delete_clip(db, CLIP_ID)
 

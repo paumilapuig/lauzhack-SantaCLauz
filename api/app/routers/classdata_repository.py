@@ -48,13 +48,13 @@ def mastery_rows(client: Client, student_id: str, lemmas: list[str]) -> dict[str
 
 
 def tapped_lemmas(client: Client, student_id: str, lemmas: list[str]) -> set[str]:
+    """Glossary lemmas this student marked at home on a clip (🟠 in class)."""
     if not lemmas:
         return set()
     rows = (
-        client.table("class_events")
+        client.table("clip_marks")
         .select("lemma")
         .eq("student_id", student_id)
-        .eq("type", "word")
         .in_("lemma", lemmas)
         .execute()
         .data
