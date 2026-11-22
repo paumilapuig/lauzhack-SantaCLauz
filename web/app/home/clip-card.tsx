@@ -7,6 +7,7 @@ import { ClipTranscript } from "./clip-transcript"
 import { tokenize } from "./transcript"
 import { usePlayback } from "./use-playback"
 import { Waveform } from "./waveform"
+import { clipTitle } from "@/lib/classTitles"
 
 const SLOW_RATE = 0.85
 
@@ -39,7 +40,7 @@ export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
             <span aria-hidden className="mx-2 text-label-secondary/40">
               ·
             </span>
-            <span lang="fr">{clip.lesson_title}</span>
+            <span lang="fr">{clipTitle(clip.created_at) ?? clip.lesson_title}</span>
           </p>
           <p className="shrink-0 text-[13px] tabular-nums text-subtle">
             {time} · {clock(clip.t_start * 1000)}–{clock(clip.t_end * 1000)}

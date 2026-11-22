@@ -26,6 +26,7 @@ import { createSeenWords, type SeenWords } from "./seenWords";
 import { SubtitleSwitch } from "./SubtitleSwitch";
 import { addResult, EMPTY_SUBTITLES, lineText, type SubtitleLines } from "./subtitleLines";
 import { createTranscriptBuffer } from "./transcriptBuffer";
+import { saveClassTitle } from "@/lib/classTitles";
 
 const LOST_WINDOW_SEC = 60;
 const PLAN_B_SENTENCE_MS = 4000;
@@ -56,6 +57,7 @@ export function ClassView() {
   const [message, setMessage] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [title, setTitle] = useState("");
   const [subtitles, setSubtitles] = useState<SubtitleLines>(EMPTY_SUBTITLES);
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [buttons, setButtons] = useState<Buttons>();
@@ -93,6 +95,7 @@ export function ClassView() {
     const session = sessionRef.current;
     if (!session || starting) return;
     setStarting(true);
+    saveClassTitle(title);
     try {
       await startSession(session);
     } finally {
@@ -217,6 +220,16 @@ export function ClassView() {
               Il faut Chrome et l&apos;accès au micro. Ensuite tu verras les sous-titres et les deux grands boutons.
             </p>
             {DEMO_MODE && <DemoModeBadge />}
+            <label className="flex w-full flex-col gap-2">
+              <span className="text-[14px] font-bold text-heading">Titre de tes clips (optionnel)</span>
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                maxLength={60}
+                placeholder="ex. Bio — la respiration"
+                className="h-12 w-full rounded-[12px] border border-input bg-card px-4 text-[16px] outline-none placeholder:text-subtle focus-visible:border-heading focus-visible:ring-2 focus-visible:ring-heading/15"
+              />
+            </label>
             <Button onClick={start} disabled={starting}>
               {starting ? "Accès au micro…" : "Commencer le cours"}
             </Button>
