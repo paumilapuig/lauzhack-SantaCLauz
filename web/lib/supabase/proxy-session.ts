@@ -1,12 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { apiMode } from "@/lib/apiMode";
+import { needsLogin } from "@/lib/protectedRoutes";
 import { supabaseAnonKey, supabaseUrl } from "./env";
-
-const PROTECTED_PREFIXES = ["/dashboard", "/teacher"];
-
-function isProtected(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-}
 
 export async function updateSession(request: NextRequest) {
   if (request.nextUrl.pathname === "/") {
@@ -36,7 +32,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
 
-  if (!data?.claims && isProtected(request.nextUrl.pathname)) {
+  if (!data?.claims && needsLogin(request.nextUrl.pathname, apiMode())) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
