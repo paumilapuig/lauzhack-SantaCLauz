@@ -5,6 +5,28 @@
 > Tot el que no és aquí no existeix: si un component nou ho necessita, afegeix-ho aquí primer.
 > Estil: **retiro solar sobre paper càlid** — crema `#f9f4f2`, pastilles suaus, un sol accent blau d'acció (`#0061ef`), groc sunbeam com a puntuació emocional. Referència visual: Headspace (només com a inspiració; cap logo, nom ni text seu a la UI).
 
+## 0. Capa visual «vídeo» (Sun 22 Nov) — mana sobre §2, §5 i §7 si hi ha conflicte
+
+Regla: el **taronja** diu «Loop'd està aprenent», el **teal** diu «ho has aconseguit». Mai els dos al mateix element.
+
+| Token (`web/app/globals.css`) | Hex | Rol |
+|---|---|---|
+| `--brand-orange` (+ `--brand-orange-soft` #FEF2EA) | #F47D31 | marca i aprenentatge: logo, xips de pas, píndoles de nivell, línies de progrés, «+1», play, ona reproduïda, icones dels jocs |
+| `--primary` (teal) + `--primary-soft` | #027E6F · #F2F8F7 | èxit: «No help needed», resposta correcta, check, bàner de pujada de nivell, anell de focus |
+| `--word-yellow` / `--word-yellow-bg` | #8A5300 · #FFF4D1 | ajuda activa: traducció, paraula marcada (/home: fons groc radi 10), «Almost» |
+| `--lost` (+ `--lost-soft`) | #1B3A6B | «Je n'ai pas compris» i l'etiqueta «A word you missed» |
+| `--heading` / `--charcoal` (ink) | #0E101A | títols, botons d'acció (Check, Next, Done, Start), «J'ai perdu le fil», toasts |
+| `--label` · `--label-secondary` · `--subtle` | #1F243C · #545454 · #707070 | text, secundari, etiquetes |
+| `--background`/`--fill` · `--border` · `--input` (`--input-hover` #BDBDBD) | #F5F5F5 · #EBEBEB · #D9D9D9 | fons, vores, vores d'opcions |
+
+- **Tipografia:** títols bold, tracking −0.01em. Etiqueta de secció en majúscules 12–13 px bold `--subtle` (TODAY'S PLAN, FROM CLASS, WHAT LOOP'D KNOWS). Cos 16–18 px; xifres `tabular-nums`.
+- **Forma:** targetes blanques, vora 1 px `--border`, radi 16 (principal 24), **sense ombres ni degradats**. Píndoles totalment arrodonides, bold 13–14 px.
+- **Opcions de joc** (`web/app/home/exercises/controls.tsx` › `AnswerOption`): 96 px d'alt (mòbil ≥ 56), vora 2 px `--input`, radi 16; hover → `--input-hover` + fons `--fill`; correcta → fons `--primary-soft`, vora i text teal, check a la dreta; errada → sacseig curt (`animate-nudge`) i text `--subtle`. `ActionButton` (pastilla 56 px, ink/teal/soft) i `FeedbackBar` (teal si encerta, groc d'ajuda si no, sempre amb «Next»).
+- **Components** (`web/components/ui/`): `CheckBadge` (cercle teal + check, entra amb rebot), `StepChip` (cercle taronja amb número), `LevelMeter` («What Loop'd knows»: paraula display, 3 píndoles de 22 px, «Level N of 3», `StatusPill` «Help on: …» groc / «No help needed» teal), `LevelUpBanner` (bloc teal radi 24: «You no longer need / help with X» — el moment principal de /home: els medidors esperen 500 ms), toast (`sonner`: píndola ink, check teal, text blanc bold).
+- **/home** (`web/app/home/`): a dalt la **feina per avui** (`study-plan-view.tsx`: clips → conceptes → un joc; els passos fets queden ratllats amb check i no tornen a la llista de pendents), i a sota un **interruptor lliscant «Vocab / Context»** (sempre al mateix lloc: el text d'introducció és el mateix a les dues pestanyes i `scrollbar-gutter: stable`) (`review-switch.tsx`, `role="tablist"`, fletxes del teclat, número de pendents a cada costat). **Vocab** = només els clips (Discard + Done) i la llista de jocs al costat; quan tots els clips estan fets, els jocs ocupen tota la pantalla en blocs grans, amb el joc suggerit primer i ample («For you», `suggested-game.ts`: el nivell de les paraules més febles decideix el joc; els jocs fets avui porten «Done today» i el suggeriment passa al següent). **Context** = els conceptes de classe (diagrama). En acabar un joc: resum amb `LevelMeter` i, si una paraula arriba a nivell 2, el bàner.
+- **Moviment** (utilitats a `globals.css`): `animate-rise` (fade + puja 40 px, 450 ms ease-out cúbic; llistes escalonades 100 ms amb `--i`), `animate-pop` (0,6 → 1 easeOutBack), `animate-pulse-once` (1,25 → 1, píndola nova), `animate-plus-one` («+1», 1 s), `animate-nudge` (resposta errada, 320 ms). Botó premut: escala 0,96. `prefers-reduced-motion`: cap animació ni transició.
+- **To:** frases curtes, segona persona, en positiu («You no longer need help with déchet», «Almost. Try again.»). L'alumna no veu mai un percentatge.
+
 ## 1. Principis
 
 1. **La lectura mana.** La pantalla de classe és per llegir a 50–70 cm d'una tauleta mentre el profe parla. Text gran, línies curtes, res que es mogui sense motiu.

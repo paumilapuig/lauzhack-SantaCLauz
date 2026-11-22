@@ -1,32 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { AnswerOption, type OptionState } from "./controls";
 import { ExerciseShell } from "./exercise-shell";
 import { buildBoard, buildResults, isPair } from "./match-pairs-logic";
 import type { ExerciseProps, ExerciseResult } from "./types";
 
 const FLASH_MS = 600;
 
-type TileProps = { text: string; lang: string; selected: boolean; matched: boolean; wrong: boolean; onPick: () => void };
+type TileProps = { text: string; lang: string; state: OptionState; onPick: () => void };
 
-function Tile({ text, lang, selected, matched, wrong, onPick }: TileProps) {
+function Tile({ text, lang, state, onPick }: TileProps) {
   return (
-    <button
-      type="button"
-      lang={lang}
-      disabled={matched}
-      onClick={onPick}
-      className={cn(
-        "h-16 rounded-xl bg-fill px-3 text-[17px] font-medium text-label focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-        lang === "es" && "text-word-yellow",
-        selected && "ring-2 ring-primary",
-        wrong && "ring-2 ring-destructive",
-        matched && "opacity-30",
-      )}
-    >
+    <AnswerOption size="md" lang={lang} state={state} disabled={state === "correct"} onClick={onPick} className="w-full">
       {text}
-    </button>
+    </AnswerOption>
   );
 }
 
@@ -63,24 +51,30 @@ export function MatchPairs({ words, onFinish, onExit }: ExerciseProps) {
     onFinish(finished);
   }
 
+  const stateOf = (lemma: string, french: boolean): OptionState => {
+    if (matched.includes(lemma)) return "correct";
+    if (wrong.includes(lemma)) return "wrong";
+    return french && selected === lemma ? "selected" : "idle";
+  };
+
   const column = (items: typeof board.french, lang: string, pick: (lemma: string) => void) => (
     <div className="flex flex-1 flex-col gap-3">
-      {items.map((w) => (
-        <Tile
-          key={w.lemma}
-          lang={lang}
-          text={lang === "fr" ? w.lemma : w.translation_es}
-          selected={lang === "fr" && selected === w.lemma}
-          matched={matched.includes(w.lemma)}
-          wrong={wrong.includes(w.lemma)}
-          onPick={() => pick(w.lemma)}
-        />
+      {items.map((w, i) => (
+        <div key={w.lemma} style={{ "--i": i } as React.CSSProperties} className="animate-rise">
+          <Tile
+            lang={lang}
+            text={lang === "fr" ? w.lemma : w.translation_es}
+            state={stateOf(w.lemma, lang === "fr")}
+            onPick={() => pick(w.lemma)}
+          />
+        </div>
       ))}
     </div>
   );
 
   return (
     <ExerciseShell title="Pairs" current={matched.length} total={lemmas.length} onExit={onExit} results={results}>
+      <p className="-mt-2 text-[17px] text-label-secondary">Tap a French word, then its Spanish pair.</p>
       <div className="flex gap-3">
         {column(board.french, "fr", setSelected)}
         {column(board.spanish, "es", pickSpanish)}

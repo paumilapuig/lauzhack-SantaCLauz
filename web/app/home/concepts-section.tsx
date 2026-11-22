@@ -12,9 +12,9 @@ type Props = {
 export function ConceptsSection({ concepts, onAnswer, onUnderstood, onTapWord }: Props) {
   if (concepts.length === 0) return null
   return (
-    <section aria-label="To understand better" className="mb-12 flex flex-col gap-4">
-      <h2 className="text-[15px] font-bold tracking-[-0.02em] text-foreground">To understand better</h2>
-      <div className="flex flex-col gap-6">
+    <section aria-label="To understand better" className="flex flex-col gap-4">
+      <h2 className="text-[13px] font-bold tracking-[0.06em] text-subtle uppercase">To understand better</h2>
+      <div className="flex max-w-[880px] flex-col gap-6">
         {concepts.map((gap) => (
           <ConceptCard key={gap.id} gap={gap} onAnswer={onAnswer} onUnderstood={onUnderstood} onTapWord={onTapWord} />
         ))}

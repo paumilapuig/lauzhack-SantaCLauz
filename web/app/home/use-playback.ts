@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { audioSeconds } from "./clip-clock"
 import { activeWordStart, timeline, type TimedWord } from "./karaoke"
 import { speak } from "./speech"
 
@@ -31,7 +32,8 @@ function lastAtOrBefore(words: TimedWord[], pick: (w: TimedWord) => number, valu
 // Word timing: a syllable/pause timeline (karaoke.ts), started when the voice really starts and
 // re-scaled on every word boundary the voice reports.
 // shortcut: with real audio the timeline is stretched to the recording, until real word timestamps exist
-export function usePlayback(text: string, audioUrl: string, rate: number): Playback {
+/** `clipSeconds`: the clip window, used when the recording does not say how long it is. */
+export function usePlayback(text: string, audioUrl: string, rate: number, clipSeconds = 0): Playback {
   const plan = useMemo(() => timeline(text, rate), [text, rate])
   const [playing, setPlaying] = useState(false)
   const [char, setChar] = useState<number | null>(null)
@@ -42,6 +44,7 @@ export function usePlayback(text: string, audioUrl: string, rate: number): Playb
   const audio = useRef<HTMLAudioElement | null>(null)
   const audioFailed = useRef(false)
 
+  const ratioOf = (ms: number) => (plan.total > 0 ? ms / plan.total : 0)
   const atOf = (c: number) => lastAtOrBefore(plan.words, (w) => w.start, c)?.at ?? 0
   const wordAtTime = (t: number) => lastAtOrBefore(plan.words, (w) => w.at, t)?.start ?? 0
   const nextStart = (c: number) => plan.words.find((w) => w.start > c)?.start ?? text.length
@@ -99,12 +102,12 @@ export function usePlayback(text: string, audioUrl: string, rate: number): Playb
     if (!hasVoice) begin()
     else setTimeout(begin, START_TIMEOUT_MS)
     loop(id, () => {
-      if (startedAt === null) return { char: from, progress: base / plan.total, done: false }
+      if (startedAt === null) return { char: from, progress: ratioOf(base), done: false }
       const t = base + (performance.now() - startedAt) / scale
       let c = wordAtTime(t)
       // the voice told us where it is: never run ahead of the next word, never fall behind it
       if (heard !== null) c = Math.max(heard, Math.min(c, nextStart(heard)))
-      return { char: c, progress: Math.min(1, t / plan.total), done: !hasVoice && t >= plan.total }
+      return { char: c, progress: Math.min(1, ratioOf(t)), done: !hasVoice && t >= plan.total }
     })
   }
 
@@ -127,10 +130,11 @@ export function usePlayback(text: string, audioUrl: string, rate: number): Playb
     playing
       .then(() => {
         if (session.current !== id) return el.pause()
-        if (from > 0 && el.duration) el.currentTime = (atOf(from) / plan.total) * el.duration
-        setAudioMs(el.duration * 1000)
+        const seconds = () => audioSeconds(el.duration, clipSeconds)
+        if (from > 0 && seconds() > 0) el.currentTime = ratioOf(atOf(from)) * seconds()
+        setAudioMs(seconds() * 1000)
         loop(id, () => {
-          const p = el.duration ? el.currentTime / el.duration : 0
+          const p = seconds() > 0 ? Math.min(1, el.currentTime / seconds()) : 0
           return { char: wordAtTime(p * plan.total), progress: p, done: false }
         })
       })
@@ -141,7 +145,7 @@ export function usePlayback(text: string, audioUrl: string, rate: number): Playb
     const id = ++session.current
     cancelAnimationFrame(frame.current)
     setChar(from)
-    setProgress(atOf(from) / plan.total)
+    setProgress(ratioOf(atOf(from)))
     setPlaying(true)
     if (audioFailed.current) startSpeech(id, from)
     else startAudio(id, from)
@@ -160,7 +164,7 @@ export function usePlayback(text: string, audioUrl: string, rate: number): Playb
       const from = wordAtTime(ratio * plan.total)
       if (playing) return start(from)
       setChar(from)
-      setProgress(atOf(from) / plan.total)
+      setProgress(ratioOf(atOf(from)))
     },
   }
 }

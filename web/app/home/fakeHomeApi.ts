@@ -76,6 +76,7 @@ const DICTIONARY: Record<string, string> = {
 };
 
 const MAX_LEVEL = 3;
+const NO_HELP_LEVEL = 2;
 
 const sentenceWith = (transcript: string, word: string) =>
   transcript.split(/(?<=[.!?])\s+/).find((s) => s.toLowerCase().includes(word)) ?? transcript;
@@ -87,7 +88,9 @@ export function createFakeHomeApi(): HomeApi {
 
   return {
     async review() {
-      return structuredClone(review);
+      // like the API: glossary words with level ≥ 2 no longer need practice
+      const words = review.words_to_practice.filter((w) => (w.level ?? 0) < NO_HELP_LEVEL);
+      return structuredClone({ ...review, words_to_practice: words });
     },
     async mark(clipId, word): Promise<MarkResult> {
       const surface = word.toLowerCase();
@@ -112,6 +115,7 @@ export function createFakeHomeApi(): HomeApi {
       const current = levels.get(lemma) ?? 0;
       const level = passed ? Math.min(current + 1, MAX_LEVEL) : current;
       levels.set(lemma, level);
+      for (const w of review.words_to_practice) if ((w.lemma ?? w.word) === lemma) w.level = level;
       return { lemma, level, leveled_up: level > current };
     },
     async answerConcept(_conceptId, answers) {

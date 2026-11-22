@@ -12,6 +12,7 @@ vi.mock("./getHomeApi", () => ({ getHomeApi: () => api }))
 
 beforeEach(() => {
   api = createFakeHomeApi()
+  localStorage.clear()
 })
 afterEach(cleanup)
 
@@ -49,15 +50,68 @@ describe("HomeReview", () => {
     expect(finishClip).toHaveBeenCalledTimes(1)
   })
 
-  it("finishing a mode saves practice for glossary words only", async () => {
+  it("finishing a mode saves practice and shows what Loop'd now knows", async () => {
     const practice = vi.spyOn(api, "practice")
     render(<HomeReview />)
-    fireEvent.click(await screen.findByRole("button", { name: /Flashcards/ }))
+    const rail = await screen.findByRole("complementary", { name: "Practice" })
+    fireEvent.click(within(rail).getByRole("button", { name: /Flashcards/ }))
     expect(screen.getByRole("dialog", { name: "Flashcards" })).toBeTruthy()
-    while (screen.queryByText("Leveled up:", { exact: false }) === null && screen.queryByRole("button", { name: "Back" }) === null) {
+    while (screen.queryByText("Tap to see")) {
       fireEvent.click(screen.getByText("Tap to see"))
       fireEvent.click(screen.getByText("I knew it"))
     }
     await waitFor(() => expect(practice).toHaveBeenCalledWith(expect.objectContaining({ lemma: "déchet", passed: true })))
+    expect(await screen.findByText("help with", { exact: false })).toBeTruthy()
+    expect(screen.getAllByText("What Loop'd knows").length).toBeGreaterThan(0)
+  })
+
+  it("Vocab shows only the clips and the practice list; Context holds the ideas from class", async () => {
+    render(<HomeReview />)
+    await screen.findByText("2 to review")
+    expect(screen.queryByRole("region", { name: "To understand better" })).toBeNull()
+    expect(screen.getByRole("complementary", { name: "Practice" })).toBeTruthy()
+    fireEvent.click(screen.getByRole("tab", { name: /Context/ }))
+    expect(screen.getByRole("tab", { name: /Context/ }).getAttribute("aria-selected")).toBe("true")
+    expect(screen.getByRole("region", { name: "To understand better" })).toBeTruthy()
+    expect(screen.queryByText("2 to review")).toBeNull()
+  })
+
+  it("the tabs show how much is left on each path", async () => {
+    render(<HomeReview />)
+    await screen.findByText("2 to review")
+    expect(screen.getByRole("tab", { name: /Vocab/ }).textContent).toContain("2")
+    expect(screen.getByRole("tab", { name: /Context/ }).textContent).toContain("1")
+  })
+
+  it("a finished game gets a check and the next game is suggested", async () => {
+    render(<HomeReview />)
+    const rail = await screen.findByRole("complementary", { name: "Practice" })
+    expect(within(rail).getByRole("button", { name: /Flashcards/ }).textContent).toContain("For you")
+    fireEvent.click(within(rail).getByRole("button", { name: /Flashcards/ }))
+    while (screen.queryByText("Tap to see")) {
+      fireEvent.click(screen.getByText("Tap to see"))
+      fireEvent.click(screen.getByText("I knew it"))
+    }
+    fireEvent.click(await screen.findByRole("button", { name: "Back" }))
+    const updated = await screen.findByRole("complementary", { name: "Practice" })
+    await waitFor(() => expect(within(updated).getByRole("button", { name: /Flashcards/ }).textContent).toContain("Done today"))
+    expect(within(updated).getByRole("button", { name: /Step by step/ }).textContent).toContain("For you")
+  })
+
+  it("today's plan stays above the tabs; a finished game is checked off and leaves the to-do (bug Sun 22 Nov)", async () => {
+    render(<HomeReview />)
+    const plan = await screen.findByRole("region", { name: /Your next/ })
+    const practiseRow = within(plan).getByRole("button", { name: /Practise with Flashcards/ })
+    expect(practiseRow.textContent).not.toContain("Done")
+    fireEvent.click(practiseRow)
+    while (screen.queryByText("Tap to see")) {
+      fireEvent.click(screen.getByText("Tap to see"))
+      fireEvent.click(screen.getByText("I knew it"))
+    }
+    fireEvent.click(await screen.findByRole("button", { name: "Back" }))
+    await waitFor(() => expect(within(plan).getByRole("button", { name: /Practise with Flashcards/ }).textContent).toContain("Done"))
+    expect(within(plan).queryAllByRole("button", { name: /Practise with/ })).toHaveLength(1)
+    fireEvent.click(screen.getByRole("tab", { name: /Context/ }))
+    expect(screen.getByRole("region", { name: /Your next/ })).toBe(plan)
   })
 })

@@ -1,14 +1,14 @@
 "use client";
 
+import { Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { speak } from "../speech";
+import { ActionButton, FeedbackBar, PRESS } from "./controls";
 import { spellingMatches } from "./dictation-logic";
 import { ExerciseShell } from "./exercise-shell";
 import type { ExerciseProps, ExerciseResult } from "./types";
 
-const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
-const PILL = cn("inline-flex h-11 w-fit items-center justify-center rounded-full px-6 text-[17px] font-semibold", FOCUS);
 const SPEAK_RATE = 0.8;
 
 export function Dictation({ words, onFinish, onExit }: ExerciseProps) {
@@ -43,13 +43,26 @@ export function Dictation({ words, onFinish, onExit }: ExerciseProps) {
 
   return (
     <ExerciseShell title="Dictation" current={index} total={words.length} onExit={onExit} results={done ? results : undefined}>
-      <div className="flex flex-col gap-4">
-        <button type="button" onClick={() => speak(word.lemma, SPEAK_RATE)} className={cn(PILL, "bg-fill text-label")}>
-          Listen again
-        </button>
-        <label htmlFor="dictation-input" className="text-[17px] text-label-secondary">
-          Write what you hear
-        </label>
+      <form
+        className="flex flex-col gap-6"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!checked && typed.trim()) check();
+        }}
+      >
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => speak(word.lemma, SPEAK_RATE)}
+            aria-label="Listen again"
+            className={cn("flex size-16 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white hover:bg-brand-orange/90", PRESS)}
+          >
+            <Volume2 aria-hidden className="size-7" />
+          </button>
+          <label htmlFor="dictation-input" className="text-[19px] font-bold text-heading">
+            Write what you hear
+          </label>
+        </div>
         <input
           id="dictation-input"
           value={typed}
@@ -59,23 +72,24 @@ export function Dictation({ words, onFinish, onExit }: ExerciseProps) {
           autoCapitalize="none"
           spellCheck={false}
           lang="fr"
-          className={cn("h-11 rounded-xl bg-fill px-4 text-[17px] text-label", FOCUS)}
+          className={cn(
+            "h-16 rounded-[16px] border-2 bg-card px-5 text-[22px] font-bold text-heading transition-colors outline-none focus:border-heading",
+            checked ? (passed ? "border-primary bg-primary-soft text-primary" : "border-input text-subtle") : "border-input",
+          )}
         />
-        {checked && (
-          <p className="text-[17px] text-label" aria-live="polite">
-            {passed ? "Well done!" : "It's spelled:"} <strong>{word.lemma}</strong>
-          </p>
-        )}
         {checked ? (
-          <button type="button" onClick={next} className={cn(PILL, "bg-primary text-primary-foreground")}>
-            Next
-          </button>
+          <FeedbackBar
+            correct={passed}
+            title={passed ? "Well done!" : "It's spelled:"}
+            detail={<strong lang="fr" className="text-[19px]">{word.lemma}</strong>}
+            action={<ActionButton onClick={next}>Next</ActionButton>}
+          />
         ) : (
-          <button type="button" onClick={check} disabled={!typed.trim()} className={cn(PILL, "bg-primary text-primary-foreground disabled:opacity-40")}>
+          <ActionButton type="submit" disabled={!typed.trim()} className="self-start">
             Check
-          </button>
+          </ActionButton>
         )}
-      </div>
+      </form>
     </ExerciseShell>
   );
 }

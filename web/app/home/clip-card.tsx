@@ -2,6 +2,7 @@
 
 import { Pause, Play } from "lucide-react"
 import type { HomeClip } from "@/lib/student-contract"
+import { clock } from "./clip-clock"
 import { ClipTranscript } from "./clip-transcript"
 import { tokenize } from "./transcript"
 import { usePlayback } from "./use-playback"
@@ -9,10 +10,6 @@ import { Waveform } from "./waveform"
 
 const SLOW_RATE = 0.85
 
-function clock(ms: number) {
-  const total = Math.round(ms / 1000)
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`
-}
 
 type Props = {
   clip: HomeClip
@@ -23,7 +20,7 @@ type Props = {
 }
 
 export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
-  const playback = usePlayback(clip.transcript, clip.audio_url, SLOW_RATE)
+  const playback = usePlayback(clip.transcript, clip.audio_url, SLOW_RATE, clip.t_end - clip.t_start)
   const time = new Date(clip.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
 
   const marks = tokenize(clip.transcript)
@@ -36,27 +33,31 @@ export function ClipCard({ clip, index, saved, translate, onToggle }: Props) {
   return (
     <article className="overflow-hidden rounded-[24px] border border-border bg-card">
       <div className="flex flex-col gap-6 px-6 pt-6 pb-2 md:px-8 md:pt-8">
-        <div className="flex items-baseline justify-between gap-4">
-          <p className="text-[13px] font-medium tracking-[-0.01em] text-label-secondary tabular-nums">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <p className="text-[13px] font-bold tracking-[-0.01em] text-label-secondary tabular-nums">
             Clip {index + 1}
             <span aria-hidden className="mx-2 text-label-secondary/40">
               ·
             </span>
             <span lang="fr">{clip.lesson_title}</span>
           </p>
-          <p className="shrink-0 text-[13px] tabular-nums text-label-secondary">
+          <p className="shrink-0 text-[13px] tabular-nums text-subtle">
             {time} · {clock(clip.t_start * 1000)}–{clock(clip.t_end * 1000)}
           </p>
         </div>
-        <ClipTranscript transcript={clip.transcript} saved={saved} translate={translate} onToggle={onToggle} char={playback.char} />
+        {clip.transcript.trim() ? (
+          <ClipTranscript transcript={clip.transcript} saved={saved} translate={translate} onToggle={onToggle} char={playback.char} />
+        ) : (
+          <p className="text-[17px] text-label-secondary">We couldn&apos;t catch the words of this moment. Listen to it, then press Done.</p>
+        )}
       </div>
 
-      <div className="mt-4 flex items-center gap-4 border-t border-separator bg-fill/80 px-6 py-4 md:px-8">
+      <div className="mt-4 flex items-center gap-4 border-t border-separator bg-fill px-6 py-4 md:px-8">
         <button
           type="button"
           onClick={playback.toggle}
           aria-label={playback.playing ? "Pause" : "Listen"}
-          className="flex size-12 shrink-0 touch-manipulation items-center justify-center rounded-full bg-charcoal text-primary-foreground shadow-[var(--shadow-subtle)] transition-[transform,opacity] hover:opacity-90 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex size-14 shrink-0 touch-manipulation items-center justify-center rounded-full bg-brand-orange text-white transition-[transform,background-color] duration-150 hover:bg-brand-orange/90 active:scale-[0.96] motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           {playback.playing ? (
             <Pause aria-hidden className="size-5 fill-current" />
