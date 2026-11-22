@@ -1,8 +1,14 @@
+import time
+
 import httpx
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 TIMEOUT_SECONDS = 120
 ERROR_EXCERPT_CHARS = 300
+# Transient provider errors (measured Sun 22 Nov: Gemini Flash Lite answered 429 to 3 calls in 6) are retried.
+RETRY_STATUSES = frozenset({429, 502, 503, 504})
+RETRY_DELAYS_SECONDS = (1.0, 3.0)
+_sleep = time.sleep
 
 
 class OpenRouterError(RuntimeError):
@@ -32,6 +38,11 @@ def call_openrouter(
 
 def _post(client: httpx.Client, payload: dict, headers: dict) -> tuple[str, dict]:
     response = client.post(OPENROUTER_URL, json=payload, headers=headers)
+    for delay in RETRY_DELAYS_SECONDS:
+        if response.status_code not in RETRY_STATUSES:
+            break
+        _sleep(delay)
+        response = client.post(OPENROUTER_URL, json=payload, headers=headers)
     if response.status_code // 100 != 2:
         excerpt = response.text[:ERROR_EXCERPT_CHARS]
         raise OpenRouterError(f"OpenRouter error {response.status_code}: {excerpt}")

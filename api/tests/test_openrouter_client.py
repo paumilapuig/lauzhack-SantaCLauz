@@ -79,3 +79,51 @@ def make_raw_client(response: httpx.Response) -> httpx.Client:
 def test_malformed_2xx_raises_openrouter_error(response):
     with pytest.raises(OpenRouterError):
         call_openrouter([], "m", "k", http=make_raw_client(response))
+
+
+def sequence_client(statuses: list[int], seen: list) -> httpx.Client:
+    def handler(request: httpx.Request) -> httpx.Response:
+        status = statuses[min(len(seen), len(statuses) - 1)]
+        seen.append(request)
+        return httpx.Response(status, json=ok_body() if status == 200 else {"error": "rate limited"})
+
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+@pytest.fixture
+def no_sleep(monkeypatch):
+    waits: list = []
+    monkeypatch.setattr("app.glossary.openrouter_client._sleep", waits.append)
+    return waits
+
+
+@pytest.mark.parametrize("transient", [429, 502, 503, 504])
+def test_a_transient_error_is_retried(transient, no_sleep):
+    seen: list = []
+
+    content, _ = call_openrouter([], "m", "k", http=sequence_client([transient, 200], seen))
+
+    assert content == '{"terms": []}'
+    assert len(seen) == 2
+    assert len(no_sleep) == 1
+
+
+def test_gives_up_after_three_attempts_on_rate_limit(no_sleep):
+    seen: list = []
+
+    with pytest.raises(OpenRouterError, match="429"):
+        call_openrouter([], "m", "k", http=sequence_client([429], seen))
+
+    assert len(seen) == 3
+    assert no_sleep == [1.0, 3.0]
+
+
+@pytest.mark.parametrize("permanent", [400, 401, 402, 404, 500])
+def test_a_permanent_error_is_not_retried(permanent, no_sleep):
+    seen: list = []
+
+    with pytest.raises(OpenRouterError):
+        call_openrouter([], "m", "k", http=sequence_client([permanent, 200], seen))
+
+    assert len(seen) == 1
+    assert no_sleep == []

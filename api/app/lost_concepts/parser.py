@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pydantic import ValidationError
 
 from app.lost_concepts.errors import LostConceptsParseError
-from app.lost_concepts.repair import repair_concept
+from app.lost_concepts.repair import decode_byte_tokens, repair_concept
 from app.lost_concepts.schema import MAX_CONCEPTS, ConceptGap, LlmConcept
 
 FENCE_PATTERN = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL)
@@ -28,7 +28,7 @@ def _strip_fences(content: str) -> str:
 
 def _load_concepts(content: str) -> list:
     try:
-        data = json.loads(_strip_fences(content))
+        data = json.loads(decode_byte_tokens(_strip_fences(content)))
     except json.JSONDecodeError as error:
         raise LostConceptsParseError(f"LLM returned non-JSON content: {error}") from error
     if not isinstance(data, dict) or not isinstance(data.get("concepts"), list):
