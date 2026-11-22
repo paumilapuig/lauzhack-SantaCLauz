@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "./env";
 
-const PROTECTED_PREFIXES = ["/dashboard"];
+const PROTECTED_PREFIXES = ["/dashboard", "/teacher"];
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
