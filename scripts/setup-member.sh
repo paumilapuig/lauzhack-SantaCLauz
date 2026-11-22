@@ -28,9 +28,7 @@ npm install -g @playwright/cli@latest
 playwright-cli install-browser || npx playwright install chromium
 
 say "Env files (fill values from the team's private channel — NEVER commit them)"
-[[ -f web/.env.local ]] || cp web/.env.example web/.env.local
-[[ -f api/.env ]]       || cp api/.env.example api/.env
-echo "→ edit web/.env.local and api/.env now"
+bash scripts/demo-env.sh
 
 say "Install deps (if the app is already scaffolded)"
 [[ -f web/package.json ]] && (cd web && npm install) || true
