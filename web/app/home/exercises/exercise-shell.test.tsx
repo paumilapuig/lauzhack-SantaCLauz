@@ -5,18 +5,18 @@ import { ExerciseShell } from "./exercise-shell"
 
 afterEach(cleanup)
 
-const base = { title: "Tarjetas", current: 1, total: 6, onExit: vi.fn() }
+const base = { title: "Flashcards", current: 1, total: 6, onExit: vi.fn() }
 
 describe("ExerciseShell", () => {
   it("labels the region, shows children, renders no h1 or own exit", () => {
     render(<ExerciseShell {...base}><p>contenido</p></ExerciseShell>)
-    expect(screen.getByRole("region", { name: "Tarjetas" })).toBeTruthy()
+    expect(screen.getByRole("region", { name: "Flashcards" })).toBeTruthy()
     expect(screen.getByText("contenido")).toBeTruthy()
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull()
-    expect(screen.queryByRole("button", { name: "Salir" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Exit" })).toBeNull()
   })
 
-  it("end screen lists passed and failed words, no digits, Volver exits", () => {
+  it("end screen lists passed and failed words, no digits, Back exits", () => {
     const onExit = vi.fn()
     const { container } = render(
       <ExerciseShell {...base} onExit={onExit} results={[
@@ -24,12 +24,12 @@ describe("ExerciseShell", () => {
         { lemma: "énergie", passed: false },
       ]}><p>contenido</p></ExerciseShell>,
     )
-    expect(screen.getByText("Hecho")).toBeTruthy()
-    expect(screen.getByText(/Sube de nivel: déchet/)).toBeTruthy()
-    expect(screen.getByText(/Para repasar otra vez: énergie/)).toBeTruthy()
+    expect(screen.getByText("Done")).toBeTruthy()
+    expect(screen.getByText(/Leveled up: déchet/)).toBeTruthy()
+    expect(screen.getByText(/To review again: énergie/)).toBeTruthy()
     expect(screen.queryByText("contenido")).toBeNull()
     expect(container.textContent).not.toMatch(/\d|%/)
-    fireEvent.click(screen.getByRole("button", { name: "Volver" }))
+    fireEvent.click(screen.getByRole("button", { name: "Back" }))
     expect(onExit).toHaveBeenCalled()
   })
 

@@ -12,7 +12,7 @@ export function NextClassCard({ lostPeaks, conceptGaps }: NextClassCardProps) {
   return (
     <Card className="shadow-none">
       <CardHeader>
-        <CardTitle>Pour la prochaine classe</CardTitle>
+        <CardTitle>For the next class</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <LostPeaksSection peaks={lostPeaks} />

@@ -3,16 +3,16 @@ import { createLessonErrorFr, loadErrorFr } from "./teacher-errors";
 
 describe("createLessonErrorFr", () => {
   it.each([
-    [401, "Session expirée, reconnectez-vous."],
-    [403, "Réservé aux enseignants."],
-    [413, "Fichier trop lourd (10 Mo maximum)."],
-    [415, "Format non accepté : txt, PDF, PNG ou JPG."],
-    [422, "Il manque un champ, ou le texte/fichier est vide ou illisible."],
-    [502, "L'IA n'a pas pu préparer le glossaire. Réessayez."],
-    [503, "L'IA n'est pas configurée sur le serveur."],
-    [500, "Impossible d'enregistrer la leçon. Réessayez."],
-    [0, "Serveur injoignable."],
-    [418, "Erreur inattendue (code 418)."],
+    [401, "Session expired, please sign in again."],
+    [403, "Teachers only."],
+    [413, "File too large (10 MB maximum)."],
+    [415, "Format not accepted: txt, PDF, PNG or JPG."],
+    [422, "A field is missing, or the text/file is empty or unreadable."],
+    [502, "The AI could not prepare the glossary. Please try again."],
+    [503, "The AI is not configured on the server."],
+    [500, "Could not save the lesson. Please try again."],
+    [0, "Server unreachable."],
+    [418, "Unexpected error (code 418)."],
   ])("maps %i", (status, text) => {
     expect(createLessonErrorFr(status)).toBe(text);
   });
@@ -20,11 +20,11 @@ describe("createLessonErrorFr", () => {
 
 describe("loadErrorFr", () => {
   it.each([
-    [401, "Session expirée, reconnectez-vous."],
-    [403, "Cette leçon n'est pas la vôtre."],
-    [404, "Leçon introuvable"],
-    [0, "Serveur injoignable."],
-    [418, "Erreur inattendue (code 418)."],
+    [401, "Session expired, please sign in again."],
+    [403, "This lesson is not yours."],
+    [404, "Lesson not found"],
+    [0, "Server unreachable."],
+    [418, "Unexpected error (code 418)."],
   ])("maps %i", (status, text) => {
     expect(loadErrorFr(status)).toBe(text);
   });

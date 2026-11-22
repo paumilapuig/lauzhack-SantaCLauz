@@ -31,4 +31,9 @@ describe("addResult + lineText", () => {
     const before = addResult(EMPTY_SUBTITLES, { finalText: "un", interimText: "", at: 1 });
     expect(addResult(before, { finalText: " ", interimText: "", at: 2 })).toBe(before);
   });
+  it("replaces the last finished sentence with Chrome's revised version", () => {
+    let state = addResult(EMPTY_SUBTITLES, { finalText: "aujourd hui je suis très Jol", interimText: "", at: 1 });
+    state = addResult(state, { finalText: "aujourd hui je suis très jolie de la", interimText: "", at: 2 });
+    expect(lineText(state)).toBe("aujourd hui je suis très jolie de la");
+  });
 });

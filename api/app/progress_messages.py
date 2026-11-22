@@ -6,7 +6,7 @@ from datetime import datetime, time, timedelta, timezone
 
 from app.mastery import GREEN_FROM_LEVEL
 
-DEFAULT_KEEP_GOING = "Sigue así, vas muy bien"
+DEFAULT_KEEP_GOING = "Keep going, you're doing great"
 PENDING_BELOW_LEVEL = 2
 
 
@@ -29,10 +29,8 @@ def _learned_this_week(
     count = len({lemma for lemma, created_at in passed if created_at >= start})
     if count == 0:
         return None
-    noun = "palabra nueva" if count == 1 else "palabras nuevas"
-    return ProgressMessage(
-        "learned_this_week", f"Esta semana has aprendido {count} {noun}"
-    )
+    noun = "new word" if count == 1 else "new words"
+    return ProgressMessage("learned_this_week", f"This week you learned {count} {noun}")
 
 
 def _no_help_needed(
@@ -41,7 +39,7 @@ def _no_help_needed(
     for lemma, _ in passed:
         if levels.get(lemma, 0) >= GREEN_FROM_LEVEL:
             return ProgressMessage(
-                "no_help_needed", f"Ya no necesitas ayuda con «{lemma}»"
+                "no_help_needed", f"You no longer need help with «{lemma}»"
             )
     return None
 
@@ -49,7 +47,7 @@ def _no_help_needed(
 def _keep_going(mark_lemmas: list[str], levels: Mapping[str, int]) -> ProgressMessage:
     for lemma in mark_lemmas:
         if levels.get(lemma, 0) < PENDING_BELOW_LEVEL:
-            return ProgressMessage("keep_going", f"Sigue así: mañana repasamos «{lemma}»")
+            return ProgressMessage("keep_going", f"Keep going: tomorrow we review «{lemma}»")
     return ProgressMessage("keep_going", DEFAULT_KEEP_GOING)
 
 

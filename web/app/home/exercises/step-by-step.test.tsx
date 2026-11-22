@@ -27,6 +27,6 @@ describe("StepByStep", () => {
     expect(onFinish).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText("done tri"));
     expect(onFinish).toHaveBeenCalledWith([]);
-    expect(flow.words[0]).toMatchObject({ lemma: "déchet", level: 0, clip_id: null });
+    expect(flow.words[0]).toMatchObject({ lemma: "déchet", clip_id: null });
   });
 });

@@ -23,16 +23,19 @@ def _terms_by_lesson(terms: list[dict]) -> dict[str, list[dict]]:
     return grouped
 
 
+MAX_PENDING_CLIPS = 5
+
+
 def build_clips(
     clips: list[dict],
-    passed_clip_ids: set[str],
     sessions: list[dict],
     lessons: list[dict],
     lesson_terms: list[dict],
     sign_audio: SignAudio,
 ) -> list[ReviewClip]:
-    """Pending clips (input order kept) with title, matched terms and signed audio.
+    """Up to MAX_PENDING_CLIPS clips not yet reviewed (input order kept), with title, terms and signed audio.
 
+    A clip is reviewed once the student has picked its hard words (`clips.reviewed_at`).
     Clips whose audio cannot be signed are left out.
     """
     lesson_by_session = _lesson_ids_by_session(sessions)
@@ -40,7 +43,9 @@ def build_clips(
     terms = _terms_by_lesson(lesson_terms)
     review: list[ReviewClip] = []
     for clip in clips:
-        if clip["id"] in passed_clip_ids:
+        if len(review) == MAX_PENDING_CLIPS:
+            break
+        if clip.get("reviewed_at"):
             continue
         audio_url = sign_audio(clip["id"], clip["audio_path"])
         if audio_url is None:

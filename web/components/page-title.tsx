@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react"
 
 const noop = () => () => {}
-const todayLabel = () => new Date().toLocaleDateString("es", { weekday: "long", day: "numeric" })
+const todayLabel = () => new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric" })
 
 export function useTodayLabel() {
   return useSyncExternalStore(noop, todayLabel, () => "")

@@ -32,7 +32,7 @@ export function TrueFalse({ words, onFinish, onExit }: ExerciseProps) {
   }
 
   return (
-    <ExerciseShell title="¿Verdadero o falso?" current={index} total={items.length} onExit={onExit} results={done ? results : undefined}>
+    <ExerciseShell title="True or false?" current={index} total={items.length} onExit={onExit} results={done ? results : undefined}>
       <div className="flex flex-col gap-6">
         <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-xl bg-fill px-6 text-center">
           <span lang="fr" className="text-[34px] font-semibold tracking-tight text-label">{item.lemma}</span>
@@ -40,15 +40,15 @@ export function TrueFalse({ words, onFinish, onExit }: ExerciseProps) {
         </div>
         {correct === null ? (
           <div className="flex flex-col gap-3">
-            <button type="button" onClick={() => answer(true)} className={BIG_BUTTON}>Verdadero</button>
-            <button type="button" onClick={() => answer(false)} className={BIG_BUTTON}>Falso</button>
+            <button type="button" onClick={() => answer(true)} className={BIG_BUTTON}>True</button>
+            <button type="button" onClick={() => answer(false)} className={BIG_BUTTON}>False</button>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             <p className={cn("text-[17px] font-semibold", correct ? "text-label" : "text-word-orange")}>
-              {correct ? "¡Bien!" : "No era así"}
+              {correct ? "Well done!" : "Not quite"}
             </p>
-            <button type="button" onClick={next} className={BIG_BUTTON}>Siguiente</button>
+            <button type="button" onClick={next} className={BIG_BUTTON}>Next</button>
           </div>
         )}
       </div>

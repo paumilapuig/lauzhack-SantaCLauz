@@ -1,3 +1,5 @@
+import { isRevisionOf } from "./finalRevision";
+
 export type TranscriptBufferOptions = { keepSec: number };
 
 export type TranscriptBuffer = {
@@ -13,7 +15,9 @@ export function createTranscriptBuffer({ keepSec }: TranscriptBufferOptions): Tr
 
   return {
     add(text, tSec) {
-      entries.push({ text, tSec });
+      const last = entries.at(-1);
+      if (last && isRevisionOf(last.text, text)) last.text = text;
+      else entries.push({ text, tSec });
     },
     textBetween(tStart, tEnd) {
       return entries

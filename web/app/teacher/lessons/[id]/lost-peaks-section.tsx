@@ -4,10 +4,10 @@ import { peakBars } from "./dashboard-format";
 export function LostPeaksSection({ peaks }: { peaks: LostPeak[] }) {
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="text-base font-bold">Moments difficiles</h3>
+      <h3 className="text-base font-bold">Difficult moments</h3>
       {peaks.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Personne ne s&apos;est perdu pendant cette leçon.
+          Nobody lost the thread during this lesson.
         </p>
       ) : (
         <ul className="flex flex-col gap-2">

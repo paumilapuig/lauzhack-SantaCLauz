@@ -16,8 +16,8 @@ export function StepByStep({ words, onFinish, onExit }: ExerciseProps) {
   }
 
   return (
-    <ExerciseShell title="Paso a paso" current={index} total={words.length} onExit={onExit}>
-      <PracticeFlow key={word.lemma} word={{ ...word, level: 0, clip_id: null }} onDone={next} onExit={onExit} />
+    <ExerciseShell title="Step by step" current={index} total={words.length} onExit={onExit}>
+      <PracticeFlow key={word.lemma} word={{ ...word, clip_id: null }} onDone={next} onExit={onExit} />
     </ExerciseShell>
   );
 }

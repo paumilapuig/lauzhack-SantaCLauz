@@ -9,8 +9,8 @@ export default function TeacherLayout({
   return (
     <Suspense
       fallback={
-        <p lang="fr" className="p-8 text-sm text-neutral-600">
-          Chargement…
+        <p className="p-8 text-sm text-neutral-600">
+          Loading…
         </p>
       }
     >

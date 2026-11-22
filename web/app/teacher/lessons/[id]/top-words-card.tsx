@@ -5,19 +5,19 @@ export function TopWordsCard({ words }: { words: TopWord[] }) {
   return (
     <Card className="shadow-none">
       <CardHeader>
-        <CardTitle>Mots les plus marqués</CardTitle>
+        <CardTitle>Most marked words</CardTitle>
       </CardHeader>
       <CardContent>
         {words.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aucun mot marqué pour l&apos;instant.
+            No marked words yet.
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
             {words.map(({ lemma, taps }) => (
               <li key={lemma} className="flex items-baseline justify-between text-base">
                 <span lang="fr" className="font-bold">{lemma}</span>
-                <span className="text-sm text-muted-foreground">{taps} fois</span>
+                <span className="text-sm text-muted-foreground">{taps} times</span>
               </li>
             ))}
           </ul>

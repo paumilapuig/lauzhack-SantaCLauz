@@ -12,7 +12,7 @@ const isAcceptedFormat = ({ name, type }: LessonFileInfo): boolean =>
   ACCEPTED_MIME_TYPES.includes(type);
 
 export function validateLessonFile(file: LessonFileInfo): string | null {
-  if (file.size === 0) return "Le fichier est vide.";
+  if (file.size === 0) return "The file is empty.";
   if (file.size > MAX_LESSON_FILE_BYTES) return createLessonErrorFr(413);
   if (!isAcceptedFormat(file)) return createLessonErrorFr(415);
   return null;

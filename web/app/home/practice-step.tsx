@@ -4,7 +4,7 @@ import { cn } from "cn";
 // Three thin segments, like a story progress bar
 export function StepRail({ steps, current }: { steps: string[]; current: number }) {
   return (
-    <ol aria-label="Pasos" className="grid grid-cols-3 gap-1.5">
+    <ol aria-label="Steps" className="grid grid-cols-3 gap-1.5">
       {steps.map((title, i) => (
         <li key={title} aria-current={i === current ? "step" : undefined}>
           <span className={cn("block h-1 rounded-full transition-colors", i <= current ? "bg-primary" : "bg-fill-strong")} />
@@ -26,7 +26,7 @@ export function StepPanel({ number, title, hint, children }: { number: number; t
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-1">
-        <p className="text-[15px] font-medium text-label-secondary tabular-nums">Paso {number} de 3</p>
+        <p className="text-[15px] font-medium text-label-secondary tabular-nums">Step {number} of 3</p>
         <h3 ref={heading} tabIndex={-1} className="text-balance text-[28px] font-semibold tracking-[-0.02em]">
           {title}
         </h3>
@@ -66,7 +66,7 @@ export function OptionsStep({
       </div>
       {retry && (
         <p role="status" className="text-[17px] text-word-orange">
-          Casi. Prueba otra vez.
+          Almost. Try again.
         </p>
       )}
     </>

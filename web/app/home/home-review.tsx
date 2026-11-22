@@ -1,83 +1,93 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import type { HomeReview as HomeReviewData } from "@/lib/student-contract"
+import { Check } from "lucide-react"
+import { useState } from "react"
 import { useTodayLabel } from "@/components/page-title"
 import { StudentPage } from "@/components/student-page"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { ClipCard } from "./clip-card"
-import { getHomeReview, getMyWords, removeMark, saveMark, savePractice, translate } from "./data"
-import type { ExerciseResult } from "./exercises/types"
 import { PRACTICE_MODES } from "./practice-modes"
-import { PracticeModesList } from "./practice-modes-list"
-import type { MyWord } from "./types"
+import { PracticeModesGrid } from "./practice-modes-grid"
+import { PracticeModesList, type PracticeModeItem } from "./practice-modes-list"
 import { usableWords } from "./usable-words"
+import { useHomeReview } from "./use-home-review"
+
+const DONE_BUTTON =
+  "inline-flex h-11 items-center gap-2 self-end rounded-full bg-charcoal px-5 text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-subtle)] transition-transform active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
 
 export function HomeReview() {
-  const [review, setReview] = useState<HomeReviewData | null>(null)
-  const [words, setWords] = useState<MyWord[]>([])
+  const { review, marks, words, failed, toggle, finishClip, savePractice } = useHomeReview()
   const [openMode, setOpenMode] = useState<string | null>(null)
-  const [failed, setFailed] = useState(false)
-
-  const refreshWords = useCallback(() => getMyWords().then(setWords), [])
-
-  useEffect(() => {
-    Promise.all([getHomeReview(), refreshWords()]).then(([data]) => setReview(data)).catch(() => setFailed(true))
-  }, [refreshWords])
-
+  const [finishing, setFinishing] = useState<string | null>(null)
   const today = useTodayLabel()
+
   const mode = PRACTICE_MODES.find((m) => m.id === openMode)
   const closeMode = () => setOpenMode(null)
-  const finish = (results: ExerciseResult[]) =>
-    results.forEach(({ lemma, passed }) =>
-      savePractice({ lemma, clip_id: words.find((w) => w.lemma === lemma)?.clip_id ?? null, passed }),
-    )
+  const wordCount = (m: PracticeModeItem) => usableWords(words, m.needs).length
 
-  const saved = new Set(words.map((w) => w.lemma))
-  const toggle = async (word: string, clipId: string) => {
-    const lemma = word.toLowerCase()
-    await (saved.has(lemma) ? removeMark(lemma) : saveMark(word, clipId))
-    await refreshWords()
+  async function done(clipId: string) {
+    setFinishing(clipId)
+    try {
+      await finishClip(clipId)
+    } finally {
+      setFinishing(null)
+    }
   }
+
+  const pending = review?.clips ?? []
 
   return (
     <StudentPage
-      title="Repasar"
+      title="Review"
       context={today}
-      lead="Escucha otra vez la clase. Toca una palabra cuando no la entiendas."
+      lead={
+        pending.length > 0
+          ? "Listen to the class again. Tap every word you didn't understand, then press Done."
+          : "No clips left to review. Practise the words you picked."
+      }
       wide
     >
       {failed ? (
-        <p role="alert" className="text-[19px]">No se han podido cargar tus clips.</p>
+        <p role="alert" className="text-[19px]">Your clips could not be loaded. Is the server running?</p>
       ) : !review ? (
-        <p className="text-[19px] text-label-secondary">Cargando…</p>
+        <p className="text-[19px] text-label-secondary">Loading…</p>
+      ) : pending.length === 0 ? (
+        <section aria-label="Practice">
+          <PracticeModesGrid modes={PRACTICE_MODES} wordCount={wordCount} onOpen={setOpenMode} />
+        </section>
       ) : (
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-12">
-          <section aria-label="Clips" className="flex min-w-0 flex-col gap-6">
+          <section aria-label="Clips to review" className="flex min-w-0 flex-col gap-10">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-[15px] font-bold tracking-[-0.02em] text-foreground">De la clase</h2>
-              <p className="text-[14px] tabular-nums text-label-secondary">{review.clips.length} clips</p>
+              <h2 className="text-[15px] font-bold tracking-[-0.02em] text-foreground">From class</h2>
+              <p className="text-[14px] tabular-nums text-label-secondary">
+                {pending.length} to review
+              </p>
             </div>
-            {review.clips.map((clip, index) => (
-              <ClipCard
-                key={clip.id}
-                clip={clip}
-                index={index}
-                saved={saved}
-                translate={translate}
-                onToggle={(word) => toggle(word, clip.id)}
-              />
-            ))}
+            {pending.map((clip, index) => {
+              const clipMarks = marks[clip.id] ?? {}
+              return (
+                <div key={clip.id} className="flex flex-col gap-3">
+                  <ClipCard
+                    clip={clip}
+                    index={index}
+                    saved={new Set(Object.keys(clipMarks))}
+                    translate={(word) => clipMarks[word.toLowerCase()] ?? ""}
+                    onToggle={(word) => toggle(clip.id, word)}
+                  />
+                  <button type="button" onClick={() => done(clip.id)} disabled={finishing === clip.id} className={DONE_BUTTON}>
+                    <Check className="size-4" aria-hidden />
+                    {finishing === clip.id ? "Saving…" : "Done"}
+                  </button>
+                </div>
+              )
+            })}
           </section>
 
           <aside className="lg:sticky lg:top-24">
             <div className="rounded-[24px] border border-border bg-card p-5">
-              <h2 className="mb-3 px-1 text-[15px] font-bold tracking-[-0.02em] text-foreground">Practicar</h2>
-              <PracticeModesList
-                modes={PRACTICE_MODES}
-                wordCount={(m) => usableWords(words, m.needs).length}
-                onOpen={setOpenMode}
-              />
+              <h2 className="mb-3 px-1 text-[15px] font-bold tracking-[-0.02em] text-foreground">Practice</h2>
+              <PracticeModesList modes={PRACTICE_MODES} wordCount={wordCount} onOpen={setOpenMode} />
             </div>
           </aside>
         </div>
@@ -96,10 +106,10 @@ export function HomeReview() {
                 onClick={closeMode}
                 className="min-h-11 px-2 text-[17px] font-medium text-primary focus-visible:outline-2 focus-visible:outline-primary"
               >
-                Cerrar
+                Close
               </button>
             </div>
-            <mode.Component words={usableWords(words, mode.needs)} onFinish={finish} onExit={closeMode} />
+            <mode.Component words={usableWords(words, mode.needs)} onFinish={savePractice} onExit={closeMode} />
           </DialogContent>
         )}
       </Dialog>

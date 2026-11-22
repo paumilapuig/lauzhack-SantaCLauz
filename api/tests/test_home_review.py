@@ -23,8 +23,9 @@ def clip_id(n: int) -> str:
     return f"30000000-0000-4000-8000-{n:012d}"
 
 
-def make_clip(n, student=STUDENT, session=SESSION, transcript="les mitochondries", day=15):
+def make_clip(n, student=STUDENT, session=SESSION, transcript="les mitochondries", day=15, reviewed_at=None):
     return {
+        "reviewed_at": reviewed_at,
         "id": clip_id(n), "session_id": session, "student_id": student,
         "t_start": 10.0, "t_end": 20.0, "transcript": transcript,
         "audio_path": f"{student}/{clip_id(n)}.webm",
@@ -97,13 +98,15 @@ def test_pending_clip_has_audio_title_terms_kind_and_no_lemma(client_for):
     assert (clip["kind"], clip["lemma"]) == ("word", None)
 
 
-def test_passed_clip_is_not_listed_but_failed_one_is(client_for):
-    results = [
-        {"student_id": STUDENT, "clip_id": clip_id(1), "passed": True},
-        {"student_id": STUDENT, "clip_id": clip_id(2), "passed": False},
-    ]
-    db = seed([make_clip(1), make_clip(2)], results=results)
+def test_reviewed_clip_is_not_listed(client_for):
+    db = seed([make_clip(1, reviewed_at="2026-11-16T10:00:00+00:00"), make_clip(2)])
     assert [c["id"] for c in get_review(client_for, db)["clips"]] == [clip_id(2)]
+
+
+def test_only_the_five_newest_pending_clips_are_listed(client_for):
+    db = seed([make_clip(n, day=10 + n) for n in range(1, 8)])
+    ids = [c["id"] for c in get_review(client_for, db)["clips"]]
+    assert ids == [clip_id(n) for n in (7, 6, 5, 4, 3)]
 
 
 def test_other_students_clip_is_not_listed(client_for):

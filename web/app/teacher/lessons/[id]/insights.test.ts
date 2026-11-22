@@ -28,9 +28,9 @@ describe("insights", () => {
       top_words: [{ lemma: "mitochondrie", taps: 4 }],
     };
     expect(insights(data)).toEqual([
-      "Lucía : autonomie 50 % → 80 % en 2 semaines.",
-      "Minute 12 : 5 signalements « je me suis perdu ».",
-      "« mitochondrie » a été marqué 4 fois.",
+      "Lucía: autonomy 50 % → 80 % over 2 weeks.",
+      'Minute 12: 5 "I lost the thread" reports.',
+      '"mitochondrie" was marked 4 times.',
     ]);
   });
 
@@ -42,7 +42,7 @@ describe("insights", () => {
       lost_peaks: [{ minute: 1, count: 3 }],
     });
     expect(result).toHaveLength(3);
-    expect(result.every((s) => s.includes("autonomie"))).toBe(true);
+    expect(result.every((s) => s.includes("autonomy"))).toBe(true);
   });
 
   it("picks the earliest minute on a tie", () => {
@@ -53,7 +53,7 @@ describe("insights", () => {
         { minute: 3, count: 4 },
       ],
     });
-    expect(result).toEqual(["Minute 3 : 4 signalements « je me suis perdu »."]);
+    expect(result).toEqual(['Minute 3: 4 "I lost the thread" reports.']);
   });
 
   it("adds the concept when a gap covers the peak minute", () => {
@@ -72,7 +72,7 @@ describe("insights", () => {
       ],
     });
     expect(result).toEqual([
-      "Minute 12 : 3 signalements « je me suis perdu » — probablement « Comment la cellule fabrique de l'énergie ».",
+      'Minute 12: 3 "I lost the thread" reports — probably "Comment la cellule fabrique de l\'énergie".',
     ]);
   });
 

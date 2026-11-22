@@ -65,17 +65,17 @@ export function LoginForm() {
   return (
     <form onSubmit={signIn} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="email">Correo</Label>
+        <Label htmlFor="email">Email</Label>
         <Input id="email" type="email" required autoComplete="email"
           value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">Contraseña</Label>
+        <Label htmlFor="password">Password</Label>
         <Input id="password" type="password" minLength={6} autoComplete="current-password"
           value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
-      <Button type="submit" disabled={busy}>Entrar</Button>
-      <Button type="button" variant="secondary" disabled={busy} onClick={signUp}>Crear cuenta</Button>
+      <Button type="submit" disabled={busy}>Sign in</Button>
+      <Button type="button" variant="secondary" disabled={busy} onClick={signUp}>Create account</Button>
       <Button type="button" variant="ghost" disabled={busy || !email} onClick={sendMagicLink}>
         Envíame un enlace mágico
       </Button>

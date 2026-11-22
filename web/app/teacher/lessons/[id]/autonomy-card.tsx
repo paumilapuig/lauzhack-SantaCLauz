@@ -8,7 +8,7 @@ const SPARK_HEIGHT = 48;
 function trendLabel(weekly: WeeklyAutonomy[]): string {
   const first = formatAutonomy(weekly[0].autonomy);
   const last = formatAutonomy(weekly[weekly.length - 1].autonomy);
-  return `Évolution : ${first} → ${last}`;
+  return `Trend: ${first} → ${last}`;
 }
 
 function Sparkline({ weekly }: { weekly: WeeklyAutonomy[] }) {
@@ -43,13 +43,13 @@ export function AutonomyCard({ student }: { student: StudentAutonomy }) {
   return (
     <Card>
       <CardHeader>
-        <p className="text-base text-muted-foreground">Autonomie</p>
+        <p className="text-base text-muted-foreground">Autonomy</p>
         <CardTitle className="text-xl">{student.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-wrap items-start justify-between gap-4">
         {figure === null ? (
           <p className="text-base text-muted-foreground">
-            pas encore de séance terminée
+            no finished session yet
           </p>
         ) : (
           <p className="text-4xl font-bold">{figure}</p>

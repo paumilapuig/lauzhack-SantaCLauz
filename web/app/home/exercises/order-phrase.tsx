@@ -38,7 +38,7 @@ export function OrderPhrase({ words: allWords, onFinish, onExit }: ExerciseProps
   }
 
   return (
-    <ExerciseShell title="Ordena la frase" current={index} total={words.length} onExit={onExit} results={done ? results : undefined}>
+    <ExerciseShell title="Order the sentence" current={index} total={words.length} onExit={onExit} results={done ? results : undefined}>
       <div className="flex flex-col gap-8">
         <p lang="fr" className="min-h-14 border-b border-separator pb-3 text-[24px] font-semibold tracking-tight text-label">
           {placed.map((chip) => chip.text).join(" ")}
@@ -50,14 +50,14 @@ export function OrderPhrase({ words: allWords, onFinish, onExit }: ExerciseProps
             </button>
           ))}
         </div>
-        {failed && <p className="text-[15px] text-label-secondary">Prueba otra vez</p>}
+        {failed && <p className="text-[15px] text-label-secondary">Try again</p>}
         <button
           type="button"
           disabled={placed.length === 0}
           onClick={() => setPlaced(placed.slice(0, -1))}
           className={cn(CHIP, "self-start text-[15px] disabled:opacity-40")}
         >
-          Deshacer
+          Undo
         </button>
       </div>
     </ExerciseShell>

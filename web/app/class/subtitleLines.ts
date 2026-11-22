@@ -1,3 +1,5 @@
+import { isRevisionOf } from "./finalRevision";
+
 export type SubtitleLines = { finals: string[]; interim: string; lastAt: number };
 
 export const EMPTY_SUBTITLES: SubtitleLines = { finals: [], interim: "", lastAt: Number.NEGATIVE_INFINITY };
@@ -14,8 +16,14 @@ export function addResult(
   const interimText = result.interimText.trim();
   if (!finalText && !interimText) return state;
   const finals = result.at - state.lastAt > SUBTITLE_IDLE_SEC ? [] : state.finals;
-  if (finalText) return { finals: [...finals, finalText].slice(-MAX_FINAL_LINES), interim: "", lastAt: result.at };
+  if (finalText) return { finals: withFinal(finals, finalText), interim: "", lastAt: result.at };
   return { finals, interim: interimText, lastAt: result.at };
+}
+
+function withFinal(finals: string[], finalText: string): string[] {
+  const last = finals.at(-1);
+  const kept = last !== undefined && isRevisionOf(last, finalText) ? finals.slice(0, -1) : finals;
+  return [...kept, finalText].slice(-MAX_FINAL_LINES);
 }
 
 export function lineText(state: SubtitleLines): string {

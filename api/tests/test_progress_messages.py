@@ -6,7 +6,7 @@ from app.progress_messages import ProgressMessage, build_progress_messages
 NOW = datetime(2026, 11, 20, 15, 0, tzinfo=UTC)  # Friday
 THIS_WEEK = datetime(2026, 11, 16, 0, 0, tzinfo=UTC)  # Monday 00:00
 LAST_WEEK = THIS_WEEK - timedelta(seconds=1)
-DEFAULT_KEEP_GOING = ProgressMessage("keep_going", "Sigue así, vas muy bien")
+DEFAULT_KEEP_GOING = ProgressMessage("keep_going", "Keep going, you're doing great")
 
 
 def texts(messages):
@@ -17,20 +17,20 @@ def test_twelve_distinct_lemmas_are_counted_in_plural():
     passed = [(f"mot{i}", NOW) for i in range(12)]
     messages = build_progress_messages(passed, [], {}, NOW)
     assert messages[0] == ProgressMessage(
-        "learned_this_week", "Esta semana has aprendido 12 palabras nuevas"
+        "learned_this_week", "This week you learned 12 new words"
     )
 
 
 def test_same_lemma_three_times_counts_once_in_singular():
     passed = [("mot", NOW)] * 3
     messages = build_progress_messages(passed, [], {}, NOW)
-    assert messages[0].text == "Esta semana has aprendido 1 palabra nueva"
+    assert messages[0].text == "This week you learned 1 new word"
 
 
 def test_last_week_practices_are_not_counted():
     passed = [("mot", THIS_WEEK), ("vieux", LAST_WEEK)]
     messages = build_progress_messages(passed, [], {}, NOW)
-    assert messages[0].text == "Esta semana has aprendido 1 palabra nueva"
+    assert messages[0].text == "This week you learned 1 new word"
     only_old = build_progress_messages([("vieux", LAST_WEEK)], [], {}, NOW)
     assert only_old[0].kind != "learned_this_week"
 
@@ -40,7 +40,7 @@ def test_no_help_needed_picks_newest_passed_lemma_at_level_two_or_more():
     levels = {"a": 1, "b": 2, "c": 3}
     messages = build_progress_messages(passed, [], levels, NOW)
     assert messages[1] == ProgressMessage(
-        "no_help_needed", "Ya no necesitas ayuda con «b»"
+        "no_help_needed", "You no longer need help with «b»"
     )
 
 
@@ -54,7 +54,7 @@ def test_keep_going_picks_newest_pending_mark():
     levels = {"done": 2, "pending1": 1}
     messages = build_progress_messages([], marks, levels, NOW)
     assert messages == [
-        ProgressMessage("keep_going", "Sigue así: mañana repasamos «pending1»")
+        ProgressMessage("keep_going", "Keep going: tomorrow we review «pending1»")
     ]
 
 

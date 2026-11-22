@@ -71,30 +71,30 @@ export function CreateLessonForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
-      <TextField name="title" label="Titre" />
-      <TextField name="subject" label="Matière" />
+      <TextField name="title" label="Title" />
+      <TextField name="subject" label="Subject" />
       <TextField name="lesson_date" label="Date" type="date" />
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="text-base font-medium">Source de la leçon</legend>
+        <legend className="text-base font-medium">Lesson source</legend>
         <div className="flex flex-wrap gap-6">
           <Label className="text-base">
             <input type="radio" name="mode" checked={mode === "text"} onChange={() => setMode("text")} />
-            Coller le texte
+            Paste the text
           </Label>
           <Label className="text-base">
             <input type="radio" name="mode" checked={mode === "file"} onChange={() => setMode("file")} />
-            Envoyer un fichier
+            Upload a file
           </Label>
         </div>
         {mode === "text" ? (
-          <textarea name="source_text" required aria-label="Texte de la leçon" className={TEXTAREA_CLASS} />
+          <textarea name="source_text" required aria-label="Lesson text" className={TEXTAREA_CLASS} />
         ) : (
           <input
             type="file"
             name="file"
             required
-            aria-label="Fichier de la leçon"
+            aria-label="Lesson file"
             accept=".txt,.pdf,.png,.jpg,.jpeg"
             onChange={onFileChange}
             className="text-base"
@@ -105,9 +105,9 @@ export function CreateLessonForm() {
 
       {submitError ? <p role="alert" className="text-base text-destructive">{submitError}</p> : null}
       <p aria-live="polite" className="text-base text-muted-foreground">
-        {pending ? "Préparation du glossaire… (quelques secondes)" : ""}
+        {pending ? "Preparing the glossary… (a few seconds)" : ""}
       </p>
-      <Button type="submit" disabled={blocked} className="self-start">Créer la leçon</Button>
+      <Button type="submit" disabled={blocked} className="self-start">Create lesson</Button>
     </form>
   );
 }
