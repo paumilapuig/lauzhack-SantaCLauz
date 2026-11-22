@@ -55,6 +55,10 @@ npm run test                     # Vitest (web) + pytest (api)
 - Demo accounts (passwords in the team chat): `prof-demo@demo.lauzhack` (teacher), `lucia-w1@demo.lauzhack`
   (week 1 profile), `lucia-w4@demo.lauzhack` (week 4 profile, prepared history). Demo lesson « La respiration
   cellulaire »: `/class?lesson=de100000-0000-4000-8000-000000000001`.
+- Live class without a speaker: play `docs/demo/lesson-respiration-voice.m4a` (58 s, the « Texte à lire » of
+  `docs/demo/lesson-respiration.md` read by the macOS French voice Thomas, slow, with pauses) next to the mic. Press
+  « Je n'ai pas compris » at « déchets » (~35 s) and « J'ai perdu le fil » at « chaleur » (~45 s). Open
+  `/class?lesson=de100000-0000-4000-8000-000000000001` so the class uses the demo lesson.
 - Chrome is required in class (Web Speech API). Plan B without network: « Lire le texte de la leçon » plays the demo
   lesson as subtitles.
 
