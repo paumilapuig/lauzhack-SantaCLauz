@@ -1,5 +1,7 @@
+/* Look of the concept diagram only (DESIGN "video" layer): orange = learning now, ink = result, teal = success. */
+
 @keyframes pop {
-  from { opacity: 0; transform: scale(0.85); }
+  from { opacity: 0; transform: scale(0.6); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -9,12 +11,17 @@
 }
 
 @keyframes glow {
-  from { box-shadow: 0 0 0 0 rgb(255 206 0 / 0.9); }
-  to { box-shadow: 0 0 0 10px rgb(255 206 0 / 0); }
+  from { box-shadow: 0 0 0 0 rgb(244 125 49 / 0.55); }
+  to { box-shadow: 0 0 0 14px rgb(244 125 49 / 0); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .current {
-  animation: pop 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both, glow 1200ms ease-out 420ms 2;
+  animation: pop 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both, glow 1100ms ease-out 450ms 2;
 }
 
 .drawing {
@@ -22,6 +29,42 @@
   animation: draw 900ms ease-out both;
 }
 
+.pop {
+  animation: pop 450ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.rise {
+  animation: rise 450ms cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+
+.press {
+  transition: transform 120ms ease-out;
+}
+
+.press:active {
+  transform: scale(0.96);
+}
+
+.box {
+  cursor: pointer;
+  transition: opacity 500ms ease-out, transform 160ms ease-out;
+}
+
+.box:hover {
+  transform: translateY(-2px);
+}
+
+/* Tappable words on orange or ink boxes: keep white text readable. */
+.onDark button:hover,
+.onDark button:focus-visible {
+  background-color: rgb(255 255 255 / 0.22) !important;
+}
+
+.onDark button {
+  text-decoration-color: #ffffff !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .current, .drawing { animation: none; }
+  .current, .drawing, .pop, .rise { animation: none; }
+  .press:active, .box:hover { transform: none; }
 }

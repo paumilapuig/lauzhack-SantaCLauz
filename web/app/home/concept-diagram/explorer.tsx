@@ -4,6 +4,7 @@ import { ChevronLeft, Play } from "lucide-react"
 import { useMemo, useState, type ReactNode } from "react"
 import type { ConceptGap, ConceptWordResult } from "@/lib/student-contract"
 import { ConceptDiagram } from "./diagram"
+import styles from "./diagram.module.css"
 import { layoutDiagram } from "./diagram-layout"
 import { TappableText } from "./tappable-text"
 import { glossFor } from "./words"
@@ -41,6 +42,7 @@ export function ConceptExplorer({ gap, onTapWord, questions }: Props) {
   }
 
   function go(step: number) {
+    setFinished(false)
     setCurrent(step)
     setShowSpanish(false)
     setGloss(null)
@@ -54,48 +56,55 @@ export function ConceptExplorer({ gap, onTapWord, questions }: Props) {
     <div className="flex flex-col gap-5">
       <div className="-mx-2 overflow-x-auto px-2">
         <div className="min-w-[640px]">
-          <ConceptDiagram layout={layout} current={finished ? steps.length : current} saved={saved} onTap={tap} />
+          <ConceptDiagram layout={layout} current={finished ? steps.length : current} saved={saved} onTap={tap} onSelectStep={go} />
         </div>
       </div>
-      <div aria-live="polite" className="flex flex-col gap-3 rounded-[20px] bg-fill p-5">
-        <div className="flex items-center gap-1.5" aria-hidden>
+      <div aria-live="polite" className="flex flex-col gap-3 rounded-[16px] border border-[#EBEBEB] bg-white p-5">
+        <div className="flex items-center gap-1.5">
           {steps.map((_, i) => (
-            <span key={i} className={`h-1.5 rounded-full transition-all ${i === current ? "w-8 bg-primary" : i < current ? "w-4 bg-charcoal" : "w-4 bg-border"}`} />
+            <button
+              key={i}
+              type="button"
+              aria-label={`Step ${i + 1}`}
+              aria-current={i === current ? "step" : undefined}
+              onClick={() => go(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${i === current ? "w-8 bg-[#F47D31]" : i < current ? "w-4 bg-[#0E101A]" : "w-4 bg-[#D9D9D9]"}`}
+            />
           ))}
         </div>
-        <p className="text-[20px] leading-snug font-semibold text-label">
+        <p key={current} className={`${styles.rise} text-[20px] leading-snug font-bold tracking-[-0.01em] text-[#1F243C]`}>
           <TappableText text={step.fr} saved={saved} onTap={tap} />
         </p>
         {showSpanish ? (
-          <p lang="es" className="text-[16px] text-label-secondary">{step.es}</p>
+          <p lang="es" className="text-[16px] text-[#545454]">{step.es}</p>
         ) : (
-          <button type="button" onClick={() => setShowSpanish(true)} className="w-fit text-[14px] font-semibold text-primary underline underline-offset-4">
+          <button type="button" onClick={() => setShowSpanish(true)} className="w-fit text-[14px] font-semibold text-[#545454] underline underline-offset-4">
             Show in Spanish
           </button>
         )}
         {gloss && (
-          <p role="status" className="w-fit rounded-full bg-word-yellow-bg px-4 py-1.5 text-[15px] text-[#2D2C2B]">
+          <p role="status" key={gloss.word} className={`${styles.pop} w-fit rounded-[10px] bg-[#FFF4D1] px-4 py-1.5 text-[15px] text-[#8A5300]`}>
             <span lang="fr" className="font-bold">{gloss.word}</span>
             {" → "}
             <span lang="es">{gloss.es ?? "…"}</span>
-            <span className="text-label-secondary"> · saved to your words</span>
+            <span className="text-[#545454]"> · saved to your words</span>
           </p>
         )}
-        <p className="text-[13px] text-label-secondary">Tap any word you don’t understand.</p>
+        <p className="text-[13px] text-[#707070]">Tap any word you don’t understand. Tap a box to jump to its step.</p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         {current > 0 && !finished && (
-          <button type="button" onClick={() => go(current - 1)} className={`${PILL} bg-card text-label ring-1 ring-border`}>
+          <button type="button" onClick={() => go(current - 1)} className={`${PILL} ${styles.press} border border-[#D9D9D9] bg-white text-[#1F243C]`}>
             <ChevronLeft aria-hidden className="size-4" /> Back
           </button>
         )}
         {next && (
-          <button type="button" onClick={() => go(current + 1)} className={`${PILL} bg-primary text-primary-foreground`}>
+          <button type="button" onClick={() => go(current + 1)} className={`${PILL} ${styles.press} bg-[#F47D31] text-white`}>
             Explore{nextLabel ? `: ${nextLabel}` : ""} <Play aria-hidden className="size-4 fill-current" />
           </button>
         )}
         {!next && !finished && (
-          <button type="button" onClick={() => setFinished(true)} className={`${PILL} bg-primary text-primary-foreground`}>
+          <button type="button" onClick={() => setFinished(true)} className={`${PILL} ${styles.press} bg-[#0E101A] text-white`}>
             Check what you understood <Play aria-hidden className="size-4 fill-current" />
           </button>
         )}
