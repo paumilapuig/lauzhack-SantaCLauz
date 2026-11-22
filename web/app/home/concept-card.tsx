@@ -14,9 +14,7 @@ type Props = {
 const CHECK_BUTTON =
   "inline-flex h-11 w-fit items-center rounded-full bg-charcoal px-5 text-[15px] font-bold text-primary-foreground shadow-[var(--shadow-subtle)] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
 
-const hasDiagram = (gap: ConceptGap) => gap.explanation.some((step) => (step.nodes ?? []).length > 0)
-
-/** One idea from class, explained step by step on a diagram (older ones as a list), then 2–3 questions. */
+/** One idea from class, explained step by step on its diagram, then 2–3 questions. */
 export function ConceptCard({ gap, onAnswer, onUnderstood, onTapWord }: Props) {
   const [answers, setAnswers] = useState<(number | null)[]>(gap.exercises.map(() => null))
   const [result, setResult] = useState<ConceptAnswerResult | null>(null)
@@ -71,24 +69,7 @@ export function ConceptCard({ gap, onAnswer, onUnderstood, onTapWord }: Props) {
         <p className="text-[13px] text-label-secondary" lang="fr">{gap.lesson_title}</p>
         <h3 lang="fr" className="text-[22px] leading-tight font-bold tracking-[-0.5px]">{gap.concept}</h3>
       </header>
-      {hasDiagram(gap) ? (
-        <ConceptExplorer gap={gap} onTapWord={onTapWord} questions={questions} />
-      ) : (
-        <>
-          <ol className="flex flex-col gap-4">
-            {gap.explanation.map((step, index) => (
-              <li key={index} className="flex items-start gap-4">
-                <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-charcoal text-[14px] font-bold text-primary-foreground">{index + 1}</span>
-                <div className="flex flex-col gap-0.5">
-                  <p lang="fr" className="text-[17px] text-label">{step.fr}</p>
-                  <p lang="es" className="text-[15px] text-label-secondary">{step.es}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          {questions}
-        </>
-      )}
+      <ConceptExplorer gap={gap} onTapWord={onTapWord} questions={questions} />
     </article>
   )
 }

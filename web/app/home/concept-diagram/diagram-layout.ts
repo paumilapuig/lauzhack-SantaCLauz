@@ -5,11 +5,11 @@ export type Box = DiagramNode & { step: number; column: number; x: number; y: nu
 export type Edge = { from: string; to: string; label: string | null; step: number; path: string; labelX: number; labelY: number }
 export type DiagramLayout = { boxes: Box[]; edges: Edge[]; width: number; height: number }
 
-const BOX_W = 220
+const BOX_W = 184
 const BOX_H = 64
-const COLUMN_GAP = 110
+const COLUMN_GAP = 76
 const ROW_GAP = 28
-const ZONE_PAD = 20
+const ZONE_PAD = 14
 const ZONE_LABEL = 44
 const MARGIN = 16
 
@@ -50,7 +50,7 @@ function edgePath(a: Box, b: Box): Pick<Edge, "path" | "labelX" | "labelY"> {
   return { path: `M${x} ${y1} L${x} ${y2}`, labelX: x + 12, labelY: (y1 + y2) / 2 }
 }
 
-const LABEL_W = 120
+const LABEL_W = 96
 const LABEL_H = 26
 
 /** Move an arrow label down while it would sit on an earlier label. */

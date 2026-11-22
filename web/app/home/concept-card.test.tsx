@@ -22,10 +22,20 @@ const gap = {
   status: "pending" as const,
 }
 
+/** Walk an older idea (no boxes) to its last step and open its questions. */
+function openQuestions() {
+  fireEvent.click(screen.getByRole("button", { name: /Next step/ }))
+  fireEvent.click(screen.getByRole("button", { name: /Check what you understood/ }))
+}
+
 describe("ConceptCard", () => {
-  it("shows the idea step by step with its Spanish help, never saying she got lost", () => {
+  it("draws an older idea (no boxes) as a strip of steps with its emoji, Spanish on demand, never saying she got lost", () => {
     render(<ConceptCard gap={gap} onAnswer={vi.fn()} onUnderstood={vi.fn()} onTapWord={vi.fn()} />)
     expect(screen.getByText("Comment la cellule fabrique de l'énergie")).toBeTruthy()
+    const diagram = screen.getByRole("figure", { name: "Diagram of the idea, step by step" })
+    expect(diagram.textContent).toContain("🍞 → 🔋")
+    expect(diagram.textContent).toContain("⚙️ → ⚡")
+    fireEvent.click(screen.getByRole("button", { name: "Show in Spanish" }))
     expect(screen.getByText("La célula recibe azúcar.")).toBeTruthy()
     expect(screen.queryByText(/lost|perdu/i)).toBeNull()
   })
@@ -33,6 +43,7 @@ describe("ConceptCard", () => {
   it("checks the answers and shows which were right", async () => {
     const onAnswer = vi.fn(async () => ({ correct: [true, false], status: "review" as const }))
     render(<ConceptCard gap={gap} onAnswer={onAnswer} onUnderstood={vi.fn()} onTapWord={vi.fn()} />)
+    openQuestions()
     fireEvent.click(screen.getByLabelText("de l'énergie"))
     fireEvent.click(screen.getByLabelText("de l'eau"))
     fireEvent.click(screen.getByRole("button", { name: "Check" }))
@@ -44,6 +55,7 @@ describe("ConceptCard", () => {
     const onUnderstood = vi.fn()
     const onAnswer = vi.fn(async () => ({ correct: [true, true], status: "understood" as const }))
     render(<ConceptCard gap={gap} onAnswer={onAnswer} onUnderstood={onUnderstood} onTapWord={vi.fn()} />)
+    openQuestions()
     fireEvent.click(screen.getByLabelText("de l'énergie"))
     fireEvent.click(screen.getByLabelText("du sucre", { selector: "input[name='g1-1']" }))
     fireEvent.click(screen.getByRole("button", { name: "Check" }))
@@ -53,6 +65,7 @@ describe("ConceptCard", () => {
   it("never shows a number out of a total to the student", async () => {
     const onAnswer = vi.fn(async () => ({ correct: [true, false], status: "review" as const }))
     render(<ConceptCard gap={gap} onAnswer={onAnswer} onUnderstood={vi.fn()} onTapWord={vi.fn()} />)
+    openQuestions()
     fireEvent.click(screen.getByLabelText("de l'énergie"))
     fireEvent.click(screen.getByLabelText("de l'eau"))
     fireEvent.click(screen.getByRole("button", { name: "Check" }))

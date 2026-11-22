@@ -1,6 +1,8 @@
 "use client"
 
+import { useEffect, useRef, useState, type RefObject } from "react"
 import type { Box, DiagramLayout } from "./diagram-layout"
+import { fitScale } from "./diagram-fit"
 import styles from "./diagram.module.css"
 import { TappableText } from "./tappable-text"
 
@@ -35,14 +37,36 @@ function stateOf(step: number, current: number) {
   return step < current ? "done" : "later"
 }
 
-/** The concept as a process map: everything visible but faded, explained steps solid, the current one lit. */
+/** Width of an element, kept up to date (0 where ResizeObserver does not exist, e.g. tests). */
+function useWidth(): [RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    if (!ref.current || typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width))
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+  return [ref, width]
+}
+
+const MARKER = { viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 12, markerHeight: 12, markerUnits: "userSpaceOnUse", orient: "auto-start-reverse" } as const
+
+/**
+ * The concept as a process map: everything visible but faded, explained steps solid, the current one lit.
+ * Drawn at its natural size (1 unit = 1 px) and scaled as a whole, text included, so labels never overlap.
+ */
 export function ConceptDiagram({ layout, current, saved, onTap, onSelectStep }: Props) {
   const { boxes, edges, width, height } = layout
+  const [frameRef, frameWidth] = useWidth()
+  const scale = fitScale(frameWidth, width)
   return (
+    <div ref={frameRef} className="w-full overflow-x-auto rounded-[16px] border border-[#EBEBEB] bg-[#F5F5F5]">
+      <div className="mx-auto" style={{ width: width * scale, height: height * scale }}>
     <figure
       aria-label="Diagram of the idea, step by step"
-      className="relative w-full overflow-hidden rounded-[16px] border border-[#EBEBEB] bg-[#F5F5F5]"
-      style={{ aspectRatio: `${width} / ${height}` }}
+      className="relative origin-top-left"
+      style={{ width, height, transform: `scale(${scale})` }}
     >
       {boxes.filter((b) => b.zone).map((zone) => (
         <div
@@ -58,13 +82,13 @@ export function ConceptDiagram({ layout, current, saved, onTap, onSelectStep }: 
       ))}
       <svg viewBox={`0 0 ${width} ${height}`} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
         <defs>
-          <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <marker id="head" {...MARKER}>
             <path d="M0 0 L10 5 L0 10 z" fill={MUTED} />
           </marker>
-          <marker id="head-now" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <marker id="head-now" {...MARKER}>
             <path d="M0 0 L10 5 L0 10 z" fill={ORANGE} />
           </marker>
-          <marker id="head-later" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <marker id="head-later" {...MARKER}>
             <path d="M0 0 L10 5 L0 10 z" fill={LINE} />
           </marker>
         </defs>
@@ -77,7 +101,8 @@ export function ConceptDiagram({ layout, current, saved, onTap, onSelectStep }: 
               d={edge.path}
               fill="none"
               stroke={color}
-              strokeWidth={state === "current" ? 5 : 3}
+              strokeWidth={state === "current" ? 4 : 2.5}
+              pathLength={state === "current" ? 1 : undefined}
               strokeLinecap="round"
               strokeDasharray={state === "later" ? "6 8" : undefined}
               markerEnd={`url(#${state === "current" ? "head-now" : state === "done" ? "head" : "head-later"})`}
@@ -109,7 +134,7 @@ export function ConceptDiagram({ layout, current, saved, onTap, onSelectStep }: 
             title={`Step ${box.step + 1}`}
             className={`${styles.box} ${box.kind === "input" ? "" : styles.onDark} absolute flex items-center justify-center gap-2 px-3 text-center text-[14px] leading-tight font-bold tracking-[-0.01em] md:text-[16px] ${KIND_STYLE[box.kind]} ${
               state === "later" ? "opacity-25" : ""
-            } ${state === "current" ? `${styles.current} ring-4 ring-[#F47D31]/40 ring-offset-2 ring-offset-[#F5F5F5]` : ""}`}
+            } ${state === "current" ? `${styles.current} ring-4 ring-[#F47D31]/35` : ""}`}
             style={{ left: pct(box.x, width), top: pct(box.y, height), width: pct(box.w, width), height: pct(box.h, height) }}
           >
             {box.kind === "process" && (
@@ -122,5 +147,7 @@ export function ConceptDiagram({ layout, current, saved, onTap, onSelectStep }: 
         )
       })}
     </figure>
+      </div>
+    </div>
   )
 }
